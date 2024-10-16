@@ -11,12 +11,13 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.List;
+
 @WebFluxTest(TppControllerImpl.class)
 class TppControllerTest {
 
@@ -31,21 +32,21 @@ class TppControllerTest {
 
     @Test
     void upsert_Ok() {
-        TppDTO tppDTO = new TppDTO();
+        TppDTO mockTppDTO = TppDTOFaker.mockInstance(true);
 
-        Mockito.when(tppService.upsert(tppDTO)).thenReturn(Mono.just(tppDTO));
+        Mockito.when(tppService.upsert(mockTppDTO)).thenReturn(Mono.just(mockTppDTO));
 
         webClient.post()
                 .uri("/emd/tpp")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tppDTO)
+                .bodyValue(mockTppDTO)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(TppDTO.class)
                 .consumeWith(response -> {
                     TppDTO resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
-                    Assertions.assertEquals(tppDTO, resultResponse);
+                    Assertions.assertEquals(mockTppDTO, resultResponse);
                 });
     }
 
@@ -113,9 +114,9 @@ class TppControllerTest {
                 .bodyValue(tppIdList) // Body of the request
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ArrayList<TppDTO>>() {})
+                .expectBodyList(TppDTO.class)
                 .consumeWith(response -> {
-                    ArrayList<TppDTO> resultResponse = response.getResponseBody();
+                    List<TppDTO> resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
                     Assertions.assertEquals(tppDTOList.size(), resultResponse.size());
                     Assertions.assertTrue(resultResponse.containsAll(tppDTOList));

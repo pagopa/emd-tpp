@@ -35,12 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TppServiceTest {
     @Autowired
     TppServiceImpl tppService;
-    @Autowired
-    ExceptionMap exceptionMap;
     @MockBean
     TppRepository tppRepository;
-    @Autowired
-    TppObjectToDTOMapper mapperToDTO;
     @Autowired
     TppDTOToObjectMapper mapperToObject;
 

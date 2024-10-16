@@ -10,7 +10,6 @@ public class TppDTOToObjectMapper {
     public Tpp map(TppDTO tppDTO){
         return Tpp.builder()
                 .state(true)
-                .uri(tppDTO.getUri())
                 .messageUrl(tppDTO.getMessageUrl())
                 .authenticationUrl(tppDTO.getAuthenticationUrl())
                 .tppId(tppDTO.getTppId())

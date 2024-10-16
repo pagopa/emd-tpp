@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
 import org.springframework.web.server.MissingRequestValueException;
 
 import java.util.Optional;
@@ -53,6 +54,16 @@ public class ValidationExceptionHandler {
     public ErrorDTO handleMissingRequestValueException(MissingRequestValueException e, ServerHttpRequest request) {
 
         log.info("A MissingRequestValueException occurred handling request {}: HttpStatus 400 - {}",
+                ErrorManager.getRequestDetails(request), e.getMessage());
+        log.debug("Something went wrong due to a missing request value", e);
+
+        return new ErrorDTO(templateValidationErrorDTO.getCode(), templateValidationErrorDTO.getMessage());
+    }
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDTO handleNoResourceFoundException(NoResourceFoundException e, ServerHttpRequest request) {
+
+        log.info("A NoResourceFoundException occurred handling request {}: HttpStatus 400 - {}",
                 ErrorManager.getRequestDetails(request), e.getMessage());
         log.debug("Something went wrong due to a missing request value", e);
 

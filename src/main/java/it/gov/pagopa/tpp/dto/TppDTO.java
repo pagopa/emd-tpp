@@ -13,10 +13,10 @@ public class TppDTO {
     private String tppId;
     private String entityId;
     private String businessName;
-    private String uri;
     private String messageUrl;
     private String authenticationUrl;
     private AuthenticationType authenticationType;
     private Contact contact;
     private Boolean state;
+
 }

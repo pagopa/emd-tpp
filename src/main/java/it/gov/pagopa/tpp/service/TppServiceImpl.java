@@ -42,7 +42,7 @@ public class TppServiceImpl implements TppService {
                         .map(mapperToDTO::map)
                         .toList()
                 )
-                .doOnSuccess(tppDTOList -> log.info("[EMD][TPP][GET-ENABLED] Tpps founded:  {}",(tppDTOList.size())))
+                .doOnSuccess(tppDTOList -> log.info("[EMD][TPP][GET-ENABLED] Tpps founded:  {}",tppDTOList))
                 .doOnError(error -> log.error("[EMD][TPP][GET-ENABLED] Error:  {}", error.getMessage()));
         }
 
@@ -59,14 +59,12 @@ public class TppServiceImpl implements TppService {
                     log.info("[EMD][TPP][UPSERT] TPP with entityId:[{}] already exists",(tppDTO.getEntityId()));
                     return tppRepository.save(tppReceived)
                             .map(mapperToDTO::map) // Map to DTO after saving
-                            .doOnSuccess(savedTpp -> log.info("[EMD][TPP][UPSERT] Updated existing TPP"))
-                            .doOnError(error -> log.error("[EMD][TPP][UPSERT] Error:  {}", error.getMessage()));
+                            .doOnSuccess(savedTpp -> log.info("[EMD][TPP][UPSERT] Updated existing TPP"));
                 })
                 .switchIfEmpty(
                         tppRepository.save(tppReceived)
                                 .map(mapperToDTO::map)
                                 .doOnSuccess(savedTpp -> log.info("[EMD][TPP][UPSERT] Created TPP"))
-                                .doOnError(error -> log.error("[EMD][TPP][UPSERT] Error:  {}",error.getMessage()))
                 );
     }
 
@@ -80,8 +78,7 @@ public class TppServiceImpl implements TppService {
                     return tppRepository.save(tpp);
                 })
                 .map(mapperToDTO::map)
-                .doOnSuccess(updatedTpp -> log.info("[EMD][TPP][UPDATE-STATE] Updated"))
-                .doOnError(error -> log.error("[EMD][TPP][UPDATE-STATE] Error:  {}",error.getMessage()));
+                .doOnSuccess(updatedTpp -> log.info("[EMD][TPP][UPDATE-STATE] Updated"));
     }
 
 
@@ -91,7 +88,6 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(entityId)
                 .switchIfEmpty(Mono.error(exceptionMap.getException(ExceptionName.TPP_NOT_ONBOARDED)))
                 .map(mapperToDTO::map)
-                .doOnSuccess(updatedTpp -> log.info("[EMD][TPP][GET] Founded"))
-                .doOnError(error -> log.error("[EMD][TPP][GET] Error:  {}",error.getMessage()));
+                .doOnSuccess(updatedTpp -> log.info("[EMD][TPP][GET] Founded"));
     }
 }

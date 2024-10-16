@@ -16,7 +16,6 @@ public class Tpp {
     private String tppId;
     private String entityId;
     private String businessName;
-    private String uri;
     private String messageUrl;
     private String authenticationUrl;
     private AuthenticationType authenticationType;
