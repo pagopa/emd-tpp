@@ -11,7 +11,6 @@ public class TppDTOFaker {
     public static TppDTO mockInstance(Boolean bias) {
         return TppDTO.builder()
                 .tppId("tppId")
-                .uri("uri")
                 .messageUrl("messageUrl")
                 .authenticationUrl("AuthenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)

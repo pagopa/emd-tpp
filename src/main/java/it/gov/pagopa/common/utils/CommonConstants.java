@@ -1,6 +1,8 @@
 package it.gov.pagopa.common.utils;
 
-public class Constants {
+import java.time.ZoneId;
+
+public class CommonConstants {
 
 
     public static final class ExceptionCode {
@@ -8,5 +10,7 @@ public class Constants {
         private ExceptionCode() {}
     }
 
-    private Constants(){}
+    public static final ZoneId ZONEID = ZoneId.of("Europe/Rome");
+
+    private CommonConstants(){}
 }

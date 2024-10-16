@@ -12,7 +12,6 @@ public class TppObjectToDTOMapper {
     public TppDTO map(Tpp tpp){
         return TppDTO.builder()
                 .state(tpp.getState())
-                .uri(tpp.getUri())
                 .messageUrl(tpp.getMessageUrl())
                 .authenticationUrl(tpp.getAuthenticationUrl())
                 .authenticationType(AuthenticationType.OAUTH2)
