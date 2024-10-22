@@ -18,5 +18,4 @@ public class TppDTO {
     private AuthenticationType authenticationType;
     private Contact contact;
     private Boolean state;
-
 }

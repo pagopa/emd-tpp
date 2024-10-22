@@ -74,11 +74,11 @@ class TppControllerTest {
     void get_Ok()  {
         TppDTO mockTppDTO = TppDTOFaker.mockInstance(true);
 
-        Mockito.when(tppService.get(mockTppDTO.getEntityId()))
+        Mockito.when(tppService.get(mockTppDTO.getTppId()))
                 .thenReturn(Mono.just(mockTppDTO));
 
         webClient.get()
-                .uri("/emd/tpp/{entityId}",mockTppDTO.getEntityId())
+                .uri("/emd/tpp/{tppId}",mockTppDTO.getTppId())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(TppDTO.class)

@@ -40,8 +40,8 @@ public class TppControllerImpl implements TppController {
     }
 
     @Override
-    public Mono<ResponseEntity<TppDTO>> get(String entityId) {
-        return tppService.get(entityId)
+    public Mono<ResponseEntity<TppDTO>> get(String tppId) {
+        return tppService.get(tppId)
                 .map(ResponseEntity::ok);
     }
 

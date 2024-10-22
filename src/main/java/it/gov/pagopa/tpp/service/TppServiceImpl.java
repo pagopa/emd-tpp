@@ -1,6 +1,6 @@
 package it.gov.pagopa.tpp.service;
 
-import it.gov.pagopa.tpp.constants.OnboardingTppConstants.ExceptionName;
+import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
@@ -35,15 +35,15 @@ public class TppServiceImpl implements TppService {
 
     @Override
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
-        log.info("[EMD][TPP][GET-ENABLED] Received tppIdList: {}",(tppIdList));
+        log.info("[EMD-TPP][GET-ENABLED] Received tppIdList: {}",(tppIdList));
         return tppRepository.findByTppIdInAndStateTrue(tppIdList)
                 .collectList()
                 .map(tppList -> tppList.stream()
                         .map(mapperToDTO::map)
                         .toList()
                 )
-                .doOnSuccess(tppDTOList -> log.info("[EMD][TPP][GET-ENABLED] Tpps founded:  {}",tppDTOList))
-                .doOnError(error -> log.error("[EMD][TPP][GET-ENABLED] Error:  {}", error.getMessage()));
+                .doOnSuccess(tppDTOList -> log.info("[EMD-TPP][GET-ENABLED] Tpps founded:  {}",tppDTOList))
+                .doOnError(error -> log.error("[EMD-TPP][GET-ENABLED] Error:  {}", error.getMessage()));
         }
 
 
@@ -51,28 +51,29 @@ public class TppServiceImpl implements TppService {
 
     @Override
     public Mono<TppDTO> upsert(TppDTO tppDTO) {
-        log.info("[EMD][TPP][UPSERT] Received tppDTO:  {}", inputSanify(tppDTO.toString()));
+        log.info("[EMD-TPP][UPSERT] Received tppDTO:  {}", inputSanify(tppDTO.toString()));
         Tpp tppReceived = mapperToObject.map(tppDTO);
 
         return tppRepository.findByTppId(tppDTO.getEntityId())
                 .flatMap(tppDB -> {
-                    log.info("[EMD][TPP][UPSERT] TPP with entityId:[{}] already exists",(tppDTO.getEntityId()));
+                    log.info("[EMD-TPP][UPSERT] TPP with entityId:[{}] already exists",(tppDTO.getEntityId()));
                     return tppRepository.save(tppReceived)
                             .map(mapperToDTO::map) // Map to DTO after saving
-                            .doOnSuccess(savedTpp -> log.info("[EMD][TPP][UPSERT] Updated existing TPP"));
+                            .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Updated existing TPP"));
                 })
                 .switchIfEmpty(
                         tppRepository.save(tppReceived)
                                 .map(mapperToDTO::map)
-                                .doOnSuccess(savedTpp -> log.info("[EMD][TPP][UPSERT] Created TPP"))
+                                .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Created TPP"))
                 );
     }
 
     @Override
     public Mono<TppDTO> updateState(String tppId, Boolean state) {
-        log.info("[EMD][UPDATE-TPP] Received tppId:  {}",inputSanify(tppId));
+        log.info("[EMD-TPP][UPDATE] Received tppId:  {}",inputSanify(tppId));
         return tppRepository.findByTppId(tppId)
-                .switchIfEmpty(Mono.error(exceptionMap.getException(ExceptionName.TPP_NOT_ONBOARDED)))
+                .switchIfEmpty(Mono.error(exceptionMap
+                        .throwException(ExceptionName.TPP_NOT_ONBOARDED,"Tpp not founded during update state process")))
                 .flatMap(tpp -> {
                     tpp.setState(state);
                     return tppRepository.save(tpp);
@@ -83,10 +84,11 @@ public class TppServiceImpl implements TppService {
 
 
     @Override
-    public Mono<TppDTO> get(String entityId) {
-        log.info("[EMD][UPDATE-TPP] Received tppId:  {}",inputSanify(entityId));
-        return tppRepository.findByTppId(entityId)
-                .switchIfEmpty(Mono.error(exceptionMap.getException(ExceptionName.TPP_NOT_ONBOARDED)))
+    public Mono<TppDTO> get(String tppId) {
+        log.info("[EMD-TPP][GET] Received tppId:  {}",inputSanify(tppId));
+        return tppRepository.findByTppId(tppId)
+                .switchIfEmpty(Mono.error(exceptionMap
+                        .throwException(ExceptionName.TPP_NOT_ONBOARDED,"Tpp not founded during get process")))
                 .map(mapperToDTO::map)
                 .doOnSuccess(updatedTpp -> log.info("[EMD][TPP][GET] Founded"));
     }

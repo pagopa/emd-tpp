@@ -46,7 +46,7 @@ public interface TppController {
      * @param tppId to save
      * @return outcome of saving the tpp
      */
-    @GetMapping("/{entityId}")
+    @GetMapping("/{tppId}")
     Mono<ResponseEntity<TppDTO>> get(@Valid @PathVariable String tppId);
 
 }
