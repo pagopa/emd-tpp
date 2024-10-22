@@ -118,7 +118,7 @@ class TppServiceTest {
         Executable executable = () -> tppService.updateState(tppDTO.getTppId(),tppDTO.getState()).block();
         ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
 
-        assertEquals("TPP_NOT_ONBOARDED", exception.getMessage());
+        assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
     }
 
     @Test
@@ -146,6 +146,6 @@ class TppServiceTest {
         Executable executable = () -> tppService.get(tppDTO.getEntityId()).block();
         ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
 
-        assertEquals("TPP_NOT_ONBOARDED", exception.getMessage());
+        assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
     }
 }

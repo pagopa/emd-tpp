@@ -1,6 +1,6 @@
 package it.gov.pagopa.tpp.constants;
 
-public class OnboardingTppConstants {
+public class TppConstants {
     public static final class ExceptionCode {
 
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
@@ -23,5 +23,5 @@ public class OnboardingTppConstants {
     }
 
 
-    private OnboardingTppConstants() {}
+    private TppConstants() {}
 }

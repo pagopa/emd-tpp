@@ -13,5 +13,5 @@ public interface TppService {
 
     Mono<TppDTO> updateState(String tppId, Boolean state);
 
-    Mono<TppDTO> get(String entityId);
+    Mono<TppDTO> get(String tppId);
 }
