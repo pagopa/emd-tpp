@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 public class Tpp {
 
+    private String id;
     private String tppId;
     private String entityId;
     private String businessName;

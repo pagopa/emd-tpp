@@ -54,11 +54,12 @@ public class TppServiceImpl implements TppService {
         log.info("[EMD-TPP][UPSERT] Received tppDTO:  {}", inputSanify(tppDTO.toString()));
         Tpp tppReceived = mapperToObject.map(tppDTO);
 
-        return tppRepository.findByTppId(tppDTO.getEntityId())
+        return tppRepository.findByTppId(tppDTO.getTppId())
                 .flatMap(tppDB -> {
-                    log.info("[EMD-TPP][UPSERT] TPP with entityId:[{}] already exists",(tppDTO.getEntityId()));
+                    log.info("[EMD-TPP][UPSERT] TPP with tppId:[{}] already exists",(tppDTO.getTppId()));
+                    tppReceived.setId(tppDB.getId());
                     return tppRepository.save(tppReceived)
-                            .map(mapperToDTO::map) // Map to DTO after saving
+                            .map(mapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Updated existing TPP"));
                 })
                 .switchIfEmpty(
