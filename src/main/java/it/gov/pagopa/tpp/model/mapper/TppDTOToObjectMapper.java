@@ -10,9 +10,10 @@ public class TppDTOToObjectMapper {
     public Tpp map(TppDTO tppDTO){
         return Tpp.builder()
                 .state(true)
+                .tppId(tppDTO.getTppId())
                 .messageUrl(tppDTO.getMessageUrl())
                 .authenticationUrl(tppDTO.getAuthenticationUrl())
-                .tppId(tppDTO.getTppId())
+                .authenticationType(tppDTO.getAuthenticationType())
                 .businessName(tppDTO.getBusinessName())
                 .contact(tppDTO.getContact())
                 .entityId(tppDTO.getEntityId())

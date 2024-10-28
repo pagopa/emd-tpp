@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 
 import java.util.List;
+import java.util.UUID;
 
 import static it.gov.pagopa.common.utils.Utils.inputSanify;
 
@@ -47,13 +48,11 @@ public class TppServiceImpl implements TppService {
         }
 
 
-
-
+    //TODO Definire i campi non aggiornabili
     @Override
     public Mono<TppDTO> upsert(TppDTO tppDTO) {
         log.info("[EMD-TPP][UPSERT] Received tppDTO:  {}", inputSanify(tppDTO.toString()));
         Tpp tppReceived = mapperToObject.map(tppDTO);
-
         return tppRepository.findByTppId(tppDTO.getTppId())
                 .flatMap(tppDB -> {
                     log.info("[EMD-TPP][UPSERT] TPP with tppId:[{}] already exists",(tppDTO.getTppId()));
@@ -63,9 +62,12 @@ public class TppServiceImpl implements TppService {
                             .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Updated existing TPP"));
                 })
                 .switchIfEmpty(
-                        tppRepository.save(tppReceived)
-                                .map(mapperToDTO::map)
-                                .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Created TPP"))
+                        Mono.defer(() -> {
+                            tppReceived.setTppId("%s_%d".formatted(UUID.randomUUID().toString(), System.currentTimeMillis()));
+                            return tppRepository.save(tppReceived)
+                                    .map(mapperToDTO::map)
+                                    .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Created TPP"));
+                        })
                 );
     }
 
