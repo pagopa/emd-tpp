@@ -15,6 +15,7 @@ public class TppObjectToDTOMapper {
                 .authenticationUrl(tpp.getAuthenticationUrl())
                 .authenticationType(tpp.getAuthenticationType())
                 .tppId(tpp.getTppId())
+                .idPsp(tpp.getIdPsp())
                 .businessName(tpp.getBusinessName())
                 .contact(tpp.getContact())
                 .entityId(tpp.getEntityId())

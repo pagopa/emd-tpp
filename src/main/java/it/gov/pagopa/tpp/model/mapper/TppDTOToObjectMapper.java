@@ -11,6 +11,7 @@ public class TppDTOToObjectMapper {
         return Tpp.builder()
                 .state(true)
                 .tppId(tppDTO.getTppId())
+                .idPsp(tppDTO.getIdPsp())
                 .messageUrl(tppDTO.getMessageUrl())
                 .authenticationUrl(tppDTO.getAuthenticationUrl())
                 .authenticationType(tppDTO.getAuthenticationType())

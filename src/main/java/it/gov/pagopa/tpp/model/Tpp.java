@@ -18,6 +18,7 @@ public class Tpp {
     private String id;
     private String tppId;
     private String entityId;
+    private String idPsp;
     private String businessName;
     private String messageUrl;
     private String authenticationUrl;
