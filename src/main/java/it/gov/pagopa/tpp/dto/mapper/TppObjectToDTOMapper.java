@@ -18,6 +18,8 @@ public class TppObjectToDTOMapper {
                 .businessName(tpp.getBusinessName())
                 .contact(tpp.getContact())
                 .entityId(tpp.getEntityId())
+                .creationDate(tpp.getCreationDate())
+                .lastUpdateDate(tpp.getLastUpdateDate())
                 .build();
     }
 }

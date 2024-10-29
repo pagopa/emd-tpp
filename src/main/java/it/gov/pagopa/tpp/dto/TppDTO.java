@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 @Data
 @SuperBuilder
 @NoArgsConstructor
@@ -18,4 +20,6 @@ public class TppDTO {
     private AuthenticationType authenticationType;
     private Contact contact;
     private Boolean state;
+    private LocalDateTime creationDate;
+    private LocalDateTime lastUpdateDate;
 }

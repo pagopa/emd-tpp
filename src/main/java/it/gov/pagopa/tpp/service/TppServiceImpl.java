@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,7 +49,6 @@ public class TppServiceImpl implements TppService {
         }
 
 
-    //TODO Definire i campi non aggiornabili
     @Override
     public Mono<TppDTO> upsert(TppDTO tppDTO) {
         log.info("[EMD-TPP][UPSERT] Received tppDTO:  {}", inputSanify(tppDTO.toString()));
@@ -57,6 +57,7 @@ public class TppServiceImpl implements TppService {
                 .flatMap(tppDB -> {
                     log.info("[EMD-TPP][UPSERT] TPP with tppId:[{}] already exists",(tppDTO.getTppId()));
                     tppReceived.setId(tppDB.getId());
+                    tppReceived.setLastUpdateDate(LocalDateTime.now());
                     return tppRepository.save(tppReceived)
                             .map(mapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Updated existing TPP"));
@@ -64,6 +65,8 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(
                         Mono.defer(() -> {
                             tppReceived.setTppId("%s_%d".formatted(UUID.randomUUID().toString(), System.currentTimeMillis()));
+                            tppReceived.setCreationDate(LocalDateTime.now());
+                            tppReceived.setLastUpdateDate(LocalDateTime.now());
                             return tppRepository.save(tppReceived)
                                     .map(mapperToDTO::map)
                                     .doOnSuccess(savedTpp -> log.info("[EMD-TPP][UPSERT] Created TPP"));

@@ -67,6 +67,7 @@ class TppControllerTest {
                 .consumeWith(response -> {
                     TppDTO resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(resultResponse,mockTppDTO);
                 });
     }
 
@@ -85,6 +86,7 @@ class TppControllerTest {
                 .consumeWith(response -> {
                     TppDTO resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(resultResponse,mockTppDTO);
                 });
     }
 
