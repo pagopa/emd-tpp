@@ -2,7 +2,6 @@ package it.gov.pagopa.tpp.dto.mapper;
 
 
 import it.gov.pagopa.tpp.dto.TppDTO;
-import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Tpp;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +13,7 @@ public class TppObjectToDTOMapper {
                 .state(tpp.getState())
                 .messageUrl(tpp.getMessageUrl())
                 .authenticationUrl(tpp.getAuthenticationUrl())
-                .authenticationType(AuthenticationType.OAUTH2)
+                .authenticationType(tpp.getAuthenticationType())
                 .tppId(tpp.getTppId())
                 .businessName(tpp.getBusinessName())
                 .contact(tpp.getContact())
