@@ -30,7 +30,7 @@ steps:
       organization: '$(SONARCLOUD_ORG)'
       scannerMode: Other
       extraProperties: |
-        sonar.projectKey=pagopa_emd-tpp
+        sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
         sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
         sonar.exclusions='**/enums/**, **/model/**, **/stub/**, **/dto/**, **/*Constant*, **/*Config.java, **/*Scheduler.java, **/*Application.java, **/src/test/**, **/Dummy*.java'
 
