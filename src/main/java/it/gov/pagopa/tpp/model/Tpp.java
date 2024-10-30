@@ -20,6 +20,7 @@ public class Tpp {
     private String entityId;
     private String idPsp;
     private String businessName;
+    private String legalAddress;
     private String messageUrl;
     private String authenticationUrl;
     private AuthenticationType authenticationType;

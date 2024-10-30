@@ -13,6 +13,7 @@ public class TppDTOToObjectMapper {
                 .tppId(tppDTO.getTppId())
                 .idPsp(tppDTO.getIdPsp())
                 .messageUrl(tppDTO.getMessageUrl())
+                .legalAddress(tppDTO.getLegalAddress())
                 .authenticationUrl(tppDTO.getAuthenticationUrl())
                 .authenticationType(tppDTO.getAuthenticationType())
                 .businessName(tppDTO.getBusinessName())
