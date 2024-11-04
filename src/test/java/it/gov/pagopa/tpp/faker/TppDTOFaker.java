@@ -11,11 +11,11 @@ public class TppDTOFaker {
     public static TppDTO mockInstance(Boolean bias) {
         return TppDTO.builder()
                 .tppId("tppId")
-                .messageUrl("messageUrl")
-                .authenticationUrl("AuthenticationUrl")
+                .messageUrl("https://wwwmessageUrl.it")
+                .authenticationUrl("https://www.AuthenticationUrl.it")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(bias)
-                .entityId("entityId")
+                .entityId("entityId01234567")
                 .businessName("businessName")
                 .contact(new Contact("name","number", "email"))
                 .build();
