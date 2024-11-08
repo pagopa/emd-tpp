@@ -32,7 +32,7 @@ public class ExceptionMap {
         if (exceptions.containsKey(exceptionKey)) {
             return exceptions.get(exceptionKey).apply(message);
         } else {
-            log.error("Exception Name Not Found: {}", exceptionKey);
+            log.error("[EMP-TPP][EXCEPTION-MAP] Exception Name Not Found: {}", exceptionKey);
             return  new RuntimeException();
         }
     }

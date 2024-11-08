@@ -13,10 +13,10 @@ import java.util.List;
 public interface TppController {
 
     /**
-     * Get list of tpps
+     * Get list of tpp
      *
      * @param tppIdList whose data is to be retrieved
-     * @return outcome of retrieving the tpps
+     * @return outcome of retrieving the tpp
      */
     @PostMapping("/list")
     Mono<ResponseEntity<List<TppDTO>>> getEnabledList(@Valid @RequestBody TppIdList tppIdList);
@@ -41,10 +41,10 @@ public interface TppController {
     Mono<ResponseEntity<TppDTO>> upsert(@Valid @RequestBody TppDTO tppDTO);
 
     /**
-     * Save a tpp
+     * Get a tpp
      *
-     * @param tppId to save
-     * @return outcome of saving the tpp
+     * @param tppId to get
+     * @return  outcome of getting tpp
      */
     @GetMapping("/{tppId}")
     Mono<ResponseEntity<TppDTO>> get(@Valid @PathVariable String tppId);

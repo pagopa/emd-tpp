@@ -5,6 +5,7 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.faker.TppDTOFaker;
+import it.gov.pagopa.tpp.faker.TppFaker;
 import org.junit.jupiter.api.function.Executable;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
@@ -21,11 +22,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-@ExtendWith({SpringExtension.class})
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
         TppServiceImpl.class,
         TppObjectToDTOMapper.class,
@@ -33,119 +32,104 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
         ExceptionMap.class
 })
 class TppServiceTest {
+
     @Autowired
-    TppServiceImpl tppService;
+    private TppServiceImpl tppService;
+
     @MockBean
-    TppRepository tppRepository;
+    private TppRepository tppRepository;
+
     @Autowired
-    TppDTOToObjectMapper mapperToObject;
+    private TppDTOToObjectMapper mapperToObject;
+
+    private static final TppDTO MOCK_TPP_DTO = TppDTOFaker.mockInstance(true);
+    private static final Tpp MOCK_TPP = TppFaker.mockInstance(true);
+    private static final List<TppDTO> MOCK_TPP_DTO_LIST = List.of(MOCK_TPP_DTO);
+    private static final List<Tpp> MOCK_TPP_LIST = List.of(MOCK_TPP);
+    private static final List<String> MOCK_TPP_ID_LIST = List.of(MOCK_TPP_DTO.getTppId());
 
     @Test
     void getEnabled_Ok() {
+        Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_LIST))
+                .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
 
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-        List<TppDTO> tppDTOs =List.of(tppDTO);
-        List<Tpp> tpps =List.of(mapperToObject.map(tppDTO));
-        List<String> arrayList = List.of("1");
+        List<TppDTO> response = tppService.getEnabledList(MOCK_TPP_ID_LIST).block();
 
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(arrayList))
-                .thenReturn(Flux.fromIterable(tpps));
-
-        List<TppDTO> response = tppService.getEnabledList(arrayList).block();
-
-        assertEquals(tppDTOs, response);
-
+        assertNotNull(response);
+        assertEquals(MOCK_TPP_DTO_LIST, response);
     }
 
     @Test
     void createTpp_Ok() {
-
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-        Tpp tpp = mapperToObject.map(tppDTO);
-
         Mockito.when(tppRepository.findByTppId(Mockito.any()))
                 .thenReturn(Mono.empty());
         Mockito.when(tppRepository.save(Mockito.any()))
-                .thenReturn(Mono.just(tpp));
+                .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO response = tppService.upsert(tppDTO).block();
+        TppDTO response = tppService.upsert(MOCK_TPP_DTO).block();
 
-        assertEquals(tppDTO, response);
+        assertNotNull(response);
+        assertEquals(MOCK_TPP_DTO, response);
     }
 
     @Test
     void updateTpp_Ok() {
-
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-        Tpp tpp = mapperToObject.map(tppDTO);
-
         Mockito.when(tppRepository.findByTppId(Mockito.any()))
-                .thenReturn(Mono.just(tpp));
+                .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(tppRepository.save(Mockito.any()))
-                .thenReturn(Mono.just(tpp));
+                .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO response = tppService.upsert(tppDTO).block();
+        TppDTO response = tppService.upsert(MOCK_TPP_DTO).block();
 
-        assertEquals(tppDTO, response);
+        assertNotNull(response);
+        assertEquals(MOCK_TPP_DTO, response);
     }
-
-
 
     @Test
     void updateState_Ok() {
-
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-        Tpp tpp = mapperToObject.map(tppDTO);
-
-        Mockito.when(tppRepository.findByTppId(tppDTO.getTppId()))
-                .thenReturn(Mono.just(tpp));
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
+                .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(tppRepository.save(Mockito.any()))
-                .thenReturn(Mono.just(tpp));
+                .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO result = tppService.updateState(tppDTO.getTppId(),tppDTO.getState()).block();
+        TppDTO result = tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()).block();
 
-        assertEquals(result, tppDTO);
+        assertNotNull(result);
+        assertEquals(MOCK_TPP_DTO, result);
     }
 
     @Test
     void updateState_Ko_TppNotOnboarded() {
-
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-
-        Mockito.when(tppRepository.findByTppId(tppDTO.getTppId()))
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.empty());
 
-        Executable executable = () -> tppService.updateState(tppDTO.getTppId(),tppDTO.getState()).block();
+        Executable executable = () -> tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()).block();
         ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
 
+        assertNotNull(exception);
         assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
     }
 
     @Test
     void get_Ok() {
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
+                .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-        Tpp tpp = mapperToObject.map(tppDTO);
+        TppDTO result = tppService.get(MOCK_TPP_DTO.getTppId()).block();
 
-        Mockito.when(tppRepository.findByTppId(tppDTO.getEntityId()))
-                .thenReturn(Mono.just(tpp));
-
-        TppDTO result = tppService.get(tppDTO.getEntityId()).block();
-
-        assertEquals(result, tppDTO);
+        assertNotNull(result);
+        assertEquals(MOCK_TPP_DTO, result);
     }
 
     @Test
     void get_Ko_TppNotOnboarded() {
-
-        TppDTO tppDTO = TppDTOFaker.mockInstance(true);
-
-        Mockito.when(tppRepository.findByTppId(tppDTO.getEntityId()))
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.empty());
 
-        Executable executable = () -> tppService.get(tppDTO.getEntityId()).block();
+        Executable executable = () -> tppService.get(MOCK_TPP_DTO.getTppId()).block();
         ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
 
+        assertNotNull(exception);
         assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
     }
 }
