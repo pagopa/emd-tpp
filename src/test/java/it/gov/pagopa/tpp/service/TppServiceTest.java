@@ -4,10 +4,7 @@ import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
-import it.gov.pagopa.tpp.faker.TppDTOFaker;
-import it.gov.pagopa.tpp.faker.TppFaker;
 import org.junit.jupiter.api.function.Executable;
-import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import org.junit.jupiter.api.Test;
@@ -22,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
@@ -42,18 +40,14 @@ class TppServiceTest {
     @Autowired
     private TppDTOToObjectMapper mapperToObject;
 
-    private static final TppDTO MOCK_TPP_DTO = TppDTOFaker.mockInstance(true);
-    private static final Tpp MOCK_TPP = TppFaker.mockInstance(true);
-    private static final List<TppDTO> MOCK_TPP_DTO_LIST = List.of(MOCK_TPP_DTO);
-    private static final List<Tpp> MOCK_TPP_LIST = List.of(MOCK_TPP);
-    private static final List<String> MOCK_TPP_ID_LIST = List.of(MOCK_TPP_DTO.getTppId());
+
 
     @Test
     void getEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_LIST))
+        Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
                 .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
 
-        List<TppDTO> response = tppService.getEnabledList(MOCK_TPP_ID_LIST).block();
+        List<TppDTO> response = tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST).block();
 
         assertNotNull(response);
         assertEquals(MOCK_TPP_DTO_LIST, response);

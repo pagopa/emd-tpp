@@ -2,8 +2,6 @@ package it.gov.pagopa.tpp.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.tpp.dto.TppDTO;
-import it.gov.pagopa.tpp.dto.TppIdList;
-import it.gov.pagopa.tpp.faker.TppDTOFaker;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,6 +15,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static it.gov.pagopa.tpp.utils.TestUtils.*;
+
 @WebFluxTest(TppControllerImpl.class)
 class TppControllerTest {
 
@@ -29,10 +29,6 @@ class TppControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final TppDTO MOCK_TPP_DTO = TppDTOFaker.mockInstance(true);
-
-    private static final List<TppDTO> MOCK_TPP_DTO_LIST = List.of(MOCK_TPP_DTO);
-    private static final TppIdList MOCK_TPP_ID_LIST = new TppIdList(List.of(MOCK_TPP_DTO.getTppId()));
 
     @Test
     void upsert_Ok() {

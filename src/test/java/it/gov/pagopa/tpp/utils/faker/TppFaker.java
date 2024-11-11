@@ -1,4 +1,4 @@
-package it.gov.pagopa.tpp.faker;
+package it.gov.pagopa.tpp.utils.faker;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
