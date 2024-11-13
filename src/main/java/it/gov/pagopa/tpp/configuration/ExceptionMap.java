@@ -26,6 +26,14 @@ public class ExceptionMap {
                         message
                 )
         );
+
+        exceptions.put(TppConstants.ExceptionName.TPP_ALREADY_ONBOARDED, message ->
+                new ClientExceptionWithBody(
+                        HttpStatus.FORBIDDEN,
+                        TppConstants.ExceptionCode.TPP_ALREADY_ONBOARDED,
+                        message
+                )
+        );
     }
 
     public RuntimeException throwException(String exceptionKey, String message) {

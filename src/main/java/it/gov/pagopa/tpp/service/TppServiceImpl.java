@@ -1,16 +1,15 @@
 package it.gov.pagopa.tpp.service;
 
+import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
-import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,23 +52,28 @@ public class TppServiceImpl implements TppService {
     public Mono<TppDTO> upsert(TppDTO tppDTO) {
         log.info("[TPP-SERVICE][UPSERT] Received tppDTO: {}", inputSanify(tppDTO.toString()));
 
-        if(tppDTO.getTppId() == null){
-            Tpp tppToSave = mapperToObject.map(tppDTO);
-            tppToSave.setTppId(generateTppId());
-            log.info("[TPP-SERVICE][UPSERT] Creating new entry ...");
-            return saveTpp(tppToSave, "[TPP-SERVICE][UPSERT] Created new TPP with tppId: ");
-        }
-        else {
+        if (tppDTO.getTppId() == null) {
+            return tppRepository.findByEntityId(tppDTO.getEntityId())
+                    .flatMap(existingTpp -> Mono.error(
+                            exceptionMap.throwException(ExceptionName.TPP_ALREADY_ONBOARDED, "TPP already onboarded with entity ID.")
+                    ))
+                    .flatMap(entityNotFound -> {
+                        Tpp tppToSave = mapperToObject.map(tppDTO);
+                        tppToSave.setId(generateTppId());
+                        return saveTpp(tppToSave, "[TPP-SERVICE][UPSERT] Created new TPP with tppId");
+                    });
+        } else {
             return tppRepository.findByTppId(tppDTO.getTppId())
                     .flatMap(existingTpp -> {
-                        log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] already exists. Updating...", tppDTO.getTppId());
+                        log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] found. Updating...", tppDTO.getTppId());
                         Tpp tppToUpdate = mapperToObject.map(tppDTO);
                         tppToUpdate.setId(existingTpp.getId());
                         tppToUpdate.setLastUpdateDate(LocalDateTime.now());
-                        return saveTpp(tppToUpdate, "[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: ");
+                        return saveTpp(tppToUpdate, "[TPP-SERVICE][UPSERT] Updated existing TPP with tppId");
                     })
-                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                            "Tpp not found during update process")));
+                    .switchIfEmpty(
+                            Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, "TPP not found for update."))
+                    );
         }
     }
 
