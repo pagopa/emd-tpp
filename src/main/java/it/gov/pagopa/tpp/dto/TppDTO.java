@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @NoArgsConstructor
 public class TppDTO {
-    @NotBlank(message = "TPP ID must not be blank")
     private String tppId;
 
     @NotBlank(message = "Entity ID must not be blank")
