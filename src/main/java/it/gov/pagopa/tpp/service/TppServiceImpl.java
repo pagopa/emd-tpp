@@ -66,6 +66,9 @@ public class TppServiceImpl implements TppService {
                 .flatMap(existingTpp -> {
                     log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] already exists. Updating...", tppDTO.getTppId());
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
+                    existingTpp.setMessageUrl(tppDTO.getMessageUrl());
+                    existingTpp.setContact(tppDTO.getContact());
+                    existingTpp.setBusinessName(tppDTO.getBusinessName());
                     return tppRepository.save(existingTpp)
                             .map(mapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}", existingTpp.getTppId()))
