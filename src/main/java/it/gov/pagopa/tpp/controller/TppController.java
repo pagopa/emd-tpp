@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppIdList;
+import it.gov.pagopa.tpp.dto.TppUpdateState;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +26,11 @@ public interface TppController {
     /**
      * Update a tpp
      *
-     * @param tppDTO to update
+     * @param tppUpdateState to update
      * @return outcome of the update
      */
     @PutMapping()
-    Mono<ResponseEntity<TppDTO>> updateState(@Valid @RequestBody TppDTO tppDTO);
+    Mono<ResponseEntity<TppDTO>> updateState(@Valid @RequestBody TppUpdateState tppUpdateState);
 
     /**
      * Save a tpp
@@ -37,6 +38,12 @@ public interface TppController {
      * @param tppDTO to save
      * @return outcome of saving the tpp
      */
+    @PostMapping("/save")
+    Mono<ResponseEntity<TppDTO>> save(@Valid @RequestBody TppDTO tppDTO);
+
+    @PostMapping("/update")
+    Mono<ResponseEntity<TppDTO>> update(@Valid @RequestBody TppDTO tppDTO);
+
     @PostMapping()
     Mono<ResponseEntity<TppDTO>> upsert(@Valid @RequestBody TppDTO tppDTO);
 

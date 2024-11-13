@@ -11,6 +11,10 @@ public interface TppService {
 
     Mono<TppDTO> upsert(TppDTO tppDTO);
 
+    Mono<TppDTO> createNewTpp(TppDTO tppDTO);
+
+    Mono<TppDTO> updateExistingTpp(TppDTO tppDTO);
+
     Mono<TppDTO> updateState(String tppId, Boolean state);
 
     Mono<TppDTO> get(String tppId);
