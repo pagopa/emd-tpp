@@ -59,7 +59,6 @@ public class TppServiceImpl implements TppService {
                         existingTpp.setContact(tppDTO.getContact());
                         existingTpp.setBusinessName(tppDTO.getBusinessName());
                         existingTpp.setLegalAddress(tppDTO.getLegalAddress());
-
                         return tppRepository.save(existingTpp)
                                 .map(mapperToDTO::map)
                                 .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}", existingTpp.getTppId()))
