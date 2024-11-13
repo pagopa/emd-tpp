@@ -65,13 +65,11 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppDTO.getTppId())
                 .flatMap(existingTpp -> {
                     log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] already exists. Updating...", tppDTO.getTppId());
-                    Tpp tppToUpdate = mapperToObject.map(tppDTO);
-                    tppToUpdate.setId(existingTpp.getId());
-                    tppToUpdate.setLastUpdateDate(LocalDateTime.now());
-                    return tppRepository.save(tppToUpdate)
+                    existingTpp.setLastUpdateDate(LocalDateTime.now());
+                    return tppRepository.save(existingTpp)
                             .map(mapperToDTO::map)
-                            .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}", tppToUpdate.getTppId()))
-                            .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToUpdate.getTppId(), error.getMessage()));
+                            .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}", existingTpp.getTppId()))
+                            .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", existingTpp.getTppId(), error.getMessage()));
                 })
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         ExceptionMessage.TPP_NOT_ONBOARDED)));
