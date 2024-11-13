@@ -9,7 +9,7 @@ public interface TppService {
 
     Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
 
-    Mono<TppDTO> createNewTpp(TppDTO tppDTO);
+    Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId);
 
     Mono<TppDTO> updateExistingTpp(TppDTO tppDTO);
 

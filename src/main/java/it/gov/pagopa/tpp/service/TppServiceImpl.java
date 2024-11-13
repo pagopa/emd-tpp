@@ -1,10 +1,10 @@
 package it.gov.pagopa.tpp.service;
 
+import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
-import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
@@ -12,10 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static it.gov.pagopa.common.utils.Utils.inputSanify;
 
@@ -68,14 +66,13 @@ public class TppServiceImpl implements TppService {
                     .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                             ExceptionMessage.TPP_NOT_ONBOARDED)));
         else
-           return Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                   ExceptionMessage.TPP_NOT_ONBOARDED));
+           return Mono.error(exceptionMap.throwException(ExceptionName.GENERIC_ERROR,
+                    ExceptionMessage.GENERIC_ERROR));
     }
 
     @Override
-    public Mono<TppDTO> createNewTpp(TppDTO tppDTO) {
-        String tppId = generateTppId();
-        return tppRepository.findByEntityId(tppDTO.getEntityId())
+    public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
+         return tppRepository.findByEntityId(tppDTO.getEntityId())
                 .switchIfEmpty(Mono.defer(() -> createAndSaveNewTpp(tppDTO, tppId)))
                 .flatMap(result -> {
                     if (!result.getTppId().equals(tppId)) {
@@ -123,12 +120,6 @@ public class TppServiceImpl implements TppService {
                 .map(mapperToDTO::map)
                 .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
-    }
-
-    private String generateTppId() {
-        String newTppId = String.format("%s_%d", UUID.randomUUID(), System.currentTimeMillis());
-        log.debug("[TPP-SERVICE][GENERATE-TPP-ID] Generated new TPP ID: {}", newTppId);
-        return newTppId;
     }
 
 }

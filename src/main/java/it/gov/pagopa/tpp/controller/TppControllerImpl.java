@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 public class TppControllerImpl implements TppController {
@@ -36,7 +37,7 @@ public class TppControllerImpl implements TppController {
 
     @Override
     public Mono<ResponseEntity<TppDTO>> save(TppDTO tppDTO) {
-        return tppService.createNewTpp(tppDTO)
+        return tppService.createNewTpp(tppDTO, String.format("%s_%d", UUID.randomUUID(), System.currentTimeMillis()))
                 .map(ResponseEntity::ok);
     }
 

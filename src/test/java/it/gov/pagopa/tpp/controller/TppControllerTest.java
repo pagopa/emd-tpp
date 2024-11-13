@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
+import static org.mockito.ArgumentMatchers.*;
 
 @WebFluxTest(TppControllerImpl.class)
 class TppControllerTest {
@@ -31,12 +32,31 @@ class TppControllerTest {
 
 
     @Test
-    void upsert_Ok() {
+    void update_Ok() {
 
-        Mockito.when(tppService.upsert(MOCK_TPP_DTO)).thenReturn(Mono.just(MOCK_TPP_DTO));
+        Mockito.when(tppService.updateExistingTpp(MOCK_TPP_DTO)).thenReturn(Mono.just(MOCK_TPP_DTO));
+
+        webClient.put()
+                .uri("/emd/tpp/update")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(MOCK_TPP_DTO)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTO.class)
+                .consumeWith(response -> {
+                    TppDTO resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO, resultResponse);
+                });
+    }
+
+    @Test
+    void save_Ok() {
+
+        Mockito.when(tppService.createNewTpp(eq(MOCK_TPP_DTO), anyString())).thenReturn(Mono.just(MOCK_TPP_DTO));
 
         webClient.post()
-                .uri("/emd/tpp")
+                .uri("/emd/tpp/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(MOCK_TPP_DTO)
                 .exchange()

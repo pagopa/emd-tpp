@@ -1,14 +1,14 @@
 package it.gov.pagopa.tpp.service;
 
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
+import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
-import it.gov.pagopa.tpp.configuration.ExceptionMap;
-import org.junit.jupiter.api.function.Executable;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -37,6 +37,7 @@ class TppServiceTest {
     @MockBean
     private TppRepository tppRepository;
 
+
     @Autowired
     private TppDTOToObjectMapper mapperToObject;
 
@@ -55,14 +56,16 @@ class TppServiceTest {
 
     @Test
     void createTpp_Ok() {
-        Mockito.when(tppRepository.findByTppId(Mockito.any()))
-                .thenReturn(Mono.empty());
+
+        Mockito.when(tppRepository.findByEntityId(Mockito.any()))
+                .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO response = tppService.upsert(MOCK_TPP_DTO).block();
+        TppDTO response = tppService.createNewTpp(MOCK_TPP_DTO, MOCK_TPP_DTO.getTppId()).block();
 
         assertNotNull(response);
+        response.setLastUpdateDate(null);
         assertEquals(MOCK_TPP_DTO, response);
     }
 
@@ -73,9 +76,10 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO response = tppService.upsert(MOCK_TPP_DTO).block();
+        TppDTO response = tppService.updateExistingTpp(MOCK_TPP_DTO).block();
 
         assertNotNull(response);
+        response.setLastUpdateDate(null);
         assertEquals(MOCK_TPP_DTO, response);
     }
 
