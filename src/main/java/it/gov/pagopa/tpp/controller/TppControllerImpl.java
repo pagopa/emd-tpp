@@ -47,12 +47,6 @@ public class TppControllerImpl implements TppController {
     }
 
     @Override
-    public Mono<ResponseEntity<TppDTO>> upsert(TppDTO tppDTO) {
-        return tppService.upsert(tppDTO)
-                .map(ResponseEntity::ok);
-    }
-
-    @Override
     public Mono<ResponseEntity<TppDTO>> get(String tppId) {
         return tppService.get(tppId)
                 .map(ResponseEntity::ok);

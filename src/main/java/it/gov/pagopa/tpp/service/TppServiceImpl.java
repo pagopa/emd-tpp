@@ -51,16 +51,6 @@ public class TppServiceImpl implements TppService {
     }
 
     @Override
-    public Mono<TppDTO> upsert(TppDTO tppDTO) {
-        log.info("[TPP-SERVICE][UPSERT] Received tppDTO: {}", inputSanify(tppDTO.toString()));
-
-        if (tppDTO.getTppId() != null) {
-            return updateExistingTpp(tppDTO);
-        }
-
-        return createNewTpp(tppDTO);
-    }
-    @Override
     public Mono<TppDTO> updateExistingTpp(TppDTO tppDTO) {
         if (tppDTO.getTppId() != null)
             return tppRepository.findByTppId(tppDTO.getTppId())

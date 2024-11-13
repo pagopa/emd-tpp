@@ -41,11 +41,9 @@ public interface TppController {
     @PostMapping("/save")
     Mono<ResponseEntity<TppDTO>> save(@Valid @RequestBody TppDTO tppDTO);
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     Mono<ResponseEntity<TppDTO>> update(@Valid @RequestBody TppDTO tppDTO);
 
-    @PostMapping()
-    Mono<ResponseEntity<TppDTO>> upsert(@Valid @RequestBody TppDTO tppDTO);
 
     /**
      * Get a tpp

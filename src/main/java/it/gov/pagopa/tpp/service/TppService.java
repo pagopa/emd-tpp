@@ -9,8 +9,6 @@ public interface TppService {
 
     Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
 
-    Mono<TppDTO> upsert(TppDTO tppDTO);
-
     Mono<TppDTO> createNewTpp(TppDTO tppDTO);
 
     Mono<TppDTO> updateExistingTpp(TppDTO tppDTO);
