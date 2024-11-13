@@ -73,7 +73,7 @@ public class TppServiceImpl implements TppService {
                         Mono.defer(() -> {
                             log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] does not exist. Creating new entry...", tppDTO.getTppId());
                             Tpp tppToSave = mapperToObject.map(tppDTO);
-                            tppToSave.setId(generateTppId());
+                            tppToSave.setTppId(generateTppId());
                             return tppRepository.save(tppToSave)
                                     .doOnSuccess(savedTpp -> log.info("{[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}", tppToSave.getTppId()))
                                     .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
