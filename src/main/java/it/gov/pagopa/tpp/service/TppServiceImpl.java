@@ -95,6 +95,8 @@ public class TppServiceImpl implements TppService {
         log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
         Tpp tppToSave = mapperToObject.map(tppDTO);
         tppToSave.setTppId(tppId);
+        tppToSave.setLastUpdateDate(LocalDateTime.now());
+        tppToSave.setCreationDate(LocalDateTime.now());
         return tppRepository.save(tppToSave)
                 .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
