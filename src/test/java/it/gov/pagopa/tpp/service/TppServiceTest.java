@@ -55,10 +55,22 @@ class TppServiceTest {
     }
 
     @Test
+    void createTpp_AlreadyExist(){
+        Mockito.when(tppRepository.findByEntityId(Mockito.any()))
+                .thenReturn(Mono.just(MOCK_TPP));
+
+        Executable executable = () -> tppService.createNewTpp(MOCK_TPP_DTO,MOCK_WRONG_ID).block();
+        ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
+
+        assertNotNull(exception);
+        assertEquals("TPP_ALREADY_ONBOARDED", exception.getCode());
+    }
+
+    @Test
     void createTpp_Ok() {
 
         Mockito.when(tppRepository.findByEntityId(Mockito.any()))
-                .thenReturn(Mono.just(MOCK_TPP));
+                .thenReturn(Mono.empty());
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
@@ -81,6 +93,28 @@ class TppServiceTest {
         assertNotNull(response);
         response.setLastUpdateDate(null);
         assertEquals(MOCK_TPP_DTO, response);
+    }
+
+    @Test
+    void updateTpp_TppNotFound() {
+        Mockito.when(tppRepository.findByTppId(Mockito.any()))
+                .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(tppRepository.save(Mockito.any()))
+                .thenReturn(Mono.empty());
+
+        Executable executable = () -> tppService.updateExistingTpp(MOCK_TPP_DTO).block();
+        ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
+
+        assertNotNull(exception);
+        assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
+    }
+
+    @Test
+    void updateTpp_NoTppId(){
+        Executable executable = () -> tppService.updateExistingTpp(MOCK_TPP_DTO_NO_ID).block();
+        RuntimeException exception = assertThrows(RuntimeException.class, executable);
+
+        assertNotNull(exception);
     }
 
     @Test
