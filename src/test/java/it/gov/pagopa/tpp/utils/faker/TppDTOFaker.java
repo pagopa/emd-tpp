@@ -24,4 +24,21 @@ public class TppDTOFaker {
                 .creationDate(null)
                 .build();
     }
+
+    public static TppDTO mockInstanceWithNoTppId(Boolean bias) {
+        return TppDTO.builder()
+                .tppId(null)
+                .messageUrl("https://wwwmessageUrl.it")
+                .authenticationUrl("https://www.AuthenticationUrl.it")
+                .idPsp("idPsp")
+                .legalAddress("legalAddress")
+                .authenticationType(AuthenticationType.OAUTH2)
+                .state(bias)
+                .entityId("entityId01234567")
+                .businessName("businessName")
+                .contact(new Contact("name","number", "email"))
+                .lastUpdateDate(null)
+                .creationDate(null)
+                .build();
+    }
 }
