@@ -1,15 +1,16 @@
 package it.gov.pagopa.tpp.dto;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
+import lombok.experimental.SuperBuilder;
 
 @Data
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
-public class TppIdList {
+public class TppUpdateState {
     @NotNull
-    List<String> ids;
+    private String tppId;
+    @NotNull
+    private Boolean state;
 }

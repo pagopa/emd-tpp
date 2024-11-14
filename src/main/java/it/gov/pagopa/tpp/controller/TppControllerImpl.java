@@ -2,12 +2,14 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppIdList;
+import it.gov.pagopa.tpp.dto.TppUpdateState;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 public class TppControllerImpl implements TppController {
@@ -27,15 +29,21 @@ public class TppControllerImpl implements TppController {
 
 
     @Override
-    public Mono<ResponseEntity<TppDTO>> updateState(TppDTO tppDTO) {
-        return tppService.updateState(tppDTO.getTppId(),tppDTO.getState())
+    public Mono<ResponseEntity<TppDTO>> updateState(TppUpdateState tppUpdateState) {
+        return tppService.updateState(tppUpdateState.getTppId(),tppUpdateState.getState())
                 .map(ResponseEntity::ok);
 
     }
 
     @Override
-    public Mono<ResponseEntity<TppDTO>> upsert(TppDTO tppDTO) {
-        return tppService.upsert(tppDTO)
+    public Mono<ResponseEntity<TppDTO>> save(TppDTO tppDTO) {
+        return tppService.createNewTpp(tppDTO, String.format("%s_%d", UUID.randomUUID(), System.currentTimeMillis()))
+                .map(ResponseEntity::ok);
+    }
+
+    @Override
+    public Mono<ResponseEntity<TppDTO>> update(TppDTO tppDTO) {
+        return tppService.updateExistingTpp(tppDTO)
                 .map(ResponseEntity::ok);
     }
 

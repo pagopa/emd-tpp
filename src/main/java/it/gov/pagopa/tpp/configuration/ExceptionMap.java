@@ -26,13 +26,21 @@ public class ExceptionMap {
                         message
                 )
         );
+
+        exceptions.put(TppConstants.ExceptionName.TPP_ALREADY_ONBOARDED, message ->
+                new ClientExceptionWithBody(
+                        HttpStatus.FORBIDDEN,
+                        TppConstants.ExceptionCode.TPP_ALREADY_ONBOARDED,
+                        message
+                )
+        );
     }
 
     public RuntimeException throwException(String exceptionKey, String message) {
         if (exceptions.containsKey(exceptionKey)) {
             return exceptions.get(exceptionKey).apply(message);
         } else {
-            log.error("Exception Name Not Found: {}", exceptionKey);
+            log.error("[EMP-TPP][EXCEPTION-MAP] Exception Name Not Found: {}", exceptionKey);
             return  new RuntimeException();
         }
     }

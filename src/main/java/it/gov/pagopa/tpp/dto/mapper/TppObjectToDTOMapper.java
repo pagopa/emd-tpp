@@ -15,9 +15,13 @@ public class TppObjectToDTOMapper {
                 .authenticationUrl(tpp.getAuthenticationUrl())
                 .authenticationType(tpp.getAuthenticationType())
                 .tppId(tpp.getTppId())
+                .idPsp(tpp.getIdPsp())
+                .legalAddress(tpp.getLegalAddress())
                 .businessName(tpp.getBusinessName())
                 .contact(tpp.getContact())
                 .entityId(tpp.getEntityId())
+                .creationDate(tpp.getCreationDate())
+                .lastUpdateDate(tpp.getLastUpdateDate())
                 .build();
     }
 }

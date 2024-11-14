@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+
 @Document(collection = "tpp")
 @Data
 @SuperBuilder
@@ -16,10 +18,14 @@ public class Tpp {
     private String id;
     private String tppId;
     private String entityId;
+    private String idPsp;
     private String businessName;
+    private String legalAddress;
     private String messageUrl;
     private String authenticationUrl;
     private AuthenticationType authenticationType;
-    private Contact contact;
     private Boolean state;
+    private Contact contact;
+    private LocalDateTime creationDate;
+    private LocalDateTime lastUpdateDate;
 }

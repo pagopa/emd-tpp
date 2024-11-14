@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppIdList;
+import it.gov.pagopa.tpp.dto.TppUpdateState;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +14,10 @@ import java.util.List;
 public interface TppController {
 
     /**
-     * Get list of tpps
+     * Get list of tpp
      *
      * @param tppIdList whose data is to be retrieved
-     * @return outcome of retrieving the tpps
+     * @return outcome of retrieving the tpp
      */
     @PostMapping("/list")
     Mono<ResponseEntity<List<TppDTO>>> getEnabledList(@Valid @RequestBody TppIdList tppIdList);
@@ -25,11 +26,11 @@ public interface TppController {
     /**
      * Update a tpp
      *
-     * @param tppDTO to update
+     * @param tppUpdateState to update
      * @return outcome of the update
      */
     @PutMapping()
-    Mono<ResponseEntity<TppDTO>> updateState(@Valid @RequestBody TppDTO tppDTO);
+    Mono<ResponseEntity<TppDTO>> updateState(@Valid @RequestBody TppUpdateState tppUpdateState);
 
     /**
      * Save a tpp
@@ -37,14 +38,18 @@ public interface TppController {
      * @param tppDTO to save
      * @return outcome of saving the tpp
      */
-    @PostMapping()
-    Mono<ResponseEntity<TppDTO>> upsert(@Valid @RequestBody TppDTO tppDTO);
+    @PostMapping("/save")
+    Mono<ResponseEntity<TppDTO>> save(@Valid @RequestBody TppDTO tppDTO);
+
+    @PutMapping("/update")
+    Mono<ResponseEntity<TppDTO>> update(@Valid @RequestBody TppDTO tppDTO);
+
 
     /**
-     * Save a tpp
+     * Get a tpp
      *
-     * @param tppId to save
-     * @return outcome of saving the tpp
+     * @param tppId to get
+     * @return  outcome of getting tpp
      */
     @GetMapping("/{tppId}")
     Mono<ResponseEntity<TppDTO>> get(@Valid @PathVariable String tppId);
