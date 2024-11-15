@@ -73,6 +73,10 @@ public class TppServiceImpl implements TppService {
 
     @Override
     public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
+        if (tppDTO.getTokenSection() == null)
+            return Mono.error(exceptionMap.throwException(ExceptionName.GENERIC_ERROR,
+                    ExceptionMessage.GENERIC_ERROR));
+
          return tppRepository.findByEntityId(tppDTO.getEntityId())
                 .switchIfEmpty(Mono.defer(() -> createAndSaveNewTpp(tppDTO, tppId)))
                 .flatMap(result -> {
