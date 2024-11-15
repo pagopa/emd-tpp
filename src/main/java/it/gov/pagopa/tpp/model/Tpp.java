@@ -26,6 +26,7 @@ public class Tpp {
     private AuthenticationType authenticationType;
     private Boolean state;
     private Contact contact;
+    private TokenSection tokenSection;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
 }

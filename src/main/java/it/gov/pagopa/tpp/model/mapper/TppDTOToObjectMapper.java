@@ -19,6 +19,7 @@ public class TppDTOToObjectMapper {
                 .businessName(tppDTO.getBusinessName())
                 .contact(tppDTO.getContact())
                 .entityId(tppDTO.getEntityId())
+                .tokenSection(tppDTO.getTokenSection())
                 .build();
     }
 }

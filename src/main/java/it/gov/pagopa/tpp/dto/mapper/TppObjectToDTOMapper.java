@@ -22,6 +22,7 @@ public class TppObjectToDTOMapper {
                 .entityId(tpp.getEntityId())
                 .creationDate(tpp.getCreationDate())
                 .lastUpdateDate(tpp.getLastUpdateDate())
+                .tokenSection(tpp.getTokenSection())
                 .build();
     }
 }
