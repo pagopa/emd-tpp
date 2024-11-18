@@ -2,13 +2,11 @@ package it.gov.pagopa.tpp.service;
 
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
-import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -16,11 +14,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
+import reactor.test.StepVerifier;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
@@ -37,48 +33,51 @@ class TppServiceTest {
     @MockBean
     private TppRepository tppRepository;
 
-
     @Autowired
     private TppDTOToObjectMapper mapperToObject;
-
-
 
     @Test
     void getEnabled_Ok() {
         Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
                 .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
 
-        List<TppDTO> response = tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST).block();
-
-        assertNotNull(response);
-        assertEquals(MOCK_TPP_DTO_LIST, response);
+        StepVerifier.create(tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST))
+                .expectNextMatches(response -> response.equals(MOCK_TPP_DTO_LIST))
+                .verifyComplete();
     }
 
     @Test
-    void createTpp_AlreadyExist(){
+    void createTpp_AlreadyExist() {
         Mockito.when(tppRepository.findByEntityId(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        Executable executable = () -> tppService.createNewTpp(MOCK_TPP_DTO,MOCK_WRONG_ID).block();
-        ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
-
-        assertNotNull(exception);
-        assertEquals("TPP_ALREADY_ONBOARDED", exception.getCode());
+        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_WRONG_ID))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_ALREADY_ONBOARDED"))
+                .verify();
     }
 
     @Test
     void createTpp_Ok() {
-
         Mockito.when(tppRepository.findByEntityId(Mockito.any()))
                 .thenReturn(Mono.empty());
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO response = tppService.createNewTpp(MOCK_TPP_DTO, MOCK_TPP_DTO.getTppId()).block();
+        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_TPP_DTO.getTppId()))
+                .expectNextMatches(response -> {
+                    response.setLastUpdateDate(null);
+                    return response.equals(MOCK_TPP_DTO);
+                })
+                .verifyComplete();
+    }
 
-        assertNotNull(response);
-        response.setLastUpdateDate(null);
-        assertEquals(MOCK_TPP_DTO, response);
+    @Test
+    void createTpp_MissingTokenSection() {
+        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO_NO_TOKEN_SECTION, MOCK_TPP_DTO.getTppId()))
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+                .verify();
     }
 
     @Test
@@ -88,11 +87,12 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO response = tppService.updateExistingTpp(MOCK_TPP_DTO).block();
-
-        assertNotNull(response);
-        response.setLastUpdateDate(null);
-        assertEquals(MOCK_TPP_DTO, response);
+        StepVerifier.create(tppService.updateExistingTpp(MOCK_TPP_DTO))
+                .expectNextMatches(response -> {
+                    response.setLastUpdateDate(null); // Normalize data for comparison
+                    return response.equals(MOCK_TPP_DTO);
+                })
+                .verifyComplete();
     }
 
     @Test
@@ -102,19 +102,18 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        Executable executable = () -> tppService.updateExistingTpp(MOCK_TPP_DTO).block();
-        ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
-
-        assertNotNull(exception);
-        assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
+        StepVerifier.create(tppService.updateExistingTpp(MOCK_TPP_DTO))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+                .verify();
     }
 
     @Test
-    void updateTpp_NoTppId(){
-        Executable executable = () -> tppService.updateExistingTpp(MOCK_TPP_DTO_NO_ID).block();
-        RuntimeException exception = assertThrows(RuntimeException.class, executable);
-
-        assertNotNull(exception);
+    void updateTpp_NoTppId() {
+        StepVerifier.create(tppService.updateExistingTpp(MOCK_TPP_DTO_NO_ID))
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+                .verify();
     }
 
     @Test
@@ -124,22 +123,21 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO result = tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()).block();
-
-        assertNotNull(result);
-        assertEquals(MOCK_TPP_DTO, result);
+        StepVerifier.create(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))
+                .expectNextMatches(result -> result.equals(MOCK_TPP_DTO))
+                .verifyComplete();
     }
 
     @Test
-    void updateState_Ko_TppNotOnboarded() {
+    void updateState_TppNotOnboarded() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.empty());
 
-        Executable executable = () -> tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()).block();
-        ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
-
-        assertNotNull(exception);
-        assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
+        StepVerifier.create(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+                .verify();
     }
 
     @Test
@@ -147,21 +145,22 @@ class TppServiceTest {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        TppDTO result = tppService.get(MOCK_TPP_DTO.getTppId()).block();
-
-        assertNotNull(result);
-        assertEquals(MOCK_TPP_DTO, result);
+        StepVerifier.create(tppService.get(MOCK_TPP_DTO.getTppId()))
+                .expectNextMatches(result -> result.equals(MOCK_TPP_DTO))
+                .verifyComplete();
     }
 
     @Test
-    void get_Ko_TppNotOnboarded() {
+    void get_TppNotOnboarded() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.empty());
 
-        Executable executable = () -> tppService.get(MOCK_TPP_DTO.getTppId()).block();
-        ClientExceptionWithBody exception = assertThrows(ClientExceptionWithBody.class, executable);
-
-        assertNotNull(exception);
-        assertEquals("TPP_NOT_ONBOARDED", exception.getCode());
+        StepVerifier.create(tppService.get(MOCK_TPP_DTO.getTppId()))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+                .verify();
     }
 }
+
+

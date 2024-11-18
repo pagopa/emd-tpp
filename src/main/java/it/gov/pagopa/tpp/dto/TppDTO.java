@@ -2,12 +2,14 @@ package it.gov.pagopa.tpp.dto;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
+import it.gov.pagopa.tpp.model.TokenSection;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -41,10 +43,10 @@ public class TppDTO {
 
     @NotNull(message = "Contact must not be null")
     private Contact contact;
-
     private Boolean state;
-
     private LocalDateTime creationDate;
-
     private LocalDateTime lastUpdateDate;
+    private TokenSection tokenSection;
+
+
 }
