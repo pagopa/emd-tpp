@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.model;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 
 @Document(collection = "tpp")
 @Data
+@NoArgsConstructor
 @SuperBuilder
 public class Tpp {
 
