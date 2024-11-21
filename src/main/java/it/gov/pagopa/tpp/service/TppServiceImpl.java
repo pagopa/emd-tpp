@@ -48,10 +48,9 @@ public class TppServiceImpl implements TppService {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
 
         return tppRepository.findByTppIdInAndStateTrue(tppIdList)
+                 .map(tpp -> { keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
+                                      return mapperToDTO.map(tpp);})
                 .collectList()
-                .map(tppList -> tppList.stream()
-                        .map(mapperToDTO::map)
-                        .toList())
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
     }
@@ -119,7 +118,7 @@ public class TppServiceImpl implements TppService {
         }
     }
 
-    private void keyDencrypt(TokenSection tokenSection,String tppId) {
+    private void keyDecrypt(TokenSection tokenSection,String tppId) {
         KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
         CryptographyClient cryptographyClient = AzureEncryptService.buildCryptographyClient(keyVaultKey);
         if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
