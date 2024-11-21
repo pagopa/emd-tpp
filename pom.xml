@@ -78,6 +78,11 @@
 			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.azure</groupId>
+			<artifactId>azure-security-keyvault-keys</artifactId>
+			<version>4.8.7</version>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>

@@ -1,13 +1,19 @@
 package it.gov.pagopa.tpp.service;
 
+import com.azure.security.keyvault.keys.KeyClient;
+import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
+import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
+import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
+import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
+import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -26,13 +32,15 @@ public class TppServiceImpl implements TppService {
     private final TppObjectToDTOMapper mapperToDTO;
     private final TppDTOToObjectMapper mapperToObject;
     private final ExceptionMap exceptionMap;
+    private final AzureEncryptService azureEncryptService;
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO,
-                          TppDTOToObjectMapper mapperToObject, ExceptionMap exceptionMap) {
+                          TppDTOToObjectMapper mapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService) {
         this.tppRepository = tppRepository;
         this.mapperToDTO = mapperToDTO;
         this.mapperToObject = mapperToObject;
         this.exceptionMap = exceptionMap;
+        this.azureEncryptService = azureEncryptService;
     }
 
     @Override
@@ -90,6 +98,8 @@ public class TppServiceImpl implements TppService {
 
     private Mono<Tpp> createAndSaveNewTpp(TppDTO tppDTO, String tppId) {
         log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
+        KeyVaultKey keyVaultKey = azureEncryptService.createRsaKey(tppId);
+        keyEncrypt(tppDTO.getTokenSection(),tppId,keyVaultKey);
         Tpp tppToSave = mapperToObject.map(tppDTO);
         tppToSave.setTppId(tppId);
         tppToSave.setLastUpdateDate(LocalDateTime.now());
@@ -97,6 +107,27 @@ public class TppServiceImpl implements TppService {
         return tppRepository.save(tppToSave)
                 .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
+    }
+
+    private void keyEncrypt(TokenSection tokenSection,String tppId,KeyVaultKey keyVaultKey) {
+        CryptographyClient cryptographyClient = AzureEncryptService.buildCryptographyClient(keyVaultKey);
+        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
+        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
+    }
+
+    private void keyDencrypt(TokenSection tokenSection,String tppId) {
+        KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
+        CryptographyClient cryptographyClient = AzureEncryptService.buildCryptographyClient(keyVaultKey);
+        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
+        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
     }
 
     @Override

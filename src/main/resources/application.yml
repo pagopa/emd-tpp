@@ -38,3 +38,8 @@ management:
       exposure.include: "*"
     web:
       exposure.include: info, health
+
+crypto:
+  azure:
+    key-vault:
+      url: ${AZURE_KEYVAULT_URL:https://cstar-d-weu-mil-kv.vault.azure.net}
