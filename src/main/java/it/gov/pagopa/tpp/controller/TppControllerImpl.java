@@ -37,7 +37,7 @@ public class TppControllerImpl implements TppController {
 
     @Override
     public Mono<ResponseEntity<TppDTO>> save(TppDTO tppDTO) {
-        return tppService.createNewTpp(tppDTO, String.format("%s_%d", UUID.randomUUID(), System.currentTimeMillis()))
+        return tppService.createNewTpp(tppDTO, String.format("%s-%d", UUID.randomUUID(), System.currentTimeMillis()))
                 .map(ResponseEntity::ok);
     }
 
