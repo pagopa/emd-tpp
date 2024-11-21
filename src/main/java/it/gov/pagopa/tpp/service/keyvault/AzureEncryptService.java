@@ -33,9 +33,11 @@ public class AzureEncryptService {
     }
 
     public KeyVaultKey createRsaKey(String tppId){
-        return keyClient.createRsaKey( new CreateRsaKeyOptions(tppId)
-                .setExpiresOn(OffsetDateTime.now().plusYears(1))
-                .setKeySize(2048));
+        return keyClient
+                .createRsaKey(new CreateRsaKeyOptions(tppId)
+                                  .setExpiresOn(OffsetDateTime.now().plusYears(1))
+                                  .setKeySize(2048)
+        );
     }
 
 
@@ -45,8 +47,8 @@ public class AzureEncryptService {
 
     public static CryptographyClient buildCryptographyClient(String keyId){
         return new CryptographyClientBuilder()
-                .keyIdentifier(keyId)
                 .credential(DEFAULT_AZURE_CREDENTIAL)
+                .keyIdentifier(keyId)
                 .buildClient();
     }
 
