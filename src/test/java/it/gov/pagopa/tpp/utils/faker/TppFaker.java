@@ -15,10 +15,10 @@ public class TppFaker {
         TokenSection tokenSection = new TokenSection(
                 "application/json",
                 new HashMap<>() {{
-                    put("pathKey1", "pathValue1");
+                    put("pathKey1", "test");
                 }},
                 new HashMap<>() {{
-                    put("bodyKey1", "bodyValue1");
+                    put("bodyKey1", "test");
                 }}
         );
 

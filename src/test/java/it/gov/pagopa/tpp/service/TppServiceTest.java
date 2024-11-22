@@ -5,6 +5,7 @@ import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
+import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -17,13 +18,15 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
         TppServiceImpl.class,
         TppObjectToDTOMapper.class,
         TppDTOToObjectMapper.class,
-        ExceptionMap.class
+        ExceptionMap.class,
+        AzureEncryptService.class
 })
 class TppServiceTest {
 
@@ -33,6 +36,9 @@ class TppServiceTest {
     @MockBean
     private TppRepository tppRepository;
 
+    @MockBean
+    private AzureEncryptService azureEncryptService;
+
     @Autowired
     private TppDTOToObjectMapper mapperToObject;
 
@@ -40,6 +46,7 @@ class TppServiceTest {
     void getEnabled_Ok() {
         Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
                 .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
+        Mockito.when(azureEncryptService.decrypt(any(), any(), any())).thenReturn("test");
 
         StepVerifier.create(tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST))
                 .expectNextMatches(response -> response.equals(MOCK_TPP_DTO_LIST))
@@ -48,7 +55,7 @@ class TppServiceTest {
 
     @Test
     void createTpp_AlreadyExist() {
-        Mockito.when(tppRepository.findByEntityId(Mockito.any()))
+        Mockito.when(tppRepository.findByEntityId(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
         StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_WRONG_ID))
@@ -60,10 +67,11 @@ class TppServiceTest {
 
     @Test
     void createTpp_Ok() {
-        Mockito.when(tppRepository.findByEntityId(Mockito.any()))
+        Mockito.when(tppRepository.findByEntityId(any()))
                 .thenReturn(Mono.empty());
-        Mockito.when(tppRepository.save(Mockito.any()))
+        Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(azureEncryptService.encrypt(any(), any(), any())).thenReturn("test");
 
         StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_TPP_DTO.getTppId()))
                 .expectNextMatches(response -> {
@@ -82,9 +90,9 @@ class TppServiceTest {
 
     @Test
     void updateTpp_Ok() {
-        Mockito.when(tppRepository.findByTppId(Mockito.any()))
+        Mockito.when(tppRepository.findByTppId(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(tppRepository.save(Mockito.any()))
+        Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
         StepVerifier.create(tppService.updateExistingTpp(MOCK_TPP_DTO))
@@ -97,9 +105,9 @@ class TppServiceTest {
 
     @Test
     void updateTpp_TppNotFound() {
-        Mockito.when(tppRepository.findByTppId(Mockito.any()))
+        Mockito.when(tppRepository.findByTppId(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(tppRepository.save(Mockito.any()))
+        Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(tppService.updateExistingTpp(MOCK_TPP_DTO))
@@ -120,7 +128,7 @@ class TppServiceTest {
     void updateState_Ok() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(tppRepository.save(Mockito.any()))
+        Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
         StepVerifier.create(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))

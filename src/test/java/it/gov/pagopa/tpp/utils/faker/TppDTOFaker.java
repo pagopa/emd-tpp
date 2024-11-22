@@ -9,21 +9,22 @@ import java.util.HashMap;
 
 public class TppDTOFaker {
 
-    private TppDTOFaker(){}
+    private TppDTOFaker() {
+    }
 
     public static TppDTO mockInstance(Boolean bias) {
 
         TokenSection tokenSection = new TokenSection(
                 "application/json",
                 new HashMap<>() {{
-                    put("pathKey1", "pathValue1");
+                    put("pathKey1", "test");
                 }},
                 new HashMap<>() {{
-                    put("bodyKey1", "bodyValue1");
+                    put("bodyKey1", "test");
                 }}
         );
 
-        Contact contact = new Contact("name","number", "email");
+        Contact contact = new Contact("name", "number", "email");
 
         return TppDTO.builder()
                 .tppId("tppId")
@@ -44,7 +45,7 @@ public class TppDTOFaker {
 
     public static TppDTO mockInstanceWithNoTppId(Boolean bias) {
 
-        Contact contact = new Contact("name","number", "email");
+        Contact contact = new Contact("name", "number", "email");
         TokenSection tokenSection = new TokenSection(
                 "application/json",
                 new HashMap<>() {{
@@ -73,7 +74,7 @@ public class TppDTOFaker {
 
     public static TppDTO mockInstanceWithNoTokenSection(Boolean bias) {
 
-        Contact contact = new Contact("name","number", "email");
+        Contact contact = new Contact("name", "number", "email");
 
         return TppDTO.builder()
                 .tppId(("tppId"))
@@ -91,4 +92,5 @@ public class TppDTOFaker {
                 .tokenSection(null)
                 .build();
     }
+
 }
