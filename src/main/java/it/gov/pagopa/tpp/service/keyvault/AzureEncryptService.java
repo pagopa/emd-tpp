@@ -20,7 +20,7 @@ public class AzureEncryptService {
 
     private static final DefaultAzureCredential DEFAULT_AZURE_CREDENTIAL = new DefaultAzureCredentialBuilder().build();
 
-    private final KeyClient keyClient;
+    private  KeyClient keyClient;
     public AzureEncryptService(@Value("${crypto.azure.key-vault.url}") String keyVaultUrl){
         this.keyClient= new KeyClientBuilder()
                 .vaultUrl(keyVaultUrl)
@@ -53,10 +53,14 @@ public class AzureEncryptService {
         return buildCryptographyClient(key.getId());
     }
 
-    public static CryptographyClient buildCryptographyClient(String keyId) {
+    public CryptographyClient buildCryptographyClient(String keyId) {
         return new CryptographyClientBuilder()
                 .credential(DEFAULT_AZURE_CREDENTIAL)
                 .keyIdentifier(keyId)
                 .buildClient();
+    }
+
+    public void setKeyClient(KeyClient keyClient) {
+       this.keyClient = keyClient;
     }
 }
