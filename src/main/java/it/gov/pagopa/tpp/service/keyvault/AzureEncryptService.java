@@ -20,7 +20,7 @@ public class AzureEncryptService {
 
     private static final DefaultAzureCredential DEFAULT_AZURE_CREDENTIAL = new DefaultAzureCredentialBuilder().build();
 
-    private final KeyClient keyClient;
+    private  KeyClient keyClient;
     public AzureEncryptService(@Value("${crypto.azure.key-vault.url}") String keyVaultUrl){
         this.keyClient= new KeyClientBuilder()
                 .vaultUrl(keyVaultUrl)
@@ -41,24 +41,26 @@ public class AzureEncryptService {
     }
 
 
-    public static CryptographyClient buildCryptographyClient(KeyVaultKey key){
+    public String encrypt(byte[] plainValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyClient cryptoClient) {
+        return Base64.getEncoder().encodeToString(cryptoClient.encrypt(encryptionAlgorithm, plainValue).getCipherText());
+    }
+
+    public String decrypt(String encryptedValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyClient cryptoClient) {
+        return new String(cryptoClient.decrypt(encryptionAlgorithm, Base64.getDecoder().decode(encryptedValue)).getPlainText());
+    }
+
+    public CryptographyClient buildCryptographyClient(KeyVaultKey key) {
         return buildCryptographyClient(key.getId());
     }
 
-    public static CryptographyClient buildCryptographyClient(String keyId){
+    public CryptographyClient buildCryptographyClient(String keyId) {
         return new CryptographyClientBuilder()
                 .credential(DEFAULT_AZURE_CREDENTIAL)
                 .keyIdentifier(keyId)
                 .buildClient();
     }
 
-    public static String encrypt(byte[] plainValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyClient cryptoClient) {
-        // byte[] -> RSA -> Base64
-        return Base64.getEncoder().encodeToString(cryptoClient.encrypt(encryptionAlgorithm, plainValue).getCipherText());
-    }
-
-    public static String decrypt(String encryptedValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyClient cryptoClient) {
-        // Base64 -> RSA -> byte[]
-        return new String(cryptoClient.decrypt(encryptionAlgorithm, Base64.getDecoder().decode(encryptedValue)).getPlainText());
+    public void setKeyClient(KeyClient keyClient) {
+       this.keyClient = keyClient;
     }
 }

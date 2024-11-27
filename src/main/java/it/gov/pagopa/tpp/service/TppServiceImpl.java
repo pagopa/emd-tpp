@@ -136,23 +136,23 @@ public class TppServiceImpl implements TppService {
     }
 
     private void keyEncrypt(TokenSection tokenSection,KeyVaultKey keyVaultKey) {
-        CryptographyClient cryptographyClient = AzureEncryptService.buildCryptographyClient(keyVaultKey);
+        CryptographyClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
         if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> azureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
         }
         if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> azureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
         }
     }
 
     private void keyDecrypt(TokenSection tokenSection,String tppId) {
         KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
-        CryptographyClient cryptographyClient = AzureEncryptService.buildCryptographyClient(keyVaultKey);
+        CryptographyClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
         if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> azureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
         }
         if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> AzureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> azureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
         }
     }
 
