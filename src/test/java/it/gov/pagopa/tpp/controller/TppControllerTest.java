@@ -1,7 +1,9 @@
 package it.gov.pagopa.tpp.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,21 +34,40 @@ class TppControllerTest {
 
 
     @Test
-    void update_Ok() {
+    void updateTppDetails_Ok() {
 
-        Mockito.when(tppService.updateExistingTpp(MOCK_TPP_DTO)).thenReturn(Mono.just(MOCK_TPP_DTO));
+        Mockito.when(tppService.updateTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION)).thenReturn(Mono.just(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION));
 
         webClient.put()
                 .uri("/emd/tpp/update")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(MOCK_TPP_DTO)
+                .bodyValue(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(TppDTO.class)
+                .expectBody(TppDTOWithoutTokenSection.class)
                 .consumeWith(response -> {
-                    TppDTO resultResponse = response.getResponseBody();
+                    TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
-                    Assertions.assertEquals(MOCK_TPP_DTO, resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION, resultResponse);
+                });
+    }
+
+    @Test
+    void updateTokenSection_Ok() {
+
+        Mockito.when(tppService.updateTokenSection("tppId", MOCK_TOKEN_SECTION_DTO)).thenReturn(Mono.just(MOCK_TOKEN_SECTION_DTO));
+
+        webClient.put()
+                .uri("/emd/tpp/update/{tppId}/token", "tppId" )
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(MOCK_TOKEN_SECTION_DTO)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TokenSectionDTO.class)
+                .consumeWith(response -> {
+                    TokenSectionDTO resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TOKEN_SECTION_DTO, resultResponse);
                 });
     }
 
@@ -89,19 +110,36 @@ class TppControllerTest {
     }
 
     @Test
-    void get_Ok()  {
-        Mockito.when(tppService.get(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP_DTO));
+    void getTppDetails_Ok()  {
+        Mockito.when(tppService.getTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
+                .thenReturn(Mono.just(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION));
 
         webClient.get()
-                .uri("/emd/tpp/{tppId}",MOCK_TPP_DTO.getTppId())
+                .uri("/emd/tpp/{tppId}",MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(TppDTO.class)
+                .expectBody(TppDTOWithoutTokenSection.class)
                 .consumeWith(response -> {
-                    TppDTO resultResponse = response.getResponseBody();
+                    TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
-                    Assertions.assertEquals(MOCK_TPP_DTO,resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION,resultResponse);
+                });
+    }
+
+    @Test
+    void getTokenSection_Ok()  {
+        Mockito.when(tppService.getTokenSection("tppId"))
+                .thenReturn(Mono.just(MOCK_TOKEN_SECTION_DTO));
+
+        webClient.get()
+                .uri("/emd/tpp/{tppId}/token", "tppId")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TokenSectionDTO.class)
+                .consumeWith(response -> {
+                    TokenSectionDTO resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TOKEN_SECTION_DTO,resultResponse);
                 });
     }
 

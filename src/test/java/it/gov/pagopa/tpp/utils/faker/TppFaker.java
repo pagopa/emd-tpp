@@ -2,25 +2,12 @@ package it.gov.pagopa.tpp.utils.faker;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
-import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.model.Tpp;
-
-import java.util.HashMap;
 
 public class TppFaker {
 
     private TppFaker(){}
     public static Tpp mockInstance(Boolean bias){
-
-        TokenSection tokenSection = new TokenSection(
-                "application/json",
-                new HashMap<>() {{
-                    put("pathKey1", "pathValue1");
-                }},
-                new HashMap<>() {{
-                    put("bodyKey1", "bodyValue1");
-                }}
-        );
 
         Contact contact = new Contact("name","number", "email");
 
@@ -38,7 +25,7 @@ public class TppFaker {
                 .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
-                .tokenSection(tokenSection)
+                .tokenSection(TokenSectionFaker.mockInstance())
                 .build();
     }
 }

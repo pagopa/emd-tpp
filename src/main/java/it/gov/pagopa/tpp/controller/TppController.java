@@ -1,14 +1,13 @@
 package it.gov.pagopa.tpp.controller;
 
-import it.gov.pagopa.tpp.dto.TppDTO;
-import it.gov.pagopa.tpp.dto.TppIdList;
-import it.gov.pagopa.tpp.dto.TppUpdateState;
+import it.gov.pagopa.tpp.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+
 @RestController
 @RequestMapping("/emd/tpp")
 public interface TppController {
@@ -21,7 +20,6 @@ public interface TppController {
      */
     @PostMapping("/list")
     Mono<ResponseEntity<List<TppDTO>>> getEnabledList(@Valid @RequestBody TppIdList tppIdList);
-
 
     /**
      * Update a tpp
@@ -41,17 +39,36 @@ public interface TppController {
     @PostMapping("/save")
     Mono<ResponseEntity<TppDTO>> save(@Valid @RequestBody TppDTO tppDTO);
 
-    @PutMapping("/update")
-    Mono<ResponseEntity<TppDTO>> update(@Valid @RequestBody TppDTO tppDTO);
 
+    @PutMapping("/update")
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> updateTppDetails(@Valid @RequestBody TppDTOWithoutTokenSection tppDTOWithoutTokenSection);
 
     /**
-     * Get a tpp
+     * Update TokenSection of a TPP
+     *
+     * @param tppId       of the TPP to update
+     * @param tokenSectionDTO updated token section
+     * @return outcome of the update
+     */
+    @PutMapping("/update/{tppId}/token")
+    Mono<ResponseEntity<TokenSectionDTO>> updateTokenSection(@Valid @PathVariable String tppId, @Valid @RequestBody TokenSectionDTO tokenSectionDTO);
+
+    /**
+     * Get a tpp (without token section)
      *
      * @param tppId to get
-     * @return  outcome of getting tpp
+     * @return outcome of getting tpp
      */
     @GetMapping("/{tppId}")
-    Mono<ResponseEntity<TppDTO>> get(@Valid @PathVariable String tppId);
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppDetails(@Valid @PathVariable String tppId);
+
+    /**
+     * Get TokenSection of a TPP
+     *
+     * @param tppId to get token section
+     * @return outcome of getting token section
+     */
+    @GetMapping("/{tppId}/token")
+    Mono<ResponseEntity<TokenSectionDTO>> getTokenSection(@Valid @PathVariable String tppId);
 
 }
