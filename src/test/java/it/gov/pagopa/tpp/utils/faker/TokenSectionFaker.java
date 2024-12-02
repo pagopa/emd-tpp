@@ -12,10 +12,10 @@ public class TokenSectionFaker {
         return TokenSection.builder()
                 .contentType("application/json")
                 .pathAdditionalProperties(new HashMap<>() {{
-                    put("pathKey1", "pathValue1");
+                    put("pathKey1", "test");
                 }})
                 .bodyAdditionalProperties(new HashMap<>() {{
-                    put("bodyKey1", "bodyValue1");
+                    put("bodyKey1", "test");
                 }})
                 .build();
     }

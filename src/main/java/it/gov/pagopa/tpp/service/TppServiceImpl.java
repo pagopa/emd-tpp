@@ -97,8 +97,14 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppId)
                 .flatMap(existingTpp -> {
                     log.info("[TPP-SERVICE][UPDATE] Updating TokenSection for TPP with tppId: {}", tppId);
+
+                    TokenSection tokenSection = tokenSectionMapperToObject.map(tokenSectionDTO);
+                    KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
+                    keyEncrypt(tokenSection, keyVaultKey);
+
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
-                    existingTpp.setTokenSection(tokenSectionMapperToObject.map(tokenSectionDTO));
+                    existingTpp.setTokenSection(tokenSection);
+
                     return tppRepository.save(existingTpp)
                             .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
                             .doOnSuccess(updatedTokenSection -> log.info("[TPP-SERVICE][UPDATE] Updated TokenSection for tppId: {}", tppId))

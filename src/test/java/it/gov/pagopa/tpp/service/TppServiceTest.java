@@ -55,7 +55,6 @@ class TppServiceTest {
     private TokenSectionDTOToObjectMapper tokenSectionDTOToObjectMapper;
 
 
-
     @Test
     void getEnabled_Ok() {
         Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
@@ -97,22 +96,25 @@ class TppServiceTest {
 
     @Test
     void createTpp_MissingTokenSection() {
+        Mockito.when(tppRepository.findByEntityId(MOCK_TPP_DTO_NO_TOKEN_SECTION.getEntityId()))
+                .thenReturn(Mono.empty());
+
         StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO_NO_TOKEN_SECTION, MOCK_TPP_DTO.getTppId()))
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
                 .verify();
     }
 
     @Test
-    void updateTpp_Ok() {
+    void updateTppDetails_Ok() {
         Mockito.when(tppRepository.findByTppId(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        StepVerifier.create(tppService.updateExistingTpp(MOCK_TPP_DTO))
+        StepVerifier.create(tppService.updateTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION))
                 .expectNextMatches(response -> {
-                    response.setLastUpdateDate(null); // Normalize data for comparison
-                    return response.equals(MOCK_TPP_DTO);
+                    response.setLastUpdateDate(null);
+                    return response.equals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION);
                 })
                 .verifyComplete();
     }

@@ -15,6 +15,7 @@ import java.util.List;
 public class TestUtils {
 
     public static final TppDTO MOCK_TPP_DTO = TppDTOFaker.mockInstance(true);
+    public static final TppDTO MOCK_TPP_DTO_NO_TOKEN_SECTION = TppDTOFaker.mockInstanceWithNoTokenSection(true);
     public static final TppDTOWithoutTokenSection MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION = TppDTOWithoutTokenSectionFaker.mockInstance(true);
     public static final TppDTOWithoutTokenSection MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION_NO_ID = TppDTOWithoutTokenSectionFaker.mockInstanceWithNoTppId(true);
     public static final TokenSectionDTO MOCK_TOKEN_SECTION_DTO = TokenSectionDTOFaker.mockInstance();
