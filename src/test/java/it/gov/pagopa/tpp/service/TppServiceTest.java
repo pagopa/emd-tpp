@@ -146,11 +146,12 @@ class TppServiceTest {
                 .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(azureEncryptService.encrypt(any(), any(), any())).thenReturn("test");
 
         StepVerifier.create(tppService.updateTokenSection(MOCK_TPP_DTO.getTppId(), MOCK_TOKEN_SECTION_DTO))
                 .expectNextMatches(result -> result.equals(MOCK_TOKEN_SECTION_DTO))
                 .verifyComplete();
-    }
+      }
 
     @Test
     void updateTokenSection_NoTppId() {
@@ -221,6 +222,7 @@ class TppServiceTest {
     void getTokenSection_Ok() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(azureEncryptService.decrypt(any(), any(), any())).thenReturn("test");
 
         StepVerifier.create(tppService.getTokenSection(MOCK_TPP_DTO.getTppId()))
                 .expectNextMatches(result -> result.equals(MOCK_TOKEN_SECTION_DTO))
