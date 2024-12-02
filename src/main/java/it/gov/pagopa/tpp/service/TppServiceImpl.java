@@ -197,8 +197,11 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         "Tpp not found during get process")))
-                .map(Tpp::getTokenSection)
-                .map(tokenSectionMapperToDTO::map)
+                .flatMap(tpp -> {
+                    TokenSection tokenSection = tpp.getTokenSection();
+                    keyDecrypt(tokenSection, tppId);
+                    return Mono.just(tokenSectionMapperToDTO.map(tokenSection));
+                })
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
     }
