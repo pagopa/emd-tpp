@@ -2,7 +2,6 @@ package it.gov.pagopa.tpp.dto;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
-import it.gov.pagopa.tpp.model.TokenSection;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -15,8 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @SuperBuilder
 @NoArgsConstructor
-public class TppDTO {
-
+public class TppDTOWithoutTokenSection {
     private String tppId;
 
     @NotBlank(message = "Entity ID must not be blank")
@@ -46,6 +44,4 @@ public class TppDTO {
     private Boolean state;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
-    private TokenSection tokenSection;
-
 }

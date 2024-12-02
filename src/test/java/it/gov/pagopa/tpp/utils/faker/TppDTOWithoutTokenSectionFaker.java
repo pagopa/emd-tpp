@@ -1,18 +1,18 @@
 package it.gov.pagopa.tpp.utils.faker;
 
-import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
 
-public class TppDTOFaker {
+public class TppDTOWithoutTokenSectionFaker {
 
-    private TppDTOFaker(){}
+    private TppDTOWithoutTokenSectionFaker(){}
 
-    public static TppDTO mockInstance(Boolean bias) {
+    public static TppDTOWithoutTokenSection mockInstance(Boolean bias) {
 
         Contact contact = new Contact("name","number", "email");
 
-        return TppDTO.builder()
+        return TppDTOWithoutTokenSection.builder()
                 .tppId("tppId")
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
@@ -25,15 +25,14 @@ public class TppDTOFaker {
                 .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
-                .tokenSection(TokenSectionFaker.mockInstance())
                 .build();
     }
 
-    public static TppDTO mockInstanceWithNoTppId(Boolean bias) {
+    public static TppDTOWithoutTokenSection mockInstanceWithNoTppId(Boolean bias) {
 
         Contact contact = new Contact("name","number", "email");
 
-        return TppDTO.builder()
+        return TppDTOWithoutTokenSection.builder()
                 .tppId(null)
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
@@ -46,28 +45,6 @@ public class TppDTOFaker {
                 .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
-                .tokenSection(TokenSectionFaker.mockInstance())
-                .build();
-    }
-
-    public static TppDTO mockInstanceWithNoTokenSection(Boolean bias) {
-
-        Contact contact = new Contact("name","number", "email");
-
-        return TppDTO.builder()
-                .tppId(("tppId"))
-                .messageUrl("https://wwwmessageUrl.it")
-                .authenticationUrl("https://www.AuthenticationUrl.it")
-                .idPsp("idPsp")
-                .legalAddress("legalAddress")
-                .authenticationType(AuthenticationType.OAUTH2)
-                .state(bias)
-                .entityId("entityId01234567")
-                .businessName("businessName")
-                .contact(contact)
-                .lastUpdateDate(null)
-                .creationDate(null)
-                .tokenSection(null)
                 .build();
     }
 
