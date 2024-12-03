@@ -190,6 +190,7 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         "Tpp not found during get process")))
                 .flatMap(tpp -> {
+                    log.info("{}",tpp);
                     if (Boolean.TRUE.equals(tpp.getLock()))
                         return Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_READY, ExceptionMessage.TPP_NOT_READY));
                     TokenSection tokenSection = tpp.getTokenSection();
