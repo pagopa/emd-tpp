@@ -29,4 +29,5 @@ public class Tpp {
     private TokenSection tokenSection;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
+    private Boolean lock;
 }

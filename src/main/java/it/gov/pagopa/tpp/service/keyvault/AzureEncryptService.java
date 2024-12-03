@@ -8,9 +8,12 @@ import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
 import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.CreateRsaKeyOptions;
+import com.azure.security.keyvault.keys.models.KeyProperties;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
+import it.gov.pagopa.tpp.model.TokenSection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.util.Base64;
@@ -62,5 +65,32 @@ public class AzureEncryptService {
 
     public void setKeyClient(KeyClient keyClient) {
        this.keyClient = keyClient;
+    }
+
+    public Mono<Boolean> isKeyExpiring(String tppId) {
+        KeyVaultKey key = getKey(tppId);
+        KeyProperties properties = key.getProperties();
+        return Mono.just(properties.getExpiresOn().isBefore(OffsetDateTime.now().plusDays(7)));
+    }
+
+    public void keyEncrypt(TokenSection tokenSection, KeyVaultKey keyVaultKey) {
+        CryptographyClient cryptographyClient = buildCryptographyClient(keyVaultKey);
+        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
+        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
+    }
+
+    public void keyDecrypt(TokenSection tokenSection,String tppId) {
+        KeyVaultKey keyVaultKey = getKey(tppId);
+        CryptographyClient cryptographyClient = buildCryptographyClient(keyVaultKey);
+        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
+        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
+            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) ->decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
+        }
     }
 }

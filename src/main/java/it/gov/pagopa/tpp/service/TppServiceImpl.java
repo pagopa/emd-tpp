@@ -1,7 +1,5 @@
 package it.gov.pagopa.tpp.service;
 
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
-import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
@@ -58,8 +56,10 @@ public class TppServiceImpl implements TppService {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
 
         return tppRepository.findByTppIdInAndStateTrue(tppIdList)
-                 .map(tpp -> { keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
-                                      return mapperToDTO.map(tpp);})
+                .doOnNext(this::checkLock)
+                .map(tpp -> {
+                     azureEncryptService.keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
+                     return mapperToDTO.map(tpp);})
                 .collectList()
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
@@ -73,6 +73,7 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppDTOWithoutTokenSection.getTppId())
                 .flatMap(existingTpp -> {
+                    checkLock(existingTpp);
                     log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] already exists. Updating...", tppDTOWithoutTokenSection.getTppId());
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
                     existingTpp.setMessageUrl(tppDTOWithoutTokenSection.getMessageUrl());
@@ -96,11 +97,13 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppId)
                 .flatMap(existingTpp -> {
+
+                    checkLock(existingTpp);
                     log.info("[TPP-SERVICE][UPDATE] Updating TokenSection for TPP with tppId: {}", tppId);
 
                     TokenSection tokenSection = tokenSectionMapperToObject.map(tokenSectionDTO);
                     KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
-                    keyEncrypt(tokenSection, keyVaultKey);
+                    azureEncryptService.keyEncrypt(tokenSection, keyVaultKey);
 
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
                     existingTpp.setTokenSection(tokenSection);
@@ -131,9 +134,10 @@ public class TppServiceImpl implements TppService {
     private Mono<Tpp> createAndSaveNewTpp(TppDTO tppDTO, String tppId) {
         log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
         KeyVaultKey keyVaultKey = azureEncryptService.createRsaKey(tppId);
-        keyEncrypt(tppDTO.getTokenSection(),keyVaultKey);
+        azureEncryptService.keyEncrypt(tppDTO.getTokenSection(),keyVaultKey);
         Tpp tppToSave = mapperToObject.map(tppDTO);
         tppToSave.setTppId(tppId);
+        tppToSave.setLock(false);
         tppToSave.setLastUpdateDate(LocalDateTime.now());
         tppToSave.setCreationDate(LocalDateTime.now());
         return tppRepository.save(tppToSave)
@@ -141,26 +145,7 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
     }
 
-    private void keyEncrypt(TokenSection tokenSection,KeyVaultKey keyVaultKey) {
-        CryptographyClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
-        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> azureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
-        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> azureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
-    }
 
-    private void keyDecrypt(TokenSection tokenSection,String tppId) {
-        KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
-        CryptographyClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
-        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> azureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
-        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> azureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
-    }
 
     @Override
     public Mono<TppDTO> updateState(String tppId, Boolean state) {
@@ -170,6 +155,7 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         "Tpp not found during state update process")))
                 .flatMap(tpp -> {
+                    checkLock(tpp);
                     tpp.setState(state);
                     return tppRepository.save(tpp);
                 })
@@ -198,12 +184,20 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         "Tpp not found during get process")))
                 .flatMap(tpp -> {
+                    checkLock(tpp);
                     TokenSection tokenSection = tpp.getTokenSection();
-                    keyDecrypt(tokenSection, tppId);
+                    azureEncryptService.keyDecrypt(tokenSection, tppId);
                     return Mono.just(tokenSectionMapperToDTO.map(tokenSection));
                 })
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
     }
+
+    private void checkLock(Tpp tpp) {
+        if (Boolean.TRUE.equals(tpp.getLock()))
+            Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_READY,
+                    ExceptionMessage.TPP_NOT_READY));
+    }
+
 
 }

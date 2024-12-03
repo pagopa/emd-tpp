@@ -34,6 +34,14 @@ public class ExceptionMap {
                         message
                 )
         );
+
+        exceptions.put(TppConstants.ExceptionName.TPP_NOT_READY, message ->
+                new ClientExceptionWithBody(
+                        HttpStatus.LOCKED,
+                        TppConstants.ExceptionCode.TPP_NOT_READY,
+                        message
+                )
+        );
     }
 
     public RuntimeException throwException(String exceptionKey, String message) {

@@ -7,6 +7,8 @@ public class TppConstants {
 
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
+        public static final String TPP_NOT_READY = "TPP_NOT_READY";
+
         private ExceptionCode() {}
     }
 
@@ -16,6 +18,7 @@ public class TppConstants {
 
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
+        public static final String TPP_NOT_READY = "TPP_NOT_READY";
         private ExceptionMessage() {}
     }
 
@@ -25,6 +28,8 @@ public class TppConstants {
 
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
+        public static final String TPP_NOT_READY = "TPP_NOT_READY";
+
         private ExceptionName() {}
     }
 

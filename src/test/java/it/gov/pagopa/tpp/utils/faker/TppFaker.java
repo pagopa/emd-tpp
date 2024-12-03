@@ -26,6 +26,7 @@ public class TppFaker {
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
+                .lock(false)
                 .build();
     }
 }
