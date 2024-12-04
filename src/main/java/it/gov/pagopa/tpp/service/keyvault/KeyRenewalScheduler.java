@@ -25,6 +25,7 @@ public class KeyRenewalScheduler {
 
     @Scheduled(fixedRate = 60000)
     public void renewExpiringKeys() {
+        log.info("[Key-Renewal-Scheduler] Avvio rinnovo chiavi...");
         tppRepository.findAll()
                 .doOnNext(this::checkAndProcessKey)
                 .doOnTerminate(() -> log.info("[Key-Renewal-Scheduler][Renew-Expiring-Keys]Verifica completata"))
