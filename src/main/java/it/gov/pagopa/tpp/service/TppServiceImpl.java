@@ -57,11 +57,12 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppIdInAndStateTrue(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         ExceptionMessage.TPP_NOT_ONBOARDED)))
-                .map(tpp -> {
-                    if (Boolean.TRUE.equals(tpp.getLock()))
-                        Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_READY, ExceptionMessage.TPP_NOT_READY));
-                     azureEncryptService.keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
-                     return mapperToDTO.map(tpp);
+                .flatMap(tpp -> {
+                    if (Boolean.TRUE.equals(tpp.getLock())) {
+                        return Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_READY, ExceptionMessage.TPP_NOT_READY));
+                    }
+                    azureEncryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
+                    return Mono.just(mapperToDTO.map(tpp));
                 })
                 .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET-ENABLED] Founded TPP: {}", tppDTO))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving tpp: {}", error.getMessage(), error));
