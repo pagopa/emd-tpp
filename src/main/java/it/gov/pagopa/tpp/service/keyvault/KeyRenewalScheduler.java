@@ -4,6 +4,7 @@ import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -11,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 
 @Service
+@EnableScheduling
 @Slf4j
 public class KeyRenewalScheduler {
 
