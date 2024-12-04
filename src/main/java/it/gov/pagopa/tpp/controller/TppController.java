@@ -1,25 +1,26 @@
 package it.gov.pagopa.tpp.controller;
 
-import it.gov.pagopa.tpp.dto.*;
+import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
+import it.gov.pagopa.tpp.dto.TppUpdateState;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/emd/tpp")
 public interface TppController {
 
     /**
-     * Get list of tpp
+     * Get enabled tpp
      *
-     * @param tppIdList whose data is to be retrieved
+     * @param tppId whose data is to be retrieved
      * @return outcome of retrieving the tpp
      */
-    @PostMapping("/list")
-    Mono<ResponseEntity<List<TppDTO>>> getEnabledList(@Valid @RequestBody TppIdList tppIdList);
+    @GetMapping("/{tppId}/enabled")
+    Mono<ResponseEntity<TppDTO>> getEnabled(@Valid @PathVariable String tppId);
 
     /**
      * Update a tpp

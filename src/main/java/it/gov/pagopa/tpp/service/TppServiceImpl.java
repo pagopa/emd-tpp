@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static it.gov.pagopa.common.utils.Utils.inputSanify;
 
@@ -52,20 +51,20 @@ public class TppServiceImpl implements TppService {
     }
 
     @Override
-    public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
-        log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
+    public Mono<TppDTO> getEnabled(String tppId) {
+        log.info("[TPP-SERVICE][GET-ENABLED] Received tpp: {}", tppId);
 
-        return tppRepository.findByTppIdInAndStateTrue(tppIdList)
-                .doOnNext( tpp ->{
+        return tppRepository.findByTppIdInAndStateTrue(tppId)
+                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
+                        ExceptionMessage.TPP_NOT_ONBOARDED)))
+                .map(tpp -> {
                     if (Boolean.TRUE.equals(tpp.getLock()))
                         Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_READY, ExceptionMessage.TPP_NOT_READY));
-                })
-                .map(tpp -> {
                      azureEncryptService.keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
-                     return mapperToDTO.map(tpp);})
-                .collectList()
-                .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
+                     return mapperToDTO.map(tpp);
+                })
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET-ENABLED] Founded TPP: {}", tppDTO))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving tpp: {}", error.getMessage(), error));
     }
 
     @Override

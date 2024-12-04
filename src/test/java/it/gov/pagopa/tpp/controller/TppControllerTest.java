@@ -15,10 +15,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 @WebFluxTest(TppControllerImpl.class)
 class TppControllerTest {
@@ -145,20 +144,18 @@ class TppControllerTest {
 
     @Test
     void getEnabled_Ok() {
-        Mockito.when(tppService.getEnabledList(MOCK_TPP_ID_LIST.getIds())).thenReturn(Mono.just(MOCK_TPP_DTO_LIST));
+        Mockito.when(tppService.getEnabled("tppId"))
+                .thenReturn(Mono.just(MOCK_TPP_DTO));
 
-        webClient.post()
-                .uri("/emd/tpp/list")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(MOCK_TPP_ID_LIST) // Body of the request
+        webClient.get()
+                .uri("/emd/tpp/{tppId}/enabled","tppId")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(TppDTO.class)
+                .expectBody(TppDTO.class)
                 .consumeWith(response -> {
-                    List<TppDTO> resultResponse = response.getResponseBody();
+                    TppDTO resultResponse = response.getResponseBody();
                     Assertions.assertNotNull(resultResponse);
-                    Assertions.assertEquals(MOCK_TPP_DTO_LIST.size(), resultResponse.size());
-                    Assertions.assertTrue(resultResponse.containsAll(MOCK_TPP_DTO_LIST));
+                    Assertions.assertEquals(MOCK_TPP_DTO, resultResponse);
                 });
     }
 }

@@ -1,12 +1,14 @@
 package it.gov.pagopa.tpp.controller;
 
-import it.gov.pagopa.tpp.dto.*;
+import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
+import it.gov.pagopa.tpp.dto.TppUpdateState;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,8 +21,8 @@ public class TppControllerImpl implements TppController {
     }
 
     @Override
-    public Mono<ResponseEntity<List<TppDTO>>> getEnabledList(TppIdList tppIdList) {
-        return tppService.getEnabledList(tppIdList.getIds())
+    public Mono<ResponseEntity<TppDTO>> getEnabled(String tppId) {
+        return tppService.getEnabled(tppId)
                 .map(ResponseEntity::ok);
     }
 

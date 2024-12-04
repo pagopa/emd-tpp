@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -57,12 +56,15 @@ class TppServiceTest {
 
     @Test
     void getEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
-                .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
+        Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP.getTppId()))
+                .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(azureEncryptService.decrypt(any(), any(), any())).thenReturn("test");
 
-        StepVerifier.create(tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST))
-                .expectNextMatches(response -> response.equals(MOCK_TPP_DTO_LIST))
+        StepVerifier.create(tppService.getEnabled(MOCK_TPP_DTO.getTppId()))
+                .expectNextMatches(response -> {
+                    response.setLastUpdateDate(null);
+                    return response.equals(MOCK_TPP_DTO);
+                })
                 .verifyComplete();
     }
 

@@ -5,11 +5,9 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 public interface TppService {
 
-    Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
+    Mono<TppDTO> getEnabled(String tppId);
 
     Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId);
 
