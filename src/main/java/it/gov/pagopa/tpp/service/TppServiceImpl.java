@@ -139,6 +139,7 @@ public class TppServiceImpl implements TppService {
         return tppRepository.save(tppToSave)
                 .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
+
     }
 
     private void keyEncrypt(TokenSection tokenSection,KeyVaultKey keyVaultKey) {
