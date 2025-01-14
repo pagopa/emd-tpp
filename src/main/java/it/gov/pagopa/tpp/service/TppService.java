@@ -6,7 +6,6 @@ import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-
 public interface TppService {
 
     Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
@@ -23,4 +22,7 @@ public interface TppService {
 
     Mono<TokenSectionDTO> getTokenSection(String tppId);
 
+    Mono<TppDTO> createNewTppForTesting(TppDTO tppDTO);
+
+    Mono<TppDTOWithoutTokenSection> deleteTppForTesting(String tppId);
 }

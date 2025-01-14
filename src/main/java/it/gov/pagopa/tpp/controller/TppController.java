@@ -71,4 +71,10 @@ public interface TppController {
     @GetMapping("/{tppId}/token")
     Mono<ResponseEntity<TokenSectionDTO>> getTokenSection(@Valid @PathVariable String tppId);
 
+    @PostMapping("/save/test")
+    Mono<ResponseEntity<TppDTO>> saveForTest(@Valid @RequestBody TppDTO tppDTO);
+
+    @DeleteMapping("delete/test/{tppId}")
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> deleteForTest(@Valid @PathVariable String tppId);
+
 }

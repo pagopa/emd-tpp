@@ -32,8 +32,8 @@ public class TppControllerImpl implements TppController {
 
     @Override
     public Mono<ResponseEntity<TppDTO>> save(TppDTO tppDTO) {
-        return tppService.createNewTpp(tppDTO, String.format("%s-%d", UUID.randomUUID(), System.currentTimeMillis()))
-                .map(ResponseEntity::ok);
+            return tppService.createNewTpp(tppDTO, String.format("%s-%d", UUID.randomUUID(), System.currentTimeMillis()))
+                    .map(ResponseEntity::ok);
     }
 
     @Override
@@ -57,6 +57,18 @@ public class TppControllerImpl implements TppController {
     @Override
     public Mono<ResponseEntity<TokenSectionDTO>> getTokenSection(String tppId) {
         return tppService.getTokenSection(tppId)
+                .map(ResponseEntity::ok);
+    }
+
+    @Override
+    public Mono<ResponseEntity<TppDTO>> saveForTest(TppDTO tppDTO) {
+        return tppService.createNewTppForTesting(tppDTO)
+                .map(ResponseEntity::ok);
+    }
+
+    @Override
+    public Mono<ResponseEntity<TppDTOWithoutTokenSection>> deleteForTest(String tppId) {
+        return tppService.deleteTppForTesting(tppId)
                 .map(ResponseEntity::ok);
     }
 

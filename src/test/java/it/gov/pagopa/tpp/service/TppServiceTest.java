@@ -67,18 +67,6 @@ class TppServiceTest {
     }
 
     @Test
-    void createTpp_AlreadyExist() {
-        Mockito.when(tppRepository.findByEntityId(any()))
-                .thenReturn(Mono.just(MOCK_TPP));
-
-        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_WRONG_ID))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_ALREADY_ONBOARDED"))
-                .verify();
-    }
-
-    @Test
     void createTpp_Ok() {
         Mockito.when(tppRepository.findByEntityId(any()))
                 .thenReturn(Mono.empty());
@@ -92,6 +80,45 @@ class TppServiceTest {
                     return response.equals(MOCK_TPP_DTO);
                 })
                 .verifyComplete();
+    }
+    @Test
+    void createTpp_AlreadyExist() {
+        Mockito.when(tppRepository.findByEntityId(any()))
+                .thenReturn(Mono.just(MOCK_TPP));
+
+        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_WRONG_ID))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_ALREADY_ONBOARDED"))
+                .verify();
+    }
+
+    @Test
+    void createTpp_forTest_Ok() {
+        Mockito.when(tppRepository.findByEntityId(any()))
+                .thenReturn(Mono.empty());
+        Mockito.when(tppRepository.save(any()))
+                .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(azureEncryptService.encrypt(any(), any(), any())).thenReturn("test");
+
+        StepVerifier.create(tppService.createNewTppForTesting(MOCK_TPP_DTO))
+                .expectNextMatches(response -> {
+                    response.setLastUpdateDate(null);
+                    return response.equals(MOCK_TPP_DTO);
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void createTpp_forTest_AlreadyExist() {
+        Mockito.when(tppRepository.findByEntityId(any()))
+                .thenReturn(Mono.just(MOCK_TPP));
+
+        StepVerifier.create(tppService.createNewTppForTesting(MOCK_TPP_DTO))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_ALREADY_ONBOARDED"))
+                .verify();
     }
 
     @Test

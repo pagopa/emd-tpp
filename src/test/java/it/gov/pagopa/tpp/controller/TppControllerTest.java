@@ -91,6 +91,41 @@ class TppControllerTest {
     }
 
     @Test
+    void save_test_Ok() {
+
+        Mockito.when(tppService.createNewTppForTesting(MOCK_TPP_DTO)).thenReturn(Mono.just(MOCK_TPP_DTO));
+
+        webClient.post()
+                .uri("/emd/tpp/save/test")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(MOCK_TPP_DTO)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTO.class)
+                .consumeWith(response -> {
+                    TppDTO resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO, resultResponse);
+                });
+    }
+
+    @Test
+    void delete_Ok() {
+
+        Mockito.when(tppService.deleteTppForTesting(MOCK_TPP_DTO.getTppId())).thenReturn(Mono.just(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION));
+
+        webClient.delete()
+                .uri("/emd/tpp/delete/test/{tpp}",MOCK_TPP_DTO.getTppId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTOWithoutTokenSection.class)
+                .consumeWith(response -> {
+                    TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION, resultResponse);
+                });
+    }
+    @Test
     void stateUpdate_Ok()  {
         Mockito.when(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))
                 .thenReturn(Mono.just(MOCK_TPP_DTO));

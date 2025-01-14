@@ -116,7 +116,6 @@ public class TppServiceImpl implements TppService {
 
     @Override
     public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
-
          return tppRepository.findByEntityId(tppDTO.getEntityId())
                 .switchIfEmpty(Mono.defer(() -> createAndSaveNewTpp(tppDTO, tppId)))
                 .flatMap(result -> {
@@ -205,6 +204,44 @@ public class TppServiceImpl implements TppService {
                 })
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
+    }
+
+    @Override
+    public Mono<TppDTOWithoutTokenSection> deleteTppForTesting(String tppId) {
+        return tppRepository.findByTppId(tppId)
+                .switchIfEmpty(Mono.error(exceptionMap.throwException
+                        (ExceptionName.TPP_NOT_ONBOARDED, "Tpp not founded during delete process ")))
+                .flatMap(tpp ->
+                        tppRepository.deleteById(tpp.getTppId())
+                                .then(Mono.just(tppWithoutTokenSectionMapperToDTO.map(tpp)))
+                );
+    }
+
+    @Override
+    public Mono<TppDTO> createNewTppForTesting(TppDTO tppDTO) {
+        return tppRepository.findByEntityId(tppDTO.getEntityId())
+                .hasElement().flatMap(result -> {
+                    if (Boolean.TRUE.equals(result)) {
+                        return Mono.error(exceptionMap.throwException(ExceptionName.TPP_ALREADY_ONBOARDED,
+                            ExceptionMessage.TPP_ALREADY_ONBOARDED));
+                    }
+                    else {
+                        return createAndSaveNewTppForTesting(tppDTO, tppDTO.getTppId()).map(mapperToDTO::map);
+                }
+         });
+    }
+
+    private Mono<Tpp> createAndSaveNewTppForTesting(TppDTO tppDTO, String tppId) {
+        log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
+        KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
+        keyEncrypt(tppDTO.getTokenSection(),keyVaultKey);
+        Tpp tppToSave = mapperToObject.map(tppDTO);
+        tppToSave.setTppId(tppId);
+        tppToSave.setLastUpdateDate(LocalDateTime.now());
+        tppToSave.setCreationDate(LocalDateTime.now());
+        return tppRepository.save(tppToSave)
+                .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT-TEST] Created new TPP with tppId: {}", tppToSave.getTppId()))
+                .doOnError(error -> log.error("[TPP-SERVICE][SAVE-TEST] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
     }
 
 }
