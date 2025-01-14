@@ -18,4 +18,5 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
 
     Mono<Tpp> findByEntityId(String entityId);
 
+    Mono<Tpp> deleteByTppId(String tppId);
 }

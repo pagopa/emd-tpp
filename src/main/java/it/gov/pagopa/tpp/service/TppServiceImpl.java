@@ -211,7 +211,7 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException
                         (ExceptionName.TPP_NOT_ONBOARDED, "Tpp not founded during delete process ")))
-                .flatMap(tpp -> tppRepository.deleteById(tppId)
+                .flatMap(tpp -> tppRepository.deleteByTppId(tppId)
                                              .then(Mono.just(tppWithoutTokenSectionMapperToDTO.map(tpp)))
                 );
     }
