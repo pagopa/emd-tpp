@@ -23,6 +23,8 @@ public class TppObjectToDTOMapper {
                 .creationDate(tpp.getCreationDate())
                 .lastUpdateDate(tpp.getLastUpdateDate())
                 .tokenSection(tpp.getTokenSection())
+                .paymentButton(tpp.getPaymentButton())
+                .agentDeepLinks(tpp.getAgentDeepLinks())
                 .build();
     }
 }
