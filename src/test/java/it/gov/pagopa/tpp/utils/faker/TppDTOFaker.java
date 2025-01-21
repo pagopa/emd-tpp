@@ -4,6 +4,8 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
 
+import java.util.HashMap;
+
 public class TppDTOFaker {
 
     private TppDTOFaker(){}
@@ -26,6 +28,10 @@ public class TppDTOFaker {
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
+                .paymentButton("#button")
+                .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
                 .build();
     }
 
