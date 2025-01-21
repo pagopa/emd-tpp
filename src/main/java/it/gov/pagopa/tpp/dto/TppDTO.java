@@ -1,7 +1,9 @@
 package it.gov.pagopa.tpp.dto;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
+import it.gov.pagopa.tpp.model.Agent;
 import it.gov.pagopa.tpp.model.Contact;
+import it.gov.pagopa.tpp.model.DeepLink;
 import it.gov.pagopa.tpp.model.TokenSection;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 @Data
 @SuperBuilder
@@ -47,5 +50,11 @@ public class TppDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
     private TokenSection tokenSection;
+
+    @NotNull(message = "Payment Button must not be null")
+    private String paymentButton;
+
+    @NotNull(message = "Agent Deep Link must not be null")
+    private HashMap<Agent, DeepLink> agentDeepLink;
 
 }
