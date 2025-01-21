@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -31,5 +32,6 @@ public class Tpp {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
     private String paymentButton;
-    private HashMap<Agent, DeepLink> agentDeepLink;
+    @Field("agentDeepLinks")
+    private HashMap<Agent, DeepLink> agentDeepLinks;
 }

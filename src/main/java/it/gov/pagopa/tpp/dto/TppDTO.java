@@ -55,6 +55,6 @@ public class TppDTO {
     private String paymentButton;
 
     @NotNull(message = "Agent Deep Link must not be null")
-    private HashMap<Agent, DeepLink> agentDeepLink;
+    private HashMap<Agent, DeepLink> agentDeepLinks;
 
 }

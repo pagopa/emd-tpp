@@ -21,7 +21,7 @@ public class TppDTOToObjectMapper {
                 .entityId(tppDTO.getEntityId())
                 .tokenSection(tppDTO.getTokenSection())
                 .paymentButton(tppDTO.getPaymentButton())
-                .agentDeepLink(tppDTO.getAgentDeepLink())
+                .agentDeepLinks(tppDTO.getAgentDeepLinks())
                 .build();
     }
 }
