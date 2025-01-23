@@ -23,4 +23,6 @@ public interface TppService {
 
     Mono<TokenSectionDTO> getTokenSection(String tppId);
 
+    Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId);
+
 }

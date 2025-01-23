@@ -127,6 +127,23 @@ class TppControllerTest {
     }
 
     @Test
+    void getTppByEntityId_Ok()  {
+        Mockito.when(tppService.getTppByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
+                .thenReturn(Mono.just(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION));
+
+        webClient.get()
+                .uri("/emd/tpp/entityId/{entityId}",MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTOWithoutTokenSection.class)
+                .consumeWith(response -> {
+                    TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION,resultResponse);
+                });
+    }
+
+    @Test
     void getTokenSection_Ok()  {
         Mockito.when(tppService.getTokenSection("tppId"))
                 .thenReturn(Mono.just(MOCK_TOKEN_SECTION_DTO));
