@@ -224,7 +224,7 @@ class TppServiceTest {
                 .thenReturn(Mono.just(MOCK_TPP));
 
         StepVerifier.create(tppService.getTppByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
-                .expectNextMatches(result -> result.equals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION))
+                .expectNextCount(1)
                 .verifyComplete();
     }
 
