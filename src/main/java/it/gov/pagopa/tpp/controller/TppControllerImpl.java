@@ -60,6 +60,7 @@ public class TppControllerImpl implements TppController {
                 .map(ResponseEntity::ok);
     }
 
+    @Override
     public Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppByEntityId(String entityId) {
         return tppService.getTppByEntityId(entityId)
                 .map(ResponseEntity::ok);
