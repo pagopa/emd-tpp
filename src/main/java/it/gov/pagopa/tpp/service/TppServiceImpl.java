@@ -40,6 +40,7 @@ public class TppServiceImpl implements TppService {
     private final TokenSectionDTOToObjectMapper tokenSectionMapperToObject;
     private final ExceptionMap exceptionMap;
     private final AzureEncryptService azureEncryptService;
+    private static final String TPP_NOT_FOUND = "Tpp not found during get process";
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO, TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO, TokenSectionObjectToDTOMapper tokenSectionMapperToDTO,
                           TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService) {
@@ -185,10 +186,22 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        "Tpp not found during get process")))
+                        TPP_NOT_FOUND)))
                 .map(tppWithoutTokenSectionMapperToDTO::map)
                 .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
+    }
+
+    @Override
+    public Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId) {
+        log.info("[TPP-SERVICE][GET] Received request to get TPP for entityId: {}", inputSanify(entityId));
+
+        return tppRepository.findByEntityId(entityId)
+                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
+                        TPP_NOT_FOUND)))
+                .map(tppWithoutTokenSectionMapperToDTO::map)
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}", entityId))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
     }
 
     @Override
@@ -197,7 +210,7 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        "Tpp not found during get process")))
+                        TPP_NOT_FOUND)))
                 .flatMap(tpp -> {
                     TokenSection tokenSection = tpp.getTokenSection();
                     keyDecrypt(tokenSection, tppId);
