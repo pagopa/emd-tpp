@@ -1,6 +1,7 @@
 package it.gov.pagopa.tpp.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -176,6 +177,24 @@ class TppControllerTest {
                     Assertions.assertNotNull(resultResponse);
                     Assertions.assertEquals(MOCK_TPP_DTO_LIST.size(), resultResponse.size());
                     Assertions.assertTrue(resultResponse.containsAll(MOCK_TPP_DTO_LIST));
+                });
+    }
+
+    @Test
+    void testConnection() {
+        NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();
+        networkResponseDTO.setMessage("tppName ha raggiunto i nostri sistemi");
+        networkResponseDTO.setCode("PAGOPA_NETWORK_TEST");
+        Mockito.when(tppService.testConnection("tppName")).thenReturn(Mono.just(networkResponseDTO));
+
+        webClient.get()
+                .uri("/emd/tpp/network/connection/{tppName}","tppName")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(NetworkResponseDTO.class)
+                .consumeWith(response -> {
+                    NetworkResponseDTO resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
                 });
     }
 }

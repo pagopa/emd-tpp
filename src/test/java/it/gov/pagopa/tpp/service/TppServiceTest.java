@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.service;
 
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
+import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.mapper.TokenSectionObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppWithoutTokenSectionObjectToDTOMapper;
@@ -261,6 +262,17 @@ class TppServiceTest {
                         throwable instanceof RuntimeException &&
                                 throwable.getMessage().contains("Tpp not found during get process"))
                 .verify();
+    }
+
+
+    @Test
+    void testConnection(){
+        NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();
+        networkResponseDTO.setMessage("tppName ha raggiunto i nostri sistemi");
+        networkResponseDTO.setCode("PAGOPA_NETWORK_TEST");
+        StepVerifier.create(tppService.testConnection("tppName"))
+                .expectNext(networkResponseDTO)
+                .verifyComplete();
     }
 }
 
