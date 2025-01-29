@@ -66,4 +66,10 @@ public class TppControllerImpl implements TppController {
                 .map(ResponseEntity::ok);
     }
 
+    @Override
+    public Mono<ResponseEntity<NetworkResponseDTO>> testConnection(String tppName) {
+        return tppService.testConnection(tppName)
+                .map(ResponseEntity::ok);
+    }
+
 }

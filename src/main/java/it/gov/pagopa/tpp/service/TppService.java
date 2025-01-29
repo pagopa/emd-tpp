@@ -1,5 +1,6 @@
 package it.gov.pagopa.tpp.service;
 
+import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -24,5 +25,7 @@ public interface TppService {
     Mono<TokenSectionDTO> getTokenSection(String tppId);
 
     Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId);
+
+    Mono<NetworkResponseDTO> testConnection(String tppName);
 
 }

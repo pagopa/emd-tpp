@@ -6,6 +6,7 @@ import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
+import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -219,5 +220,19 @@ public class TppServiceImpl implements TppService {
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
     }
+
+
+    @Override
+    public Mono<NetworkResponseDTO> testConnection(String tppName) {
+        return Mono.just(createNetworkResponse(tppName));
+    }
+
+    private NetworkResponseDTO createNetworkResponse(String tppName){
+        NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();
+        networkResponseDTO.setCode("PAGOPA_NETWORK_TEST");
+        networkResponseDTO.setMessage(tppName+" ha raggiunto i nostri sistemi");
+        return networkResponseDTO;
+    }
+
 
 }
