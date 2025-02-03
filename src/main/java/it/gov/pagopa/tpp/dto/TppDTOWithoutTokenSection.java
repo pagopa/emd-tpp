@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 @Data
 @SuperBuilder
@@ -44,4 +45,10 @@ public class TppDTOWithoutTokenSection {
     private Boolean state;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
+
+    @NotNull(message = "Payment Button must not be null")
+    private String paymentButton;
+
+    @NotNull(message = "Agent Deep Link must not be null")
+    private HashMap<String, String> agentDeepLinks;
 }

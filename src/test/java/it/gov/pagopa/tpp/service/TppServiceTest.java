@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.service;
 
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
+import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.mapper.TokenSectionObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppWithoutTokenSectionObjectToDTOMapper;
@@ -219,6 +220,28 @@ class TppServiceTest {
     }
 
     @Test
+    void getTppByEntityId_Ok() {
+        Mockito.when(tppRepository.findByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
+                .thenReturn(Mono.just(MOCK_TPP));
+
+        StepVerifier.create(tppService.getTppByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
+    @Test
+    void getTppByEntityId_TppNotOnboarded() {
+        Mockito.when(tppRepository.findByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.getTppByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+                .verify();
+    }
+
+    @Test
     void getTokenSection_Ok() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP));
@@ -239,6 +262,17 @@ class TppServiceTest {
                         throwable instanceof RuntimeException &&
                                 throwable.getMessage().contains("Tpp not found during get process"))
                 .verify();
+    }
+
+
+    @Test
+    void testConnection(){
+        NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();
+        networkResponseDTO.setMessage("tppName ha raggiunto i nostri sistemi");
+        networkResponseDTO.setCode("PAGOPA_NETWORK_TEST");
+        StepVerifier.create(tppService.testConnection("tppName"))
+                .expectNext(networkResponseDTO)
+                .verifyComplete();
     }
 }
 

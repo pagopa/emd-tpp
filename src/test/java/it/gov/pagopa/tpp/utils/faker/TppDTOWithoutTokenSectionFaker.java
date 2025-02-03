@@ -4,6 +4,8 @@ import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.Contact;
 
+import java.util.HashMap;
+
 public class TppDTOWithoutTokenSectionFaker {
 
     private TppDTOWithoutTokenSectionFaker(){}
@@ -25,6 +27,10 @@ public class TppDTOWithoutTokenSectionFaker {
                 .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
+                .paymentButton("#button")
+                .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
                 .build();
     }
 
@@ -45,6 +51,10 @@ public class TppDTOWithoutTokenSectionFaker {
                 .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
+                .paymentButton("#button")
+                .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
                 .build();
     }
 

@@ -71,4 +71,11 @@ public interface TppController {
     @GetMapping("/{tppId}/token")
     Mono<ResponseEntity<TokenSectionDTO>> getTokenSection(@Valid @PathVariable String tppId);
 
+    @GetMapping("/entityId/{entityId}")
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppByEntityId(@Valid @PathVariable String entityId);
+
+    @GetMapping("/network/connection/{tppName}")
+    Mono<ResponseEntity<NetworkResponseDTO>> testConnection(@Valid @PathVariable String tppName);
+
+
 }
