@@ -1,14 +1,6 @@
 name: Snapshot docker build and push
 
 on:
-  push:
-    branches-ignore:
-      - 'main'
-    paths-ignore:
-      - 'CODEOWNERS'
-      - '**.md'
-      - '.**'
-
   pull_request:
     branches:
       - 'release-*'
