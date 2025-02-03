@@ -2,9 +2,16 @@ name: Snapshot docker build and push
 
 on:
   push:
-    # Sequence of patterns matched against refs/heads
     branches-ignore:
       - 'main'
+    paths-ignore:
+      - 'CODEOWNERS'
+      - '**.md'
+      - '.**'
+
+  pull_request:
+    branches:
+      - 'release-*'
     paths-ignore:
       - 'CODEOWNERS'
       - '**.md'
