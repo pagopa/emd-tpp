@@ -19,12 +19,16 @@ import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
+import it.gov.pagopa.tpp.service.redis.AzureRedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static it.gov.pagopa.common.utils.Utils.inputSanify;
 
@@ -41,10 +45,11 @@ public class TppServiceImpl implements TppService {
     private final TokenSectionDTOToObjectMapper tokenSectionMapperToObject;
     private final ExceptionMap exceptionMap;
     private final AzureEncryptService azureEncryptService;
+    private final AzureRedisService azureRedisService;
     private static final String TPP_NOT_FOUND = "Tpp not found during get process";
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO, TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO, TokenSectionObjectToDTOMapper tokenSectionMapperToDTO,
-                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService) {
+                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService, AzureRedisService azureRedisService) {
         this.tppRepository = tppRepository;
         this.mapperToDTO = mapperToDTO;
         this.tppWithoutTokenSectionMapperToDTO = tppWithoutTokenSectionMapperToDTO;
@@ -53,19 +58,57 @@ public class TppServiceImpl implements TppService {
         this.tokenSectionMapperToObject = tokenSectionMapperToObject;
         this.exceptionMap = exceptionMap;
         this.azureEncryptService = azureEncryptService;
+        this.azureRedisService = azureRedisService;
     }
+
+
 
     @Override
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
 
-        return tppRepository.findByTppIdInAndStateTrue(tppIdList)
-                 .map(tpp -> { keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
-                                      return mapperToDTO.map(tpp);})
-                .collectList()
+        return checkCacheForTppIds(tppIdList)
+                .flatMap(cacheResult -> {
+                    List<String> missingTppIds = getMissingTppIds(tppIdList, cacheResult);
+                    if (missingTppIds.isEmpty()) {
+                        return Mono.just(cacheResult);
+                    }
+                    return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
+                            .map(tpp -> {
+                                keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
+                                TppDTO tppDTO = mapperToDTO.map(tpp);
+                                azureRedisService.addToCache(tpp.getTppId(), tpp).subscribe();
+                                return tppDTO;
+                            })
+                            .collectList()
+                            .map(tppDTOList -> {
+                                cacheResult.addAll(tppDTOList);
+                                return cacheResult;
+                            });
+                })
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
     }
+
+    private Mono<List<TppDTO>> checkCacheForTppIds(List<String> tppIdList) {
+        return Flux.fromIterable(tppIdList)
+                .flatMap(tppId -> azureRedisService.getFromCache(tppId)
+                        .map(tpp -> {
+                            keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
+                            return mapperToDTO.map(tpp);
+                        }))
+                .collectList();
+    }
+
+    private List<String> getMissingTppIds(List<String> tppIdList, List<TppDTO> cacheResult) {
+        Set<String> cachedIds = cacheResult.stream()
+                .map(TppDTO::getTppId)
+                .collect(Collectors.toSet());
+        return tppIdList.stream()
+                .filter(tppId -> !cachedIds.contains(tppId))
+                .toList();
+    }
+
 
     @Override
     public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection) {
