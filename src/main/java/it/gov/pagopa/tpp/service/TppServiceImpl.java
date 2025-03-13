@@ -74,16 +74,16 @@ public class TppServiceImpl implements TppService {
                         return Mono.just(cacheResult);
                     }
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
-                            .map(tpp -> {
+                            .flatMap(tpp -> {
                                 keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
                                 TppDTO tppDTO = mapperToDTO.map(tpp);
-                                azureRedisService.addToCache(tpp.getTppId(), tpp).subscribe();
-                                return tppDTO;
+                                return azureRedisService.addToCache(tpp.getTppId(), tpp)
+                                        .thenReturn(tppDTO);
                             })
                             .collectList()
-                            .map(tppDTOList -> {
+                            .flatMap(tppDTOList -> {
                                 cacheResult.addAll(tppDTOList);
-                                return cacheResult;
+                                return Mono.just(cacheResult);
                             });
                 })
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
