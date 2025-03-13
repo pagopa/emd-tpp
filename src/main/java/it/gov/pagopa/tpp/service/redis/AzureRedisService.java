@@ -10,13 +10,10 @@ import reactor.core.publisher.Mono;
 @Component
 @Slf4j
 public class AzureRedisService {
-
-    private final RedissonReactiveClient redissonClient;
     private final RMapReactive<String, Tpp> tppCache;
 
 
     public AzureRedisService(RedissonReactiveClient redissonClient) {
-        this.redissonClient = redissonClient;
         this.tppCache = redissonClient.getMap("tppCache");
     }
 
