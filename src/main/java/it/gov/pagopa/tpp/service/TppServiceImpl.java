@@ -21,10 +21,10 @@ import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,19 +66,18 @@ public class TppServiceImpl implements TppService {
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
 
-        return checkCacheForTppIds(tppIdList)
+        return Mono.fromCallable(() -> checkMapForTppIds(tppIdList))
                 .flatMap(cacheResult -> {
                     List<String> missingTppIds = getMissingTppIds(tppIdList, cacheResult);
                     if (missingTppIds.isEmpty()) {
                         return Mono.just(cacheResult);
                     }
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
-                            .flatMap(tpp -> tppMap.addToCache(tpp.getTppId(), tpp)
-                                   .then(Mono.fromCallable(() -> {
-                                       keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
-                                       return tpp;
-                                   }))
-                                   .map(mapperToDTO::map))
+                            .flatMap(tpp -> {
+                                tppMap.addToMap(tpp.getTppId(), tpp);
+                                keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
+                                return Mono.just(mapperToDTO.map(tpp));
+                            })
                             .collectList()
                             .flatMap(tppDTOList -> {
                                 cacheResult.addAll(tppDTOList);
@@ -89,14 +88,15 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
     }
 
-    private Mono<List<TppDTO>> checkCacheForTppIds(List<String> tppIdList) {
-        return Flux.fromIterable(tppIdList)
-                .flatMap(tppId -> tppMap.getFromMap(tppId)
-                        .map(tpp -> {
-                            keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
-                            return mapperToDTO.map(tpp);
-                        }))
-                .collectList();
+    private List<TppDTO> checkMapForTppIds(List<String> tppIdList) {
+        List<TppDTO> tppDTOList = new ArrayList<>();
+        for (String tppId : tppIdList) {
+            Tpp tpp = tppMap.getFromMap(tppId);
+            keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
+            TppDTO tppDTO = mapperToDTO.map(tpp);
+            tppDTOList.add(tppDTO);
+        }
+        return tppDTOList;
     }
 
     private List<String> getMissingTppIds(List<String> tppIdList, List<TppDTO> cacheResult) {

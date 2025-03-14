@@ -13,17 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TppMap {
     private final Map<String, Tpp> tppCache = new ConcurrentHashMap<>();
 
-    public Mono<Tpp> getFromMap(String tppId) {
-        return Mono.justOrEmpty(tppCache.get(tppId));
+    public Tpp getFromMap(String tppId) {
+        return tppCache.get(tppId);
     }
 
-    public Mono<Void> addToCache(String tppId, Tpp tpp) {
+    public Void addToMap(String tppId, Tpp tpp) {
         tppCache.put(tppId, tpp);
-        return Mono.empty();
+        return null;
     }
 
-    public Mono<Void> removeFromCache(String tppId) {
+    public Void removeFromMap(String tppId) {
         tppCache.remove(tppId);
-        return Mono.empty();
+        return null;
     }
 }
