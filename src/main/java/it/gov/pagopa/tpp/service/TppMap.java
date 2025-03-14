@@ -57,6 +57,10 @@ public class TppMap {
                                     log.info("Added TPP ID: {}", tppId);
                                 }
                                 return Mono.empty();
+                            })
+                            .onErrorResume(e -> {
+                                log.error("Decryption failed for TPP ID: {}", tppId, e);
+                                return Mono.empty();
                             });
                 })
                 .then();
