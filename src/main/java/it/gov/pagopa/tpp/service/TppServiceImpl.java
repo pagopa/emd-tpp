@@ -74,7 +74,6 @@ public class TppServiceImpl implements TppService {
                     }
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
                             .flatMap(tpp -> {
-                                tppMap.addToMap(tpp.getTppId(), tpp);
                                 log.info("[TPP-SERVICE][GET-ENABLED] Add TPP in MAP: {}", tpp);
                                 return keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                                         .map(decryptionResult -> mapperToDTO.map(tpp));
@@ -203,7 +202,7 @@ public class TppServiceImpl implements TppService {
                 .then(Mono.just(true));
     }
 
-    private Mono<Boolean> keyDecrypt(TokenSection tokenSection, String tppId) {
+    private Mono<TokenSection> keyDecrypt(TokenSection tokenSection, String tppId) {
         return azureEncryptService.getKey(tppId)
                 .flatMap(keyVaultKey -> {
                     CryptographyAsyncClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
@@ -213,7 +212,7 @@ public class TppServiceImpl implements TppService {
                             .thenMany(Flux.fromIterable(tokenSection.getBodyAdditionalProperties().entrySet()))
                             .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
                                     .map(entry::setValue))
-                            .then(Mono.just(true));
+                            .then(Mono.just(tokenSection));
                 });
     }
 
