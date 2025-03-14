@@ -19,7 +19,6 @@ import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
-import it.gov.pagopa.tpp.service.redis.AzureRedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -45,11 +44,11 @@ public class TppServiceImpl implements TppService {
     private final TokenSectionDTOToObjectMapper tokenSectionMapperToObject;
     private final ExceptionMap exceptionMap;
     private final AzureEncryptService azureEncryptService;
-    private final AzureRedisService azureRedisService;
+    private final TppMap tppMap;
     private static final String TPP_NOT_FOUND = "Tpp not found during get process";
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO, TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO, TokenSectionObjectToDTOMapper tokenSectionMapperToDTO,
-                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService, AzureRedisService azureRedisService) {
+                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService, TppMap tppMap) {
         this.tppRepository = tppRepository;
         this.mapperToDTO = mapperToDTO;
         this.tppWithoutTokenSectionMapperToDTO = tppWithoutTokenSectionMapperToDTO;
@@ -58,7 +57,7 @@ public class TppServiceImpl implements TppService {
         this.tokenSectionMapperToObject = tokenSectionMapperToObject;
         this.exceptionMap = exceptionMap;
         this.azureEncryptService = azureEncryptService;
-        this.azureRedisService = azureRedisService;
+        this.tppMap = tppMap;
     }
 
 
@@ -74,7 +73,7 @@ public class TppServiceImpl implements TppService {
                         return Mono.just(cacheResult);
                     }
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
-                            .flatMap(tpp -> azureRedisService.addToCache(tpp.getTppId(), tpp)
+                            .flatMap(tpp -> tppMap.addToCache(tpp.getTppId(), tpp)
                                    .then(Mono.fromCallable(() -> {
                                        keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
                                        return tpp;
@@ -92,7 +91,7 @@ public class TppServiceImpl implements TppService {
 
     private Mono<List<TppDTO>> checkCacheForTppIds(List<String> tppIdList) {
         return Flux.fromIterable(tppIdList)
-                .flatMap(tppId -> azureRedisService.getFromCache(tppId)
+                .flatMap(tppId -> tppMap.getFromMap(tppId)
                         .map(tpp -> {
                             keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
                             return mapperToDTO.map(tpp);
