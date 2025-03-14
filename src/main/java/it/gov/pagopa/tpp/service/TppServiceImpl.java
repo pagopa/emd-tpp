@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -191,26 +192,34 @@ public class TppServiceImpl implements TppService {
 
     private Mono<Boolean> keyEncrypt(TokenSection tokenSection, KeyVaultKey keyVaultKey) {
         CryptographyAsyncClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
-        return Flux.fromIterable(tokenSection.getPathAdditionalProperties().entrySet())
-                .flatMap(entry -> azureEncryptService.encrypt(entry.getValue().getBytes(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
-                        .map(entry::setValue))
-                .thenMany(Flux.fromIterable(tokenSection.getBodyAdditionalProperties().entrySet()))
-                .flatMap(entry -> azureEncryptService.encrypt(entry.getValue().getBytes(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
-                        .map(entry::setValue))
-                .then(Mono.just(true));
+        Map<String, String> pathProps = tokenSection.getPathAdditionalProperties();
+        Map<String, String> bodyProps = tokenSection.getBodyAdditionalProperties();
+
+        return Flux.concat(
+                pathProps != null ? Flux.fromIterable(pathProps.entrySet())
+                        .flatMap(entry -> azureEncryptService.encrypt(entry.getValue().getBytes(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                .map(entry::setValue)) : Flux.empty(),
+                bodyProps != null ? Flux.fromIterable(bodyProps.entrySet())
+                        .flatMap(entry -> azureEncryptService.encrypt(entry.getValue().getBytes(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                .map(entry::setValue)) : Flux.empty()
+        ).then(Mono.just(true));
     }
 
     private Mono<TokenSection> keyDecrypt(TokenSection tokenSection, String tppId) {
         return azureEncryptService.getKey(tppId)
                 .flatMap(keyVaultKey -> {
                     CryptographyAsyncClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
-                    return Flux.fromIterable(tokenSection.getPathAdditionalProperties().entrySet())
-                            .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
-                                    .map(entry::setValue))
-                            .thenMany(Flux.fromIterable(tokenSection.getBodyAdditionalProperties().entrySet()))
-                            .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
-                                    .map(entry::setValue))
-                            .then(Mono.just(tokenSection));
+                    Map<String, String> pathProps = tokenSection.getPathAdditionalProperties();
+                    Map<String, String> bodyProps = tokenSection.getBodyAdditionalProperties();
+
+                    return Flux.concat(
+                            pathProps != null ? Flux.fromIterable(pathProps.entrySet())
+                                    .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                            .map(entry::setValue)) : Flux.empty(),
+                            bodyProps != null ? Flux.fromIterable(bodyProps.entrySet())
+                                    .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                            .map(entry::setValue)) : Flux.empty()
+                    ).then(Mono.just(tokenSection));
                 });
     }
 
