@@ -92,8 +92,10 @@ public class TppServiceImpl implements TppService {
         return tppIdList.stream()
                 .map(tppMap::getFromMap)
                 .filter(Objects::nonNull)
-                .peek(tpp -> keyDecrypt(tpp.getTokenSection(), tpp.getTppId()))
-                .map(mapperToDTO::map)
+                .map(tpp -> {
+                    keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
+                    return mapperToDTO.map(tpp);
+                })
                 .collect(Collectors.toList());
     }
 
