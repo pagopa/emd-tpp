@@ -74,7 +74,6 @@ public class TppServiceImpl implements TppService {
                     }
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
                             .flatMap(tpp -> {
-                                log.info("[TPP-SERVICE][GET-ENABLED] Add TPP in MAP: {}", tpp);
                                 return keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                                         .map(decryptionResult -> mapperToDTO.map(tpp));
                             })

@@ -20,12 +20,11 @@ public class TppMap {
 
     public TppMap(TppRepository tppRepository) {
         this.tppRepository = tppRepository;
-
     }
 
     @PostConstruct
     private void populateMap() {
-         tppRepository.findAll()
+        tppRepository.findAll()
                 .filter(Tpp::getState)
                 .buffer(100)
                 .flatMap(this::addToMap)
@@ -44,11 +43,11 @@ public class TppMap {
         });
         return Mono.empty();
     }
+
     public void addToMap(String tppId, Tpp tpp) {
         if (tppCache.putIfAbsent(tppId, tpp) != null) {
             log.info("Duplicate TPP ID: {}", tppId);
-        }
-        else {
+        } else {
             log.info("Added TPP ID: {}", tppId);
         }
     }
