@@ -24,8 +24,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -89,14 +89,12 @@ public class TppServiceImpl implements TppService {
     }
 
     private List<TppDTO> checkMapForTppIds(List<String> tppIdList) {
-        List<TppDTO> tppDTOList = new ArrayList<>();
-        for (String tppId : tppIdList) {
-            Tpp tpp = tppMap.getFromMap(tppId);
-            keyDecrypt(tpp.getTokenSection(), tpp.getTppId());
-            TppDTO tppDTO = mapperToDTO.map(tpp);
-            tppDTOList.add(tppDTO);
-        }
-        return tppDTOList;
+        return tppIdList.stream()
+                .map(tppMap::getFromMap)
+                .filter(Objects::nonNull)
+                .peek(tpp -> keyDecrypt(tpp.getTokenSection(), tpp.getTppId()))
+                .map(mapperToDTO::map)
+                .collect(Collectors.toList());
     }
 
     private List<String> getMissingTppIds(List<String> tppIdList, List<TppDTO> cacheResult) {
