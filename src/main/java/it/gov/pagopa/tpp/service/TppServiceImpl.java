@@ -73,6 +73,7 @@ public class TppServiceImpl implements TppService {
                     if (missingTppIds.isEmpty()) {
                         return Mono.just(cacheResult);
                     }
+                    log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}", missingTppIds);
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
                             .flatMap(tpp -> keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                                         .map(decryptionResult -> mapperToDTO.map(tpp))
