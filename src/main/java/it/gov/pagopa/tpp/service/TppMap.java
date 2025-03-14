@@ -24,12 +24,13 @@ public class TppMap {
     }
 
     @PostConstruct
-    private Mono<Void> populateBloomFilter() {
-        return tppRepository.findAll()
+    private void populateMap() {
+         tppRepository.findAll()
                 .filter(Tpp::getState)
                 .buffer(100)
                 .flatMap(this::addToMap)
-                .then(Mono.fromRunnable(() -> log.info("[BLOOM-FILTER-INITIALIZER] Population complete")));
+                .then(Mono.fromRunnable(() -> log.info("[MAP-INITIALIZER] Population complete")))
+                .subscribe();
     }
 
     private Mono<Void> addToMap(List<Tpp> tpps) {
