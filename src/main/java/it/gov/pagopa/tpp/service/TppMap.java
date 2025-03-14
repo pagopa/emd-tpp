@@ -17,7 +17,9 @@ public class TppMap {
     }
 
     public void addToMap(String tppId, Tpp tpp) {
-        tppCache.put(tppId, tpp);
+        if (tppCache.putIfAbsent(tppId, tpp) != null) {
+            log.info("Duplicate TPP ID: {}", tppId);
+        }
     }
 
     public Void removeFromMap(String tppId) {
