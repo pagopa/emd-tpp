@@ -94,8 +94,7 @@ public class TppServiceImpl implements TppService {
                     Tpp tpp = tppMap.getFromMap(tppId);
                     if (tpp != null) {
                         log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp);
-                        return keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
-                                .map(decryptionResult -> mapperToDTO.map(tpp));
+                        return Mono.just(mapperToDTO.map(tpp));
                     } else {
                         return Mono.empty();
                     }
