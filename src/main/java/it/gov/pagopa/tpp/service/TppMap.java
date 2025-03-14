@@ -38,7 +38,7 @@ public class TppMap {
 
     private Mono<Void> addToMap(List<Tpp> tpps) {
         tpps.forEach(tpp -> {
-            String tppId = tpp.getId();
+            String tppId = tpp.getTppId();
             if (tppCache.asMap().putIfAbsent(tppId, tpp) != null) {
                 log.info("Duplicate TPP ID: {}", tppId);
             } else {
