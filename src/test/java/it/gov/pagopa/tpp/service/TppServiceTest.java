@@ -55,7 +55,7 @@ class TppServiceTest {
     @Autowired
     private TokenSectionObjectToDTOMapper tokenSectionObjectToDTOMapper;
 
-    @Autowired
+    @MockBean
     private  TppMap tppMap;
 
     @Autowired

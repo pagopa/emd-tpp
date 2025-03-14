@@ -73,10 +73,9 @@ public class TppServiceImpl implements TppService {
                         return Mono.just(cacheResult);
                     }
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
-                            .flatMap(tpp -> {
-                                return keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
-                                        .map(decryptionResult -> mapperToDTO.map(tpp));
-                            })
+                            .flatMap(tpp -> keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
+                                        .map(decryptionResult -> mapperToDTO.map(tpp))
+                            )
                             .collectList()
                             .flatMap(tppDTOList -> {
                                 cacheResult.addAll(tppDTOList);
