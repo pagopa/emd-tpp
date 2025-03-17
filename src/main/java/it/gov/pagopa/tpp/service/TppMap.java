@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,7 +15,6 @@ import reactor.core.publisher.Mono;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 @Component
@@ -30,7 +30,6 @@ public class TppMap {
         this.tppRepository = tppRepository;
         this.azureEncryptService = azureEncryptService;
         this.tppCache = Caffeine.newBuilder()
-                .expireAfterWrite(12, TimeUnit.HOURS)
                 .maximumSize(1000)
                 .build();
     }
@@ -45,6 +44,12 @@ public class TppMap {
                 .subscribe();
     }
 
+    @Scheduled(cron = "0 0 4 * * ?")
+    public void resetCache() {
+        tppCache.invalidateAll();
+        populateMap();
+        log.info("[CACHE-RESET] Cache reset at 4 AM");
+    }
     private Mono<Void> addToMap(List<Tpp> tpps) {
         return Flux.fromIterable(tpps)
                 .flatMap(tpp -> {
