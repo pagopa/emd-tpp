@@ -22,7 +22,6 @@ spring:
           maxConnectionIdleTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_IDLE_MS:120000}
           maxConnecting: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTING:2}
 
-
 management:
   health:
     mongo.enabled: ${HEALTH_MONGO_ENABLED:false}

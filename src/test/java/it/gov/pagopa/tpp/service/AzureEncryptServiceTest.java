@@ -1,7 +1,7 @@
 package it.gov.pagopa.tpp.service;
 
-import com.azure.security.keyvault.keys.KeyClient;
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
+import com.azure.security.keyvault.keys.KeyAsyncClient;
+import com.azure.security.keyvault.keys.cryptography.CryptographyAsyncClient;
 import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.CreateRsaKeyOptions;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 
@@ -24,12 +25,12 @@ import static org.mockito.Mockito.*;
 class AzureEncryptServiceTest {
 
     @Mock
-    private KeyClient mockKeyClient;
+    private KeyAsyncClient mockKeyClient;
 
     @Mock
     private KeyVaultKey mockKeyVaultKey;
     @Mock
-    private CryptographyClient mockCryptographyClient;
+    private CryptographyAsyncClient mockCryptographyClient;
 
     @Autowired
     private AzureEncryptService azureEncryptService;
@@ -41,17 +42,17 @@ class AzureEncryptServiceTest {
 
     @Test
     void testGetKey() {
-        when(mockKeyClient.getKey("tppId")).thenReturn(mock(KeyVaultKey.class));
+        when(mockKeyClient.getKey("tppId")).thenReturn(Mono.just(mock(KeyVaultKey.class)));
 
-        KeyVaultKey key = azureEncryptService.getKey("tppId");
+        KeyVaultKey key = azureEncryptService.getKey("tppId").block();
         assertNotNull(key);
     }
 
     @Test
     void testCreateRsaKey() {
-        when(mockKeyClient.createRsaKey(any(CreateRsaKeyOptions.class))).thenReturn(mock(KeyVaultKey.class));
+        when(mockKeyClient.createRsaKey(any(CreateRsaKeyOptions.class))).thenReturn(Mono.just(mock(KeyVaultKey.class)));
 
-        KeyVaultKey key = azureEncryptService.createRsaKey("tppId");
+        KeyVaultKey key = azureEncryptService.createRsaKey("tppId").block();
         assertNotNull(key);
     }
 
@@ -62,9 +63,9 @@ class AzureEncryptServiceTest {
 
         byte[] encryptedBytes = "encrypted message".getBytes();
         when(mockCryptographyClient.encrypt(algorithm, plainText))
-                .thenReturn(new com.azure.security.keyvault.keys.cryptography.models.EncryptResult(encryptedBytes, algorithm, "key"));
+                .thenReturn(Mono.just(new com.azure.security.keyvault.keys.cryptography.models.EncryptResult(encryptedBytes, algorithm, "key")));
 
-        String encrypted = azureEncryptService.encrypt(plainText, algorithm, mockCryptographyClient);
+        String encrypted = azureEncryptService.encrypt(plainText, algorithm, mockCryptographyClient).block();
         assertNotNull(encrypted);
         assertEquals(Base64.getEncoder().encodeToString(encryptedBytes), encrypted);
     }
@@ -76,9 +77,9 @@ class AzureEncryptServiceTest {
 
         byte[] decryptedBytes = "test message".getBytes();
         when(mockCryptographyClient.decrypt(algorithm, Base64.getDecoder().decode(encryptedValue)))
-                .thenReturn(new com.azure.security.keyvault.keys.cryptography.models.DecryptResult(decryptedBytes, algorithm, "key"));
+                .thenReturn(Mono.just(new com.azure.security.keyvault.keys.cryptography.models.DecryptResult(decryptedBytes, algorithm, "key")));
 
-        String decrypted = azureEncryptService.decrypt(encryptedValue, algorithm, mockCryptographyClient);
+        String decrypted = azureEncryptService.decrypt(encryptedValue, algorithm, mockCryptographyClient).block();
         assertNotNull(decrypted);
         assertEquals(new String(decryptedBytes), decrypted);
     }
@@ -87,7 +88,7 @@ class AzureEncryptServiceTest {
     void testBuildCryptographyClient_WithString() {
         String keyId = "https://test.vault.azure.net/keys/myKey/test";
 
-        CryptographyClient client1 = azureEncryptService.buildCryptographyClient(keyId);
+        CryptographyAsyncClient client1 = azureEncryptService.buildCryptographyClient(keyId);
         assertNotNull(client1);
     }
 
@@ -97,7 +98,7 @@ class AzureEncryptServiceTest {
 
         when(mockKeyVaultKey.getId()).thenReturn(keyId);
 
-        CryptographyClient client2 = azureEncryptService.buildCryptographyClient(mockKeyVaultKey);
+        CryptographyAsyncClient client2 = azureEncryptService.buildCryptographyClient(mockKeyVaultKey);
         assertNotNull(client2);
     }
 }

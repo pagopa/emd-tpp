@@ -83,7 +83,12 @@
 			<artifactId>azure-security-keyvault-keys</artifactId>
 			<version>4.8.7</version>
 		</dependency>
-	</dependencies>
+
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+    </dependencies>
 
 	<dependencyManagement>
 		<dependencies>
