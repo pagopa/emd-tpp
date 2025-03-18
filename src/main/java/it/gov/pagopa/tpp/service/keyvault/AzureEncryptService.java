@@ -2,15 +2,16 @@ package it.gov.pagopa.tpp.service.keyvault;
 
 import com.azure.identity.DefaultAzureCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.security.keyvault.keys.KeyClient;
+import com.azure.security.keyvault.keys.KeyAsyncClient;
 import com.azure.security.keyvault.keys.KeyClientBuilder;
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
+import com.azure.security.keyvault.keys.cryptography.CryptographyAsyncClient;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
 import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.CreateRsaKeyOptions;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.util.Base64;
@@ -20,19 +21,19 @@ public class AzureEncryptService {
 
     private static final DefaultAzureCredential DEFAULT_AZURE_CREDENTIAL = new DefaultAzureCredentialBuilder().build();
 
-    private  KeyClient keyClient;
+    private KeyAsyncClient keyClient;
     public AzureEncryptService(@Value("${crypto.azure.key-vault.url}") String keyVaultUrl){
         this.keyClient= new KeyClientBuilder()
                 .vaultUrl(keyVaultUrl)
                 .credential(DEFAULT_AZURE_CREDENTIAL)
-                .buildClient();
+                .buildAsyncClient();
     }
 
-    public KeyVaultKey getKey(String tppId){
+    public Mono<KeyVaultKey> getKey(String tppId){
         return keyClient.getKey(tppId);
     }
 
-    public KeyVaultKey createRsaKey(String tppId){
+    public Mono<KeyVaultKey> createRsaKey(String tppId){
         return keyClient
                 .createRsaKey(new CreateRsaKeyOptions(tppId)
                                   .setExpiresOn(OffsetDateTime.now().plusYears(1))
@@ -41,26 +42,28 @@ public class AzureEncryptService {
     }
 
 
-    public String encrypt(byte[] plainValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyClient cryptoClient) {
-        return Base64.getEncoder().encodeToString(cryptoClient.encrypt(encryptionAlgorithm, plainValue).getCipherText());
+    public Mono<String> encrypt(byte[] plainValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyAsyncClient cryptoClient) {
+        return cryptoClient.encrypt(encryptionAlgorithm, plainValue)
+                .map(encryptedData -> Base64.getEncoder().encodeToString(encryptedData.getCipherText()));
     }
 
-    public String decrypt(String encryptedValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyClient cryptoClient) {
-        return new String(cryptoClient.decrypt(encryptionAlgorithm, Base64.getDecoder().decode(encryptedValue)).getPlainText());
+    public Mono<String> decrypt(String encryptedValue, EncryptionAlgorithm encryptionAlgorithm, CryptographyAsyncClient cryptoClient) {
+        return cryptoClient.decrypt(encryptionAlgorithm, Base64.getDecoder().decode(encryptedValue))
+                .map(decryptedData -> new String(decryptedData.getPlainText()));
     }
 
-    public CryptographyClient buildCryptographyClient(KeyVaultKey key) {
+    public CryptographyAsyncClient buildCryptographyClient(KeyVaultKey key) {
         return buildCryptographyClient(key.getId());
     }
 
-    public CryptographyClient buildCryptographyClient(String keyId) {
+    public CryptographyAsyncClient buildCryptographyClient(String keyId) {
         return new CryptographyClientBuilder()
                 .credential(DEFAULT_AZURE_CREDENTIAL)
                 .keyIdentifier(keyId)
-                .buildClient();
+                .buildAsyncClient();
     }
 
-    public void setKeyClient(KeyClient keyClient) {
+    public void setKeyClient(KeyAsyncClient keyClient) {
        this.keyClient = keyClient;
     }
 }
