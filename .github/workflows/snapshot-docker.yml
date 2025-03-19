@@ -20,13 +20,7 @@ jobs:
         run: mkdir -p docker-context
 
       - name: Write GITHUB_TOKEN to a file
-        run: echo "${{ secrets.GITHUB_TOKEN }}" > github_token.txt
-
-      - name: Check if the token file exists
-        run: cat github_token.txt || echo "❌ Token file not found!"
-
-      - name: Move token file to Docker build context
-        run: mv github_token.txt ./docker-context/
+        run: echo "${{ secrets.GITHUB_TOKEN }}" > docker-context/github_token.txt
 
       - name: 📦 Docker build and push
         id: release

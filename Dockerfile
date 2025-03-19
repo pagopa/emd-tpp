@@ -18,7 +18,7 @@ RUN TOKEN=$(cat /tmp/github_token.txt) && \
     echo '  <servers>' >> /root/.m2/settings.xml && \
     echo '    <server>' >> /root/.m2/settings.xml && \
     echo '      <id>github</id>' >> /root/.m2/settings.xml && \
-    echo '      <username>your-username</username>' >> /root/.m2/settings.xml && \
+    echo '      <username></username>' >> /root/.m2/settings.xml && \
     echo "      <password>${TOKEN}</password>" >> /root/.m2/settings.xml && \
     echo '    </server>' >> /root/.m2/settings.xml && \
     echo '  </servers>' >> /root/.m2/settings.xml && \
