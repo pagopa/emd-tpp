@@ -16,9 +16,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Write GITHUB_TOKEN to a file
-        run: echo "${{ secrets.GITHUB_TOKEN }}" > github_token.txt
-
       - name: 📦 Docker build and push
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #

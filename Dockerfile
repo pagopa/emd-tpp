@@ -8,25 +8,11 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-# Copia il file contenente il token
-COPY github_token.txt /tmp/github_token.txt
+RUN \
+ --mount=type=secret,id=github_token,uid=1001 \
+ export GH_TOKEN=$(cat /run/secrets/github_token) && \
+ echo "<settings><servers><server><id>github</id><username></username><password>$GH_TOKEN</password></server></settings>" >> settings.xml
 
-# Legge il token dal file e lo usa per creare settings.xml
-RUN TOKEN=$(cat /tmp/github_token.txt) && \
-    echo '<?xml version="1.0" encoding="UTF-8"?>' > /root/.m2/settings.xml && \
-    echo '<settings>' >> /root/.m2/settings.xml && \
-    echo '  <servers>' >> /root/.m2/settings.xml && \
-    echo '    <server>' >> /root/.m2/settings.xml && \
-    echo '      <id>github</id>' >> /root/.m2/settings.xml && \
-    echo '      <username></username>' >> /root/.m2/settings.xml && \
-    echo "      <password>${TOKEN}</password>" >> /root/.m2/settings.xml && \
-    echo '    </server>' >> /root/.m2/settings.xml && \
-    echo '  </servers>' >> /root/.m2/settings.xml && \
-    echo '</settings>' >> /root/.m2/settings.xml && \
-    rm /tmp/github_token.txt
-
-# Debug per verificare che settings.xml sia stato creato correttamente
-RUN cat settings.xml
 
 # Esegue la build Maven con il file settings.xml
 RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
