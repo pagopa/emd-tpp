@@ -7,9 +7,9 @@ WORKDIR /build
 
 COPY pom.xml .
 COPY src ./src
-COPY settings.xml /root/.m2/settings.xml
 
-RUN if [-f /root/.m2/settings.xml ]; then echo "settings.xml found!"; else echo "settings.xml MISSING!"; fi
+ARG MAVEN_SETTINGS=settings.xml
+COPY ${MAVEN_SETTINGS} /root/.m2/settings.xml
 
 RUN mvn clean package -DskipTests
 
