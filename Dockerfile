@@ -8,13 +8,19 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-RUN \
- --mount=type=secret,id=github_token,uid=1001 \
- export GH_TOKEN=$(cat /run/secrets/github_token) && \
- echo "<settings><servers><server><id>github</id><username></username><password>$GH_TOKEN</password></server></settings>" >> settings.xml
+# Monta il secret di GitHub Token
+RUN --mount=type=secret,id=github_token,uid=1001 \
+    SECRET_PATH="/run/secrets/github_token"; \
+    if [ -f "$SECRET_PATH" ] && [ -s "$SECRET_PATH" ]; then \
+        GH_TOKEN=$(cat "$SECRET_PATH"); \
+        echo "✅ Secret github_token trovato!"; \
+        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><settings><servers><server><id>github</id><username>your-username</username><password>${GH_TOKEN}</password></server></servers></settings>" > settings.xml; \
+    else \
+        echo "❌ Errore: Il secret github_token non è stato trovato o è vuoto!"; \
+        exit 1; \
+    fi
 
-
-# Esegue la build Maven con il file settings.xml
+# Esegue la build Maven utilizzando settings.xml
 RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
 
 #
