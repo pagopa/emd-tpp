@@ -8,11 +8,14 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-# Gestione del token GitHub per Maven
+# Gestione delle credenziali GitHub per Maven
 RUN --mount=type=secret,id=gh_token,uid=1001 \
+    --mount=type=secret,id=gh_user,uid=1001 \
     export GH_TOKEN=$(cat /run/secrets/gh_token) && \
-    echo "<settings><servers><server><id>github</id><username>your-username</username><password>$GH_TOKEN</password></server></servers></settings>" > settings.xml && \
+    export GH_USER=$(cat /run/secrets/gh_user) && \
+    echo "<settings><servers><server><id>github</id><username>${GH_USER}</username><password>${GH_TOKEN}</password></server></servers></settings>" > settings.xml && \
     mvn clean package -DskipTests -s settings.xml
+
 
 #
 # Docker RUNTIME
