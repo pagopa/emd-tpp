@@ -24,5 +24,4 @@ jobs:
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          docker_build_args: "REPO_PASSWORD=${{ secrets.GITHUB_TOKEN }}"
 
