@@ -21,3 +21,10 @@ jobs:
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Docker secret and Build Image
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker secret create gh_token -
+          DOCKER_BUILDKIT=1 docker build \
+            --secret id=gh_token \
+            -t myapp .
