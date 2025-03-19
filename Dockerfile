@@ -9,9 +9,9 @@ COPY pom.xml .
 COPY src ./src
 
 # Monta il secret di GitHub Token
-RUN --mount=type=secret,id=github_token,uid=1001 \
+RUN --mount=type=secret,id=github_token,uid=1001 sh -c ' \
     SECRET_PATH="/run/secrets/github_token"; \
-    echo "📂 Contenuto della directory /run/secrets/:";\
+    echo "📂 Contenuto della directory /run/secrets/:"; \
     ls -lah /run/secrets/ || echo "⚠️ La directory /run/secrets/ non esiste!"; \
     if [ -f "$SECRET_PATH" ]; then \
         echo "✅ Il secret github_token è stato montato correttamente!"; \
@@ -20,7 +20,7 @@ RUN --mount=type=secret,id=github_token,uid=1001 \
     else \
         echo "❌ Il secret github_token NON è stato trovato in /run/secrets/!"; \
         echo "⚠️ Questo significa che il secret non è stato montato o è stato passato vuoto!"; \
-    fi
+    fi'
 
 # Esegue la build Maven utilizzando settings.xml
 RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
