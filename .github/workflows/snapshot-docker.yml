@@ -27,6 +27,12 @@ jobs:
       - name: Copy Maven settings into Docker context
         run: cp ~/.m2/settings.xml ./settings.xml
 
+      - name: Verify settings.xml before Docker build
+        run: |
+          echo "Checking if settings.xml exists..."
+          ls -l settings.xml || echo "settings.xml NOT found!"
+          cat settings.xml || echo "Unable to read settings.xml!"
+
       - name: 📦 Docker build and push
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
