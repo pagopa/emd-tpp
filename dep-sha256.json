@@ -1119,6 +1119,27 @@
       "groupId": "io.netty",
       "version": "4.1.112.Final",
       "sha256": "sDln8yxl3l7TObl3KRcOAomyL_pXKef0X2i_a0MftWc="
+    },
+    {
+      "id": "com.github.ben-manes.caffeine:caffeine:jar:3.1.8",
+      "artifactId": "caffeine",
+      "groupId": "com.github.ben-manes.caffeine",
+      "version": "3.1.8",
+      "sha256": "fdFfnfG-I4_6o2fOb1VnN6iAMd5ClNrRju9XxHTd8dM="
+    },
+    {
+      "id": "org.checkerframework:checker-qual:jar:3.37.0",
+      "artifactId": "checker-qual",
+      "groupId": "org.checkerframework",
+      "version": "3.37.0",
+      "sha256": "5M4TdswnNeHd4iC2KtCRP1EpdwTarRVaM_OGvF2w2fc="
+    },
+    {
+      "id": "com.google.errorprone:error_prone_annotations:jar:2.21.1",
+      "artifactId": "error_prone_annotations",
+      "groupId": "com.google.errorprone",
+      "version": "2.21.1",
+      "sha256": "0fPGaqkaxSVJ4Arjsgi6S5r31y1o8jBkNVO-s45hGKw="
     }
   ]
 }
