@@ -16,27 +16,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Maven Settings
-        run: |
-          mkdir -p ~/.m2
-          echo '<settings><servers><server><id>github</id><username></username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>' > ~/.m2/settings.xml
-
-      - name: Copy Maven settings into Docker context
-        run: cp ~/.m2/settings.xml ./settings.xml
-
-      - name: Verify settings.xml before Docker build
-        run: |
-          echo "Checking if settings.xml exists..."
-          ls -l settings.xml || echo "settings.xml NOT found!"
-          cat settings.xml || echo "Unable to read settings.xml!"
-
       - name: 📦 Docker build and push
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_args: MAVEN_SETTINGS=settings.xml
-
+          docker_build_args: REPO_PASSWORD=${{ secrets.GITHUB_TOKEN }}

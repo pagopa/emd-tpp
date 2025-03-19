@@ -8,8 +8,20 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-ARG MAVEN_SETTINGS=settings.xml
-COPY ${MAVEN_SETTINGS} /root/.m2/settings.xml
+RUN echo "<settings>\n" \
+         "<servers>\n" \
+         "<server>\n" \
+         "<id>github</id>\n" \
+         "<username></username>\n" \
+         "<password>\${repoPwd}</password>\n" \
+         "</server>\n" \
+         "</servers>\n" \
+         "</settings>\n" > settings.xml
+
+
+ARG REPO_PASSWORD
+
+RUN mvn --global-settings settings.xml --projects :emd-tpp  -DrepoPwd=${REPO_PASSWORD} --also-make-dependents clean package -DskipTests
 
 RUN mvn clean package -DskipTests
 
