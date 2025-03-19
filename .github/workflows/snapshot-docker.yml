@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Set environment variable for Docker
+        run: echo "REPO_PASSWORD=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
       - name: 📦 Docker build and push
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #

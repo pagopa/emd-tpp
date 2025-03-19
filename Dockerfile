@@ -9,7 +9,6 @@ COPY pom.xml .
 COPY src ./src
 
 # Definizione della variabile d'ambiente per REPO_PASSWORD
-ARG REPO_PASSWORD
 ENV REPO_PASSWORD=${REPO_PASSWORD}
 
 # Creazione del file settings.xml con il token GitHub
