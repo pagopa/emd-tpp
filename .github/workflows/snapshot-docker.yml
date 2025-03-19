@@ -20,4 +20,4 @@ jobs:
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          secrets: ${{ secrets.GITHUB_TOKEN }}
