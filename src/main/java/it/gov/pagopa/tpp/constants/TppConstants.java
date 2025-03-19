@@ -27,6 +27,5 @@ public class TppConstants {
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
         private ExceptionName() {}
     }
-
     private TppConstants() {}
 }
