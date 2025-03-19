@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Create Docker build context directory
+        run: mkdir -p docker-context
+
       - name: Write GITHUB_TOKEN to a file
         run: echo "${{ secrets.GITHUB_TOKEN }}" > github_token.txt
 
