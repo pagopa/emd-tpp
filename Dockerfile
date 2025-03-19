@@ -12,8 +12,7 @@ COPY src ./src
 RUN --mount=type=secret,id=github_token,uid=1001 \
     SECRET_PATH="/run/secrets/github_token"; \
     echo "📂 Contenuto della directory /run/secrets/:";
-    ls -lah /run/secrets/ || echo "⚠️ La directory /run/secrets/ non esiste!";
-    \
+    ls -lah /run/secrets/ || echo "⚠️ La directory /run/secrets/ non esiste!"; \
     if [ -f "$SECRET_PATH" ]; then \
         echo "✅ Il secret github_token è stato montato correttamente!"; \
         echo "📜 Contenuto del secret github_token:"; \
