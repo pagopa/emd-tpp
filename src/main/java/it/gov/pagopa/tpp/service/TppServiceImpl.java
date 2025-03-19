@@ -1,6 +1,6 @@
 package it.gov.pagopa.tpp.service;
 
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
+import com.azure.security.keyvault.keys.cryptography.CryptographyAsyncClient;
 import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
@@ -21,10 +21,14 @@ import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static it.gov.pagopa.common.utils.Utils.inputSanify;
 
@@ -41,10 +45,11 @@ public class TppServiceImpl implements TppService {
     private final TokenSectionDTOToObjectMapper tokenSectionMapperToObject;
     private final ExceptionMap exceptionMap;
     private final AzureEncryptService azureEncryptService;
+    private final TppMap tppMap;
     private static final String TPP_NOT_FOUND = "Tpp not found during get process";
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO, TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO, TokenSectionObjectToDTOMapper tokenSectionMapperToDTO,
-                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService) {
+                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureEncryptService azureEncryptService, TppMap tppMap) {
         this.tppRepository = tppRepository;
         this.mapperToDTO = mapperToDTO;
         this.tppWithoutTokenSectionMapperToDTO = tppWithoutTokenSectionMapperToDTO;
@@ -53,19 +58,59 @@ public class TppServiceImpl implements TppService {
         this.tokenSectionMapperToObject = tokenSectionMapperToObject;
         this.exceptionMap = exceptionMap;
         this.azureEncryptService = azureEncryptService;
+        this.tppMap = tppMap;
     }
+
+
 
     @Override
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
 
-        return tppRepository.findByTppIdInAndStateTrue(tppIdList)
-                 .map(tpp -> { keyDecrypt(tpp.getTokenSection(),tpp.getTppId());
-                                      return mapperToDTO.map(tpp);})
-                .collectList()
+        return checkMapForTppIds(tppIdList)
+                .flatMap(cacheResult -> {
+                    List<String> missingTppIds = getMissingTppIds(tppIdList, cacheResult);
+                    if (missingTppIds.isEmpty()) {
+                        return Mono.just(cacheResult);
+                    }
+                    log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}", missingTppIds);
+                    return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
+                            .flatMap(tpp -> keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
+                                        .map(decryptionResult -> mapperToDTO.map(tpp))
+                            )
+                            .collectList()
+                            .flatMap(tppDTOList -> {
+                                cacheResult.addAll(tppDTOList);
+                                return Mono.just(cacheResult);
+                            });
+                })
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
     }
+
+    private Mono<List<TppDTO>> checkMapForTppIds(List<String> tppIdList) {
+        return Flux.fromIterable(tppIdList)
+                .flatMap(tppId -> {
+                    Tpp tpp = tppMap.getFromMap(tppId);
+                    if (tpp != null) {
+                        log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp);
+                        return Mono.just(mapperToDTO.map(tpp));
+                    } else {
+                        return Mono.empty();
+                    }
+                })
+                .collectList();
+    }
+
+    private List<String> getMissingTppIds(List<String> tppIdList, List<TppDTO> cacheResult) {
+        Set<String> cachedIds = cacheResult.stream()
+                .map(TppDTO::getTppId)
+                .collect(Collectors.toSet());
+        return tppIdList.stream()
+                .filter(tppId -> !cachedIds.contains(tppId))
+                .toList();
+    }
+
 
     @Override
     public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection) {
@@ -101,19 +146,19 @@ public class TppServiceImpl implements TppService {
                     log.info("[TPP-SERVICE][UPDATE] Updating TokenSection for TPP with tppId: {}", tppId);
 
                     TokenSection tokenSection = tokenSectionMapperToObject.map(tokenSectionDTO);
-                    KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
-                    keyEncrypt(tokenSection, keyVaultKey);
+                    return azureEncryptService.getKey(tppId)
+                            .flatMap(keyVaultKey -> keyEncrypt(tokenSection, keyVaultKey))
+                            .flatMap(encryptionResult -> {
+                                existingTpp.setLastUpdateDate(LocalDateTime.now());
+                                existingTpp.setTokenSection(tokenSection);
 
-                    existingTpp.setLastUpdateDate(LocalDateTime.now());
-                    existingTpp.setTokenSection(tokenSection);
-
-                    return tppRepository.save(existingTpp)
-                            .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
-                            .doOnSuccess(updatedTokenSection -> log.info("[TPP-SERVICE][UPDATE] Updated TokenSection for tppId: {}", tppId))
-                            .doOnError(error -> log.error("[TPP-SERVICE][UPDATE] Error updating TokenSection for tppId {}: {}", tppId, error.getMessage()));
+                                return tppRepository.save(existingTpp)
+                                        .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
+                                        .doOnSuccess(updatedTokenSection -> log.info("[TPP-SERVICE][UPDATE] Updated TokenSection for tppId: {}", tppId))
+                                        .doOnError(error -> log.error("[TPP-SERVICE][UPDATE] Error updating TokenSection for tppId {}: {}", tppId, error.getMessage()));
+                            });
                 })
-                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        ExceptionMessage.TPP_NOT_ONBOARDED)));
+                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_ONBOARDED)));
     }
 
     @Override
@@ -132,37 +177,50 @@ public class TppServiceImpl implements TppService {
 
     private Mono<Tpp> createAndSaveNewTpp(TppDTO tppDTO, String tppId) {
         log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
-        KeyVaultKey keyVaultKey = azureEncryptService.createRsaKey(tppId);
-        keyEncrypt(tppDTO.getTokenSection(),keyVaultKey);
-        Tpp tppToSave = mapperToObject.map(tppDTO);
-        tppToSave.setTppId(tppId);
-        tppToSave.setLastUpdateDate(LocalDateTime.now());
-        tppToSave.setCreationDate(LocalDateTime.now());
-        return tppRepository.save(tppToSave)
-                .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
-                .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
-
+        return azureEncryptService.createRsaKey(tppId)
+                .flatMap(keyVaultKey -> keyEncrypt(tppDTO.getTokenSection(), keyVaultKey))
+                .flatMap(encryptionResult -> {
+                    Tpp tppToSave = mapperToObject.map(tppDTO);
+                    tppToSave.setTppId(tppId);
+                    tppToSave.setLastUpdateDate(LocalDateTime.now());
+                    tppToSave.setCreationDate(LocalDateTime.now());
+                    return tppRepository.save(tppToSave)
+                            .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
+                            .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
+                });
     }
 
-    private void keyEncrypt(TokenSection tokenSection,KeyVaultKey keyVaultKey) {
-        CryptographyClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
-        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> azureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
-        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> azureEncryptService.encrypt(value.getBytes(), EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
+    private Mono<Boolean> keyEncrypt(TokenSection tokenSection, KeyVaultKey keyVaultKey) {
+        CryptographyAsyncClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
+        Map<String, String> pathProps = tokenSection.getPathAdditionalProperties();
+        Map<String, String> bodyProps = tokenSection.getBodyAdditionalProperties();
+
+        return Flux.concat(
+                pathProps != null ? Flux.fromIterable(pathProps.entrySet())
+                        .flatMap(entry -> azureEncryptService.encrypt(entry.getValue().getBytes(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                .map(entry::setValue)) : Flux.empty(),
+                bodyProps != null ? Flux.fromIterable(bodyProps.entrySet())
+                        .flatMap(entry -> azureEncryptService.encrypt(entry.getValue().getBytes(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                .map(entry::setValue)) : Flux.empty()
+        ).then(Mono.just(true));
     }
 
-    private void keyDecrypt(TokenSection tokenSection,String tppId) {
-        KeyVaultKey keyVaultKey = azureEncryptService.getKey(tppId);
-        CryptographyClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
-        if(tokenSection.getPathAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getPathAdditionalProperties().replaceAll((key, value) -> azureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
-        if(tokenSection.getBodyAdditionalProperties() != null && !tokenSection.getBodyAdditionalProperties().isEmpty()){
-            tokenSection.getBodyAdditionalProperties().replaceAll((key, value) -> azureEncryptService.decrypt(value, EncryptionAlgorithm.RSA_OAEP_256,cryptographyClient));
-        }
+    private Mono<TokenSection> keyDecrypt(TokenSection tokenSection, String tppId) {
+        return azureEncryptService.getKey(tppId)
+                .flatMap(keyVaultKey -> {
+                    CryptographyAsyncClient cryptographyClient = azureEncryptService.buildCryptographyClient(keyVaultKey);
+                    Map<String, String> pathProps = tokenSection.getPathAdditionalProperties();
+                    Map<String, String> bodyProps = tokenSection.getBodyAdditionalProperties();
+
+                    return Flux.concat(
+                            pathProps != null ? Flux.fromIterable(pathProps.entrySet())
+                                    .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                            .map(entry::setValue)) : Flux.empty(),
+                            bodyProps != null ? Flux.fromIterable(bodyProps.entrySet())
+                                    .flatMap(entry -> azureEncryptService.decrypt(entry.getValue(), EncryptionAlgorithm.RSA_OAEP_256, cryptographyClient)
+                                            .map(entry::setValue)) : Flux.empty()
+                    ).then(Mono.just(tokenSection));
+                });
     }
 
     @Override
