@@ -22,9 +22,13 @@ jobs:
       - name: Check if the token file exists
         run: cat github_token.txt || echo "❌ Token file not found!"
 
+      - name: Move token file to Docker build context
+        run: mv github_token.txt ./docker-context/
+
       - name: 📦 Docker build and push
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          docker_context_path: docker-context
 
