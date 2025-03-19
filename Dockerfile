@@ -11,13 +11,16 @@ COPY src ./src
 # Monta il secret di GitHub Token
 RUN --mount=type=secret,id=github_token,uid=1001 \
     SECRET_PATH="/run/secrets/github_token"; \
-    if [ -f "$SECRET_PATH" ] && [ -s "$SECRET_PATH" ]; then \
-        GH_TOKEN=$(cat "$SECRET_PATH"); \
-        echo "✅ Secret github_token trovato!"; \
-        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><settings><servers><server><id>github</id><username>your-username</username><password>${GH_TOKEN}</password></server></servers></settings>" > settings.xml; \
+    echo "📂 Contenuto della directory /run/secrets/:";
+    ls -lah /run/secrets/ || echo "⚠️ La directory /run/secrets/ non esiste!";
+    \
+    if [ -f "$SECRET_PATH" ]; then \
+        echo "✅ Il secret github_token è stato montato correttamente!"; \
+        echo "📜 Contenuto del secret github_token:"; \
+        cat "$SECRET_PATH"; \
     else \
-        echo "❌ Errore: Il secret github_token non è stato trovato o è vuoto!"; \
-        exit 1; \
+        echo "❌ Il secret github_token NON è stato trovato in /run/secrets/!"; \
+        echo "⚠️ Questo significa che il secret non è stato montato o è stato passato vuoto!"; \
     fi
 
 # Esegue la build Maven utilizzando settings.xml
