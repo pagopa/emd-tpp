@@ -8,12 +8,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-# Gestione delle credenziali GitHub per Maven
-RUN --mount=type=secret,id=gh_token,uid=1001 \
-    echo "<settings><servers><server><id>github</id><username>x-access-token</username><password>$(cat /run/secrets/gh_token)</password></server></servers></settings>" > settings.xml && \
-    cat settings.xml && \
-    mvn clean package -DskipTests -s settings.xml
-
+RUN mvn clean package -DskipTests
 
 #
 # Docker RUNTIME
