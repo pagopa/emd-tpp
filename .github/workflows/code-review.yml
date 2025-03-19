@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-java@v4.2.1
         with:
           distribution: 'adopt'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Maven
         shell: bash
