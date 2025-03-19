@@ -28,6 +28,15 @@ jobs:
           distribution: 'adopt'
           java-version: '21'
 
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+
       - name: Setup Maven
         shell: bash
         env:
@@ -37,13 +46,6 @@ jobs:
           tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
           echo "<settings><servers><server><id>github</id><username></username><password>$GH_TOKEN</password></server><server><id>github-mil-azure-services</id><username></username><password>$GH_TOKEN</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml          
 
-      - name: Cache Maven packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
       - name: Build and test with Maven
         run: mvn clean org.jacoco:jacoco-maven-plugin:0.8.8:prepare-agent verify org.jacoco:jacoco-maven-plugin:0.8.8:report org.jacoco:jacoco-maven-plugin:0.8.8:report-aggregate -B
