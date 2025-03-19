@@ -25,9 +25,7 @@ jobs:
       #
       # Setup Maven.
       #
-      - name: Setup Maven
-        if: steps.semantic.outputs.new_release_published == 'true'
+      - name: Setup Maven Settings
         run: |
-          mkdir ${{ runner.temp }}/maven
-          tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
-          echo "<settings><servers><server><id>github</id><username></username><password>${{ secrets.GITHUB_TOKEN}}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
+          mkdir -p ~/.m2
+          echo '<settings><servers><server><id>github</id><username></username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>' > ~/.m2/settings.xml
