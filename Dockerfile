@@ -8,22 +8,27 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-RUN echo "<settings>\n" \
-         "<servers>\n" \
-         "<server>\n" \
-         "<id>github</id>\n" \
-         "<username></username>\n" \
-         "<password>\${repoPwd}</password>\n" \
-         "</server>\n" \
-         "</servers>\n" \
-         "</settings>\n" > settings.xml
-
-
+# Definizione della variabile d'ambiente per REPO_PASSWORD
 ARG REPO_PASSWORD
+ENV REPO_PASSWORD=${REPO_PASSWORD}
 
-RUN mvn --global-settings settings.xml --projects :emd-tpp  -DrepoPwd=${REPO_PASSWORD} --also-make-dependents clean package -DskipTests
+# Creazione del file settings.xml con il token GitHub
+RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
+    echo '<settings>' >> settings.xml && \
+    echo '  <servers>' >> settings.xml && \
+    echo '    <server>' >> settings.xml && \
+    echo '      <id>github</id>' >> settings.xml && \
+    echo '      <username></username>' >> settings.xml && \
+    echo "      <password>${REPO_PASSWORD}</password>" >> settings.xml && \
+    echo '    </server>' >> settings.xml && \
+    echo '  </servers>' >> settings.xml && \
+    echo '</settings>' >> settings.xml
 
-RUN mvn clean package -DskipTests
+# Debug per verificare che settings.xml sia stato creato correttamente
+RUN cat settings.xml
+
+# Esegue la build Maven con il file settings.xml
+RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
 
 #
 # Docker RUNTIME
