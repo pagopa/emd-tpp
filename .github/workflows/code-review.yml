@@ -59,3 +59,13 @@ jobs:
 
       - name: Fetch all branches
         run: git fetch --all
+
+      #
+      # Setup Maven.
+      #
+      - name: Setup Maven
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          mkdir ${{ runner.temp }}/maven
+          tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
+          echo "<settings><servers><server><id>github</id><username></username><password>${{ secrets.GITHUB_TOKEN}}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
