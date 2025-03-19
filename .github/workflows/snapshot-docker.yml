@@ -27,5 +27,5 @@ jobs:
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          docker_context_path: docker-context
+          docker_context_path: ./docker-context
 
