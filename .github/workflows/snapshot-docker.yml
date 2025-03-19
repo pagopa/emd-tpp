@@ -16,16 +16,11 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Create Docker build context directory
-        run: mkdir -p docker-context
-
       - name: Write GITHUB_TOKEN to a file
-        run: echo "${{ secrets.GITHUB_TOKEN }}" > docker-context/github_token.txt
+        run: echo "${{ secrets.GITHUB_TOKEN }}" > github_token.txt
 
       - name: 📦 Docker build and push
         id: release
         uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          docker_context_path: ./docker-context
-
