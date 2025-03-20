@@ -8,21 +8,26 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-# Monta il secret di GitHub Token
-RUN --mount=type=secret,id=github_token,uid=1001 sh -c ' \
-    SECRET_PATH="/run/secrets/github_token"; \
-    echo "📂 Contenuto della directory /run/secrets/:"; \
-    ls -lah /run/secrets/ || echo "⚠️ La directory /run/secrets/ non esiste!"; \
-    if [ -f "$SECRET_PATH" ]; then \
-        echo "✅ Il secret github_token è stato montato correttamente!"; \
-        echo "📜 Contenuto del secret github_token:"; \
-        cat "$SECRET_PATH"; \
-    else \
-        echo "❌ Il secret github_token NON è stato trovato in /run/secrets/!"; \
-        echo "⚠️ Questo significa che il secret non è stato montato o è stato passato vuoto!"; \
-    fi'
+# Definizione della variabile d'ambiente per REPO_PASSWORD
+ARG REPO_PASSWORD
+ENV REPO_PASSWORD=${REPO_PASSWORD}
 
-# Esegue la build Maven utilizzando settings.xml
+# Creazione del file settings.xml con il token GitHub
+RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
+    echo '<settings>' >> settings.xml && \
+    echo '  <servers>' >> settings.xml && \
+    echo '    <server>' >> settings.xml && \
+    echo '      <id>github</id>' >> settings.xml && \
+    echo '      <username>your-username</username>' >> settings.xml && \
+    echo "      <password>${REPO_PASSWORD}</password>" >> settings.xml && \
+    echo '    </server>' >> settings.xml && \
+    echo '  </servers>' >> settings.xml && \
+    echo '</settings>' >> settings.xml
+
+# Debug per verificare che settings.xml sia stato creato correttamente
+RUN cat settings.xml
+
+# Esegue la build Maven con il file settings.xml
 RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
 
 #
