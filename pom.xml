@@ -143,7 +143,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<fileName>dep-sha256.json</fileName>
+					<fileName>build/dep-sha256.json</fileName>
 					<includePlugins>false</includePlugins>
 					<includeParent>false</includeParent>
 				</configuration>
