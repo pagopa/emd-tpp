@@ -9,7 +9,7 @@ on:
       - 'CODEOWNERS'
       - '**.md'
       - '.**'
-      -
+
 jobs:
    release:
      name: Snapshot Docker
