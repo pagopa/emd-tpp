@@ -8,11 +8,12 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 COPY dep-sha256.json .
-# Definizione della variabile d'ambiente per REPO_PASSWORD
+
+# Setting ENV variables for GITHUB_TOKEN
 ARG GITHUB_TOKEN
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 
-# Creazione del file settings.xml con il token GitHub
+# settings.xml file creation with GitHub token
 RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
     echo '<settings>' >> settings.xml && \
     echo '  <servers>' >> settings.xml && \
@@ -24,10 +25,8 @@ RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
     echo '  </servers>' >> settings.xml && \
     echo '</settings>' >> settings.xml
 
-# Debug per verificare che settings.xml sia stato creato correttamente
-RUN cat settings.xml
 
-# Esegue la build Maven con il file settings.xml
+# Maven build with settings.xml file
 RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
 
 #
