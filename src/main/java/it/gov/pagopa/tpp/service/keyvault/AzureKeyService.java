@@ -17,12 +17,12 @@ import java.time.OffsetDateTime;
 import java.util.Base64;
 
 @Service
-public class AzureEncryptService {
+public class AzureKeyService {
 
     private static final DefaultAzureCredential DEFAULT_AZURE_CREDENTIAL = new DefaultAzureCredentialBuilder().build();
 
     private KeyAsyncClient keyClient;
-    public AzureEncryptService(@Value("${crypto.azure.key-vault.url}") String keyVaultUrl){
+    public AzureKeyService(@Value("${crypto.azure.key-vault.url}") String keyVaultUrl){
         this.keyClient= new KeyClientBuilder()
                 .vaultUrl(keyVaultUrl)
                 .credential(DEFAULT_AZURE_CREDENTIAL)
@@ -66,4 +66,5 @@ public class AzureEncryptService {
     public void setKeyClient(KeyAsyncClient keyClient) {
        this.keyClient = keyClient;
     }
+
 }
