@@ -18,8 +18,8 @@ RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
     echo '  <servers>' >> settings.xml && \
     echo '    <server>' >> settings.xml && \
     echo '      <id>github</id>' >> settings.xml && \
-    echo '      <username>your-username</username>' >> settings.xml && \
-    echo "      <password>${GITHUB_TOKEN }</password>" >> settings.xml && \
+    echo '      <username></username>' >> settings.xml && \
+    echo "      <password>${GITHUB_TOKEN}</password>" >> settings.xml && \
     echo '    </server>' >> settings.xml && \
     echo '  </servers>' >> settings.xml && \
     echo '</settings>' >> settings.xml
