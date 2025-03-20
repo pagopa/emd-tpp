@@ -9,8 +9,8 @@ COPY pom.xml .
 COPY src ./src
 
 # Definizione della variabile d'ambiente per REPO_PASSWORD
-ARG REPO_PASSWORD
-ENV REPO_PASSWORD=${REPO_PASSWORD}
+ARG GITHUB_TOKEN
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 
 # Creazione del file settings.xml con il token GitHub
 RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
@@ -19,7 +19,7 @@ RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
     echo '    <server>' >> settings.xml && \
     echo '      <id>github</id>' >> settings.xml && \
     echo '      <username>your-username</username>' >> settings.xml && \
-    echo "      <password>${REPO_PASSWORD}</password>" >> settings.xml && \
+    echo "      <password>${GITHUB_TOKEN }</password>" >> settings.xml && \
     echo '    </server>' >> settings.xml && \
     echo '  </servers>' >> settings.xml && \
     echo '</settings>' >> settings.xml

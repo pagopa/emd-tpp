@@ -16,9 +16,8 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: 📦 Docker build and push
-        id: release
-        uses: pagopa/eng-github-actions-iac-template/global/docker-build-push@main #
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_args: "REPO_PASSWORD=${{ secrets.GITHUB_TOKEN }}"
+     - name: Run Snapshot Docker Build/Push
+      # https://github.com/pagopa/github-actions-template/releases/tag/v2.1.1
+       uses: pagopa/github-actions-template/payments-flow-docker-snapshot@e67e0ec4bb01d6cb5065e311ba0e1c92c49966a7
+       with:
+        current_branch: ${{ github.ref_name }}
