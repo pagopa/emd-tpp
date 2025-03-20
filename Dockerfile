@@ -28,7 +28,13 @@ RUN echo '<?xml version="1.0" encoding="UTF-8"?>' > settings.xml && \
 RUN cat settings.xml
 
 # Esegue la build Maven con il file settings.xml
-RUN mvn --global-settings settings.xml clean package -DskipTests && rm settings.xml
+RUN mvn --global-settings settings.xml clean package -DskipTests
+
+# Debug: verifica che il file dep-sha256.json sia stato generato
+RUN ls -l /build/ && cat /build/dep-sha256.json || echo "dep-sha256.json non trovato"
+
+# Rimozione del file settings.xml dopo la build
+RUN rm -f settings.xml
 
 #
 # Docker RUNTIME
