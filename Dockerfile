@@ -7,7 +7,7 @@ WORKDIR /build
 
 COPY pom.xml .
 COPY src ./src
-
+COPY dep-sha256.json .
 # Definizione della variabile d'ambiente per REPO_PASSWORD
 ARG GITHUB_TOKEN
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
