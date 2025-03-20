@@ -10,7 +10,7 @@ import it.gov.pagopa.tpp.dto.mapper.TppWithoutTokenSectionObjectToDTOMapper;
 import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
-import it.gov.pagopa.tpp.service.keyvault.AzureEncryptService;
+import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,8 +34,8 @@ import static org.mockito.ArgumentMatchers.any;
         TokenSectionObjectToDTOMapper.class,
         TokenSectionDTOToObjectMapper.class,
         TppWithoutTokenSectionObjectToDTOMapper.class,
-        AzureEncryptService.class,
-        TppMap.class,
+        AzureKeyService.class,
+        TppMapService.class,
         ExceptionMap.class
 })
 class TppServiceTest {
@@ -47,7 +47,10 @@ class TppServiceTest {
     private TppRepository tppRepository;
 
     @MockBean
-    private AzureEncryptService azureEncryptService;
+    private AzureKeyService azureKeyService;
+
+    @MockBean
+    private TokenSectionCryptService tokenSectionCryptService;
 
     @Autowired
     private TppDTOToObjectMapper mapperToObject;
@@ -56,7 +59,7 @@ class TppServiceTest {
     private TokenSectionObjectToDTOMapper tokenSectionObjectToDTOMapper;
 
     @MockBean
-    private  TppMap tppMap;
+    private TppMapService tppMapService;
 
     @Autowired
     private TokenSectionDTOToObjectMapper tokenSectionDTOToObjectMapper;
@@ -69,9 +72,8 @@ class TppServiceTest {
     void getEnabled_Ok() {
         Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
                 .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
-        Mockito.when(azureEncryptService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.getKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.decrypt(any(), any(), any())).thenReturn(Mono.just("test"));
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
 
         StepVerifier.create(tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST))
                 .expectNextMatches(response -> response.equals(MOCK_TPP_DTO_LIST))
@@ -96,9 +98,9 @@ class TppServiceTest {
                 .thenReturn(Mono.empty());
         Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(azureEncryptService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.getKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.encrypt(any(), any(), any())).thenReturn(Mono.just("test"));
+        Mockito.when(azureKeyService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
+        Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
+        Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
 
         StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_TPP_DTO.getTppId()))
                 .expectNextMatches(response -> {
@@ -161,8 +163,8 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.just(MOCK_TPP));
 
-        Mockito.when(azureEncryptService.getKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.encrypt(any(), any(), any())).thenReturn(Mono.just("test"));
+        Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
+        Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
 
         StepVerifier.create(tppService.updateTokenSection(MOCK_TPP_DTO.getTppId(), MOCK_TOKEN_SECTION_DTO))
                 .expectNextMatches(result -> result.equals(MOCK_TOKEN_SECTION_DTO))
@@ -259,10 +261,7 @@ class TppServiceTest {
     void getTokenSection_Ok() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(azureEncryptService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.getKey(any())).thenReturn(Mono.just(keyVault));
-        Mockito.when(azureEncryptService.decrypt(any(), any(), any())).thenReturn(Mono.just("test"));
-
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         StepVerifier.create(tppService.getTokenSection(MOCK_TPP_DTO.getTppId()))
                 .expectNextMatches(result -> result.equals(MOCK_TOKEN_SECTION_DTO))
                 .verifyComplete();
