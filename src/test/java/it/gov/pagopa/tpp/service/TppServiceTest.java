@@ -289,6 +289,18 @@ class TppServiceTest {
                 .expectNext(networkResponseDTO)
                 .verifyComplete();
     }
+
+    @Test
+    void deleteTpp_OK() {
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
+                .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(tppRepository.delete(MOCK_TPP)).thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.deleteTpp(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
 }
 
 
