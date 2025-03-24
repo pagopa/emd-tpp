@@ -28,4 +28,6 @@ public interface TppService {
 
     Mono<NetworkResponseDTO> testConnection(String tppName);
 
+    Mono<TppDTO> deleteTpp(String tppId);
+
 }
