@@ -213,8 +213,8 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
                 .map(tppWithoutTokenSectionMapperToDTO::map)
-                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppId))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppId.replace("\n", "").replace("\r", "")))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId.replace("\n", "").replace("\r", ""), error.getMessage()));
     }
 
     @Override
@@ -225,8 +225,8 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
                 .map(tppWithoutTokenSectionMapperToDTO::map)
-                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}", entityId))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}", entityId.replace("\n", "").replace("\r", "")))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId.replace("\n", "").replace("\r", ""), error.getMessage()));
     }
 
     @Override
@@ -241,8 +241,8 @@ public class TppServiceImpl implements TppService {
                     return tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                             .map(decryptionResult -> tokenSectionMapperToDTO.map(tokenSection));
                 })
-                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
+                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId.replace("\n", "").replace("\r", "")))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId.replace("\n", "").replace("\r", ""), error.getMessage()));
     }
 
     @Override
@@ -253,8 +253,8 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
                 .flatMap(tpp -> tppRepository.delete(tpp).then(Mono.just(mapperToDTO.map(tpp))))
-                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}", tppId))
-                .doOnError(error -> log.error("[TPP-SERVICE][DELETE] Error Delete TPP for tppId {}: {}", tppId, error.getMessage()));
+                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}", tppId.replace("\n", "").replace("\r", "")))
+                .doOnError(error -> log.error("[TPP-SERVICE][DELETE] Error Delete TPP for tppId {}: {}", tppId.replace("\n", "").replace("\r", ""), error.getMessage()));
 
     }
 
