@@ -9,12 +9,10 @@ on:
       - 'CODEOWNERS'
       - '**.md'
       - '.**'
-
-permissions:
-  packages: write
-  contents: write
+  workflow_dispatch:
 
 jobs:
+
   checkout:
     name: 🔖 Checkout Repository
     runs-on: ubuntu-22.04
@@ -24,7 +22,7 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
-  flow-release:
+  payments-flow-release:
     name: 🚀 Release
     runs-on: ubuntu-22.04
     needs: checkout
