@@ -72,4 +72,10 @@ public class TppControllerImpl implements TppController {
                 .map(ResponseEntity::ok);
     }
 
+    @Override
+    public Mono<ResponseEntity<TppDTO>> deleteTpp(String tppId) {
+        return tppService.deleteTpp(tppId)
+                .map(ResponseEntity::ok);
+    }
+
 }

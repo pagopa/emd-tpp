@@ -54,6 +54,23 @@ class TppControllerTest {
     }
 
     @Test
+    void deleteTpp_ok() {
+
+        Mockito.when(tppService.deleteTpp("tppId")).thenReturn(Mono.just(MOCK_TPP_DTO));
+
+        webClient.delete()
+                .uri("/emd/tpp/test/delete/{tppId}", "tppId" )
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTOWithoutTokenSection.class)
+                .consumeWith(response -> {
+                    TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION, resultResponse);
+                });
+    }
+
+    @Test
     void updateTokenSection_Ok() {
 
         Mockito.when(tppService.updateTokenSection("tppId", MOCK_TOKEN_SECTION_DTO)).thenReturn(Mono.just(MOCK_TOKEN_SECTION_DTO));

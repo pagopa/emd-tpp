@@ -77,4 +77,7 @@ public interface TppController {
     @GetMapping("/network/connection/{tppName}")
     Mono<ResponseEntity<NetworkResponseDTO>> testConnection(@Valid @PathVariable String tppName);
 
+    @DeleteMapping("/test/delete/{tppId}")
+    Mono<ResponseEntity<TppDTO>> deleteTpp(@PathVariable String tppId);
+
 }
