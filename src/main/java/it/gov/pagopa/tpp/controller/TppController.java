@@ -80,5 +80,4 @@ public interface TppController {
     @DeleteMapping("/test/delete/{tppId}")
     Mono<ResponseEntity<TppDTO>> deleteTpp(@PathVariable String tppId);
 
-
 }
