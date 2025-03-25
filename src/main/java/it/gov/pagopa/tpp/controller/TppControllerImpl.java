@@ -77,7 +77,4 @@ public class TppControllerImpl implements TppController {
         return tppService.deleteTpp(tppId)
                 .map(ResponseEntity::ok);
     }
-
-
-  
 }
