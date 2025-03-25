@@ -22,7 +22,7 @@ jobs:
           ref: ${{ github.ref_name }}
 
 
-payments-flow-release:
+  payments-flow-release:
     name: 🚀 Release
     runs-on: ubuntu-22.04
     needs: checkout
