@@ -12,7 +12,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   checkout:
     name: 🔖 Checkout Repository
     runs-on: ubuntu-22.04
@@ -22,13 +21,14 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
+
   payments-flow-release:
     name: 🚀 Release
     runs-on: ubuntu-22.04
     needs: checkout
     steps:
       - name: 🚀 release + docker
-        # https://github.com/pagopa/github-actions-template/releases/tag/v2.0.0
-        uses: pagopa/github-actions-template/payments-flow-release@b825ee193430395706a4a7e580b8435bdded0227
+        # https://github.com/pagopa/github-actions-template/releases/tag/v2.1.1
+        uses: pagopa/github-actions-template/payments-flow-release@e67e0ec4bb01d6cb5065e311ba0e1c92c49966a7
         with:
           current_branch: ${{ github.ref_name }}
