@@ -18,6 +18,10 @@ permissions:
   packages: write
   contents: write
 
+permissions:
+  packages: write
+  contents: write
+
 jobs:
   checkout:
     name: 🔖 Checkout Repository
