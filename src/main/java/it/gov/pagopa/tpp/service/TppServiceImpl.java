@@ -26,9 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static it.gov.pagopa.common.utils.Utils.inputSanify;
-
-
 @Service
 @Slf4j
 public class TppServiceImpl implements TppService {
@@ -71,7 +68,7 @@ public class TppServiceImpl implements TppService {
                     if (missingTppIds.isEmpty()) {
                         return Mono.just(cacheResult);
                     }
-                    log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}", missingTppIds);
+                    log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}",missingTppIds);
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
                             .flatMap(tpp -> tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                                     .flatMap(decryptionResult -> tppMapService.addToMap(tpp).map(cachingResult -> mapperToDTO.map(tpp)))
@@ -82,8 +79,8 @@ public class TppServiceImpl implements TppService {
                                 return Mono.just(cacheResult);
                             });
                 })
-                .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPPs: {}", tppDTOList))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage(), error));
+                .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Retrival ended"))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage()));
     }
 
     private Mono<List<TppDTO>> checkMapForTppIds(List<String> tppIdList) {
@@ -91,7 +88,7 @@ public class TppServiceImpl implements TppService {
                 .flatMap(tppId -> {
                     Tpp tpp = tppMapService.getFromMap(tppId);
                     if (tpp != null) {
-                        log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp);
+                        log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp.getTppId());
                         return Mono.just(mapperToDTO.map(tpp));
                     } else {
                         return Mono.empty();
@@ -118,7 +115,7 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppDTOWithoutTokenSection.getTppId())
                 .flatMap(existingTpp -> {
-                    log.info("[TPP-SERVICE][UPSERT] TPP with tppId [{}] already exists. Updating...", tppDTOWithoutTokenSection.getTppId());
+                    log.info("[TPP-SERVICE][UPSERT] TPP with tppId {} already exists. Updating...", existingTpp.getTppId());
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
                     existingTpp.setMessageUrl(tppDTOWithoutTokenSection.getMessageUrl());
                     existingTpp.setContact(tppDTOWithoutTokenSection.getContact());
@@ -126,8 +123,8 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setLegalAddress(tppDTOWithoutTokenSection.getLegalAddress());
                     return tppRepository.save(existingTpp)
                             .map(tppWithoutTokenSectionMapperToDTO::map)
-                            .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}", existingTpp.getTppId()))
-                            .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", existingTpp.getTppId(), error.getMessage()));
+                            .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}" ,savedTpp.getTppId()))
+                            .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}" , existingTpp.getTppId(), error.getMessage()));
                 })
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         ExceptionMessage.TPP_NOT_ONBOARDED)));
@@ -141,7 +138,7 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppId)
                 .flatMap(existingTpp -> {
-                    log.info("[TPP-SERVICE][UPDATE] Updating TokenSection for TPP with tppId: {}", tppId);
+                    log.info("[TPP-SERVICE][UPDATE] Updating TokenSection for TPP with tppId: {}", existingTpp.getTppId());
 
                     TokenSection tokenSection = tokenSectionMapperToObject.map(tokenSectionDTO);
                     return azureKeyService.getKey(tppId)
@@ -152,8 +149,8 @@ public class TppServiceImpl implements TppService {
 
                                 return tppRepository.save(existingTpp)
                                         .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
-                                        .doOnSuccess(updatedTokenSection -> log.info("[TPP-SERVICE][UPDATE] Updated TokenSection for tppId: {}", tppId))
-                                        .doOnError(error -> log.error("[TPP-SERVICE][UPDATE] Error updating TokenSection for tppId {}: {}", tppId, error.getMessage()));
+                                        .doOnSuccess(updatedTokenSection -> log.info("[TPP-SERVICE][UPDATE] Updated TokenSection for tppId: {}", existingTpp.getTppId()))
+                                        .doOnError(error -> log.error("[TPP-SERVICE][UPDATE] Error updating TokenSection for tppId {}: {}",  existingTpp.getTppId(), error.getMessage()));
                             });
                 })
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_ONBOARDED)));
@@ -191,7 +188,7 @@ public class TppServiceImpl implements TppService {
 
     @Override
     public Mono<TppDTO> updateState(String tppId, Boolean state) {
-        log.info("[TPP-SERVICE][UPDATE-STATE] Received request to update state for tppId: {}", inputSanify(tppId));
+        log.info("[TPP-SERVICE][UPDATE-STATE] Received request to update state for tppId: {}", tppId);
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
@@ -201,37 +198,37 @@ public class TppServiceImpl implements TppService {
                     return tppRepository.save(tpp);
                 })
                 .map(mapperToDTO::map)
-                .doOnSuccess(updatedTpp -> log.info("[TPP-SERVICE][UPDATE-STATE] State updated for tppId: {}", tppId))
+                .doOnSuccess(updatedTpp -> log.info("[TPP-SERVICE][UPDATE-STATE] State updated for tppId: {}", updatedTpp.getTppId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][UPDATE-STATE] Error updating state for tppId {}: {}", tppId, error.getMessage()));
     }
 
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
-        log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", inputSanify(tppId));
+        log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", tppId);
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
                 .map(tppWithoutTokenSectionMapperToDTO::map)
-                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppId.replace("\n", "").replace("\r", "")))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId.replace("\n", "").replace("\r", ""), error.getMessage()));
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppDTO.getTppId()))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
     }
 
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId) {
-        log.info("[TPP-SERVICE][GET] Received request to get TPP for entityId: {}", inputSanify(entityId));
+        log.info("[TPP-SERVICE][GET] Received request to get TPP for entityId: {}",  entityId);
 
         return tppRepository.findByEntityId(entityId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
                 .map(tppWithoutTokenSectionMapperToDTO::map)
-                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}", entityId.replace("\n", "").replace("\r", "")))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId.replace("\n", "").replace("\r", ""), error.getMessage()));
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}",tppDTO.getEntityId()))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
     }
 
     @Override
     public Mono<TokenSectionDTO> getTokenSection(String tppId) {
-        log.info("[TPP-SERVICE][GET] Received request to get TokenSection for tppId: {}", inputSanify(tppId));
+        log.info("[TPP-SERVICE][GET] Received request to get TokenSection for tppId: {}", tppId);
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
@@ -241,20 +238,20 @@ public class TppServiceImpl implements TppService {
                     return tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                             .map(decryptionResult -> tokenSectionMapperToDTO.map(tokenSection));
                 })
-                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId.replace("\n", "").replace("\r", "")))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId.replace("\n", "").replace("\r", ""), error.getMessage()));
+                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
     }
 
     @Override
     public Mono<TppDTO> deleteTpp(String tppId){
-        log.info("[TPP-SERVICE][DELETE] Received request to delete TPP for tppId: {}", inputSanify(tppId));
+        log.info("[TPP-SERVICE][DELETE] Received request to delete TPP for tppId: {}",tppId);
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
                 .flatMap(tpp -> tppRepository.delete(tpp).then(Mono.just(mapperToDTO.map(tpp))))
-                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}", tppId.replace("\n", "").replace("\r", "")))
-                .doOnError(error -> log.error("[TPP-SERVICE][DELETE] Error Delete TPP for tppId {}: {}", tppId.replace("\n", "").replace("\r", ""), error.getMessage()));
+                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}",tppId))
+                .doOnError(error -> log.error("[TPP-SERVICE][DELETE] Error Delete TPP for tppId {}: {}",tppId, error.getMessage()));
 
     }
 

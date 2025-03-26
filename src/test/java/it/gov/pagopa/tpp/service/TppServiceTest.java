@@ -138,9 +138,8 @@ class TppServiceTest {
     @Test
     void updateTppDetails_TppNotFound() {
         Mockito.when(tppRepository.findByTppId(Mockito.any()))
-                .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(tppRepository.save(Mockito.any()))
                 .thenReturn(Mono.empty());
+
 
         StepVerifier.create(tppService.updateTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION))
                 .expectErrorMatches(throwable ->
