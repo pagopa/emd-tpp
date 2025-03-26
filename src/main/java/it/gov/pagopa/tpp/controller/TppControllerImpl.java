@@ -28,7 +28,7 @@ public class TppControllerImpl implements TppController {
 
     @Override
     public Mono<ResponseEntity<TppDTO>> updateState(TppUpdateState tppUpdateState) {
-        return tppService.updateState(tppUpdateState.getTppId(), tppUpdateState.getState())
+        return tppService.updateState(inputSanitization(tppUpdateState.getTppId()), tppUpdateState.getState())
                 .map(ResponseEntity::ok);
     }
 
