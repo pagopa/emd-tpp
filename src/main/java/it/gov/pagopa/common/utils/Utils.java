@@ -30,9 +30,11 @@ public class Utils {
         }
     }
 
-    public static String inputSanify(String message){
+    public static String inputSanitization(String message){
         if (message != null)
-           return message.replaceAll("[\\r\\n]", " ");
+           return message.replace("\n", " ").replace("\r", " ");
        return "[EMD][WARNING] Null log";
     }
+
 }
+
