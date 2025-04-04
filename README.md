@@ -1,2 +1,2 @@
 # emd-tpp
-Messaggi di Cortesia - Gestione delle Terze Parti
+Service that manages the registration and data recovery operations of TPPs
