@@ -13,9 +13,6 @@ import reactor.core.publisher.Mono;
 @CrossOrigin(origins = "*")
 public class StubTppControllerImpl implements StubTppController {
 
-    public StubTppControllerImpl() {
-    }
-
     @Override
     public Mono<ResponseEntity<TokenDTO>> auth(MultiValueMap<String, String> formData){
         return Mono.just(ResponseEntity.ok(new TokenDTO()));
