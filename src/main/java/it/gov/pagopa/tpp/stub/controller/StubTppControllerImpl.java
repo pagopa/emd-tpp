@@ -10,7 +10,6 @@ import reactor.core.publisher.Mono;
 
 
 @RestController
-@CrossOrigin(origins = "*")
 public class StubTppControllerImpl implements StubTppController {
 
     @Override
