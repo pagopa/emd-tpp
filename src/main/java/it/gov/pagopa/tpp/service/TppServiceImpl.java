@@ -118,9 +118,12 @@ public class TppServiceImpl implements TppService {
                     log.info("[TPP-SERVICE][UPSERT] TPP with tppId {} already exists. Updating...", existingTpp.getTppId());
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
                     existingTpp.setMessageUrl(tppDTOWithoutTokenSection.getMessageUrl());
+                    existingTpp.setAuthenticationUrl(tppDTOWithoutTokenSection.getAuthenticationUrl());
                     existingTpp.setContact(tppDTOWithoutTokenSection.getContact());
                     existingTpp.setBusinessName(tppDTOWithoutTokenSection.getBusinessName());
                     existingTpp.setLegalAddress(tppDTOWithoutTokenSection.getLegalAddress());
+                    existingTpp.setPaymentButton(tppDTOWithoutTokenSection.getPaymentButton());
+                    existingTpp.setAgentDeepLinks(tppDTOWithoutTokenSection.getAgentDeepLinks());
                     return tppRepository.save(existingTpp)
                             .map(tppWithoutTokenSectionMapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}" ,savedTpp.getTppId()))
