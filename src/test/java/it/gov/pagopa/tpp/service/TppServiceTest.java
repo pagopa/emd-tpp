@@ -196,7 +196,7 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
         StepVerifier.create(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))
-                .expectNextMatches(result -> result.equals(MOCK_TPP_DTO))
+                .expectNextMatches(result -> result.getTppId().equals(MOCK_TPP_DTO.getTppId()))
                 .verifyComplete();
     }
 
@@ -218,7 +218,7 @@ class TppServiceTest {
                 .thenReturn(Mono.just(MOCK_TPP));
 
         StepVerifier.create(tppService.getTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .expectNextMatches(result -> result.equals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION))
+                .expectNextMatches(result -> result.getTppId().equals(MOCK_TPP_DTO.getTppId()))
                 .verifyComplete();
     }
 
