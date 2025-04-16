@@ -198,6 +198,7 @@ public class TppServiceImpl implements TppService {
                         "Tpp not found during state update process")))
                 .flatMap(tpp -> {
                     tpp.setState(state);
+                    tpp.setLastUpdateDate(LocalDateTime.now());
                     return tppRepository.save(tpp);
                 })
                 .map(mapperToDTO::map)
