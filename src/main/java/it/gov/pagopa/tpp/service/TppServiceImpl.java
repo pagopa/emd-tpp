@@ -57,7 +57,13 @@ public class TppServiceImpl implements TppService {
     }
 
 
-
+    /**
+     * Retrieves a list of TTP objects from cache. If any TTP IDs from the provided list are not found in cache,
+     * they will be fetched from the database and then cached.
+     * 
+     * @param tppIdList the list of TTP identifiers to retrieve
+     * @return a list of enabled TTP objects corresponding to the provided IDs
+    */
     @Override
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
@@ -106,7 +112,12 @@ public class TppServiceImpl implements TppService {
                 .toList();
     }
 
-
+    /**
+     * Updates an existing TPP in the database with new information.
+     * 
+     * @param tppDTOWithoutTokenSection TPP object with the updated information
+     * @return the result of the update operation
+     */
     @Override
     public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection) {
         if (tppDTOWithoutTokenSection.getTppId() == null)
@@ -133,6 +144,13 @@ public class TppServiceImpl implements TppService {
                         ExceptionMessage.TPP_NOT_ONBOARDED)));
     }
 
+    /**
+     * Updates the TokenSection of an existing TPP.
+     * 
+     * @param tppId the identifier of the TPP to update
+     * @param tokenSectionDTO the new TokenSection data
+     * @return the result of the update operation
+     */
     @Override
     public Mono<TokenSectionDTO> updateTokenSection(String tppId, TokenSectionDTO tokenSectionDTO) {
         if (tppId == null)
@@ -159,6 +177,13 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_ONBOARDED)));
     }
 
+    /**
+     * Create and save new TPP
+     * 
+     * @param tppDTO new TPP to save
+     * @param tppId the identifier of the TPP to save
+     * @return saved TPP
+     */
     @Override
     public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
 
@@ -188,7 +213,13 @@ public class TppServiceImpl implements TppService {
                 });
     }
 
-
+    /**
+     * Update the state of an existing TPP
+     * 
+     * @param tppid the identifier of the TPP to update
+     * @param state the new state
+     * @return the result of the update operation
+     */
     @Override
     public Mono<TppDTO> updateState(String tppId, Boolean state) {
         log.info("[TPP-SERVICE][UPDATE-STATE] Received request to update state for tppId: {}", tppId);
@@ -206,6 +237,12 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][UPDATE-STATE] Error updating state for tppId {}: {}", tppId, error.getMessage()));
     }
 
+    /**
+     * Find TPP object by the provided tppId
+     * 
+     * @param tppId the identifier of the TPP
+     * @return TPP object
+     */
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
         log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", tppId);
@@ -218,6 +255,12 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
     }
 
+    /**
+     * Find TPP object by TPP fiscal code
+     * 
+     * @param entityId the fiscal code of the TPP
+     * @return TPP object
+     */
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId) {
         log.info("[TPP-SERVICE][GET] Received request to get TPP for entityId: {}",  entityId);
@@ -230,6 +273,12 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
     }
 
+    /**
+     * Get the token information from the TPP
+     * 
+     * @param tppId the identifier of the TPP
+     * @return TokenSection object
+     */
     @Override
     public Mono<TokenSectionDTO> getTokenSection(String tppId) {
         log.info("[TPP-SERVICE][GET] Received request to get TokenSection for tppId: {}", tppId);
@@ -246,6 +295,12 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
     }
 
+    /**
+     * Delete TPP object 
+     * 
+     * @param tppId the identifier of the TPP
+     * @return deleted TPP
+     */
     @Override
     public Mono<TppDTO> deleteTpp(String tppId){
         log.info("[TPP-SERVICE][DELETE] Received request to delete TPP for tppId: {}",tppId);

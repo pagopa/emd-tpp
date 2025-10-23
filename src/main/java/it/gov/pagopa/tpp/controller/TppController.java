@@ -39,7 +39,12 @@ public interface TppController {
     @PostMapping("/save")
     Mono<ResponseEntity<TppDTO>> save(@Valid @RequestBody TppDTO tppDTO);
 
-
+    /**
+     * Update a tpp
+     *
+     * @param tppDTO to update
+     * @return outcome of updating the tpp
+     */
     @PutMapping("/update")
     Mono<ResponseEntity<TppDTOWithoutTokenSection>> updateTppDetails(@Valid @RequestBody TppDTOWithoutTokenSection tppDTOWithoutTokenSection);
 
@@ -71,12 +76,24 @@ public interface TppController {
     @GetMapping("/{tppId}/token")
     Mono<ResponseEntity<TokenSectionDTO>> getTokenSection(@Valid @PathVariable String tppId);
 
+    /**
+     * Get a tpp (without token section)
+     *
+     * @param entityId to get
+     * @return outcome of getting tpp
+     */
     @GetMapping("/entityId/{entityId}")
     Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppByEntityId(@Valid @PathVariable String entityId);
 
     @GetMapping("/network/connection/{tppName}")
     Mono<ResponseEntity<NetworkResponseDTO>> testConnection(@Valid @PathVariable String tppName);
 
+    /**
+     * Delete a tpp
+     *
+     * @param tppDTO to delete
+     * @return outcome of deleting the tpp
+     */
     @DeleteMapping("/test/delete/{tppId}")
     Mono<ResponseEntity<TppDTO>> deleteTpp(@PathVariable String tppId);
 }
