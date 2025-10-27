@@ -6,6 +6,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
+/**
+ * Data Transfer Object representing token section configuration for TPP.
+ */
 @Data
 @SuperBuilder
 @NoArgsConstructor

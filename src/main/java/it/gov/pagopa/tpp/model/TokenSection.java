@@ -7,6 +7,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
+/**
+ * Represents a token section. It serves as a data model for storing token section information.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

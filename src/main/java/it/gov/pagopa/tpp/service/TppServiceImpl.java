@@ -26,6 +26,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of the TppService interface providing comprehensive TPP management functionality.
+ * 
+ * This service class implements all TPP-related operations including creation, retrieval, updating,
+ * and deletion. It integrates with multiple components including
+ * database repository, caching service, cryptographic services, and Azure Key Vault for secure
+ * token management.
+ * 
+ */
 @Service
 @Slf4j
 public class TppServiceImpl implements TppService {
@@ -58,12 +67,14 @@ public class TppServiceImpl implements TppService {
 
 
     /**
-     * Retrieves a list of TTP objects from cache. If any TTP IDs from the provided list are not found in cache,
-     * they will be fetched from the database and then cached.
      * 
-     * @param tppIdList the list of TTP identifiers to retrieve
-     * @return a list of enabled TTP objects corresponding to the provided IDs
-    */
+     * {@inheritDoc}
+     *
+     * <p>
+     * This method first checks the cache for requested TPP IDs, then fetches any missing
+     * entries from the database. Missing entries are automatically cached after retrieval
+     * with their token sections decrypted for immediate use.
+     */
     @Override
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
         log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
@@ -89,6 +100,12 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage()));
     }
 
+    /**
+     * Checks the cache for TPP entities corresponding to the provided IDs.
+     * 
+     * @param tppIdList the list of TPP identifiers to check in cache
+     * @return a Mono containing a list of cached TppDTO entities
+     */
     private Mono<List<TppDTO>> checkMapForTppIds(List<String> tppIdList) {
         return Flux.fromIterable(tppIdList)
                 .flatMap(tppId -> {
@@ -103,6 +120,13 @@ public class TppServiceImpl implements TppService {
                 .collectList();
     }
 
+    /**
+     * Identifies TPP IDs that are not present in the cache result.
+     * 
+     * @param tppIdList the original list of requested TPP IDs
+     * @param cacheResult the list of TPP DTOs found in cache
+     * @return a list of TPP IDs that were not found in cache
+     */
     private List<String> getMissingTppIds(List<String> tppIdList, List<TppDTO> cacheResult) {
         Set<String> cachedIds = cacheResult.stream()
                 .map(TppDTO::getTppId)
@@ -113,10 +137,7 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Updates an existing TPP in the database with new information.
-     * 
-     * @param tppDTOWithoutTokenSection TPP object with the updated information
-     * @return the result of the update operation
+     * {@inheritDoc}
      */
     @Override
     public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection) {
@@ -145,11 +166,11 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Updates the TokenSection of an existing TPP.
-     * 
-     * @param tppId the identifier of the TPP to update
-     * @param tokenSectionDTO the new TokenSection data
-     * @return the result of the update operation
+     * {@inheritDoc}
+     *
+     * <p>
+     * Encrypts the new token section data using Azure Key Vault before storing
+     * it in the database. The encryption uses the TPP's specific RSA key.
      */
     @Override
     public Mono<TokenSectionDTO> updateTokenSection(String tppId, TokenSectionDTO tokenSectionDTO) {
@@ -178,11 +199,15 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Create and save new TPP
      * 
-     * @param tppDTO new TPP to save
-     * @param tppId the identifier of the TPP to save
-     * @return saved TPP
+     * {@inheritDoc}
+     *
+     * Creates a new TPP entity with encrypted token section and Azure Key Vault key generation.
+     * <p>
+     * This method creates a new RSA key in Azure Key Vault, encrypts the token section,
+     * and saves the TPP entity to the database. It includes duplicate detection based
+     * on entity ID to prevent multiple registrations.
+     * 
      */
     @Override
     public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
@@ -198,6 +223,13 @@ public class TppServiceImpl implements TppService {
                 });
     }
 
+    /**
+     * Creates and saves a new TPP entity with Azure Key Vault integration.
+     * 
+     * @param tppDTO the TPP data for creation
+     * @param tppId the TPP identifier
+     * @return a Mono containing the created Tpp entity
+     */
     private Mono<Tpp> createAndSaveNewTpp(TppDTO tppDTO, String tppId) {
         log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
         return azureKeyService.createRsaKey(tppId)
@@ -214,12 +246,12 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Update the state of an existing TPP
      * 
-     * @param tppid the identifier of the TPP to update
-     * @param state the new state
-     * @return the result of the update operation
-     */
+     * {@inheritDoc}
+     *
+     * The operation also updates the last modification timestamp.
+     * 
+     * */
     @Override
     public Mono<TppDTO> updateState(String tppId, Boolean state) {
         log.info("[TPP-SERVICE][UPDATE-STATE] Received request to update state for tppId: {}", tppId);
@@ -238,10 +270,7 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Find TPP object by the provided tppId
-     * 
-     * @param tppId the identifier of the TPP
-     * @return TPP object
+     * {@inheritDoc}
      */
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
@@ -256,10 +285,17 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Find TPP object by TPP fiscal code
      * 
-     * @param entityId the fiscal code of the TPP
-     * @return TPP object
+     * {@inheritDoc}
+     *
+     * 
+     * This method allows TPP lookup using the entity's fiscal code rather than
+     * the internal TPP identifier. Returns TPP information without sensitive
+     * token section data.
+     * 
+     * @param entityId the fiscal code/entity identifier of the TPP
+     * @return a Mono containing the TppDTOWithoutTokenSection
+     * @throws TPP_NOT_ONBOARDED if the TPP is not found in the database
      */
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId) {
@@ -274,10 +310,11 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Get the token information from the TPP
+     * {@inheritDoc}
      * 
-     * @param tppId the identifier of the TPP
-     * @return TokenSection object
+     * This method fetches the TPP's token section from the database, decrypts
+     * the sensitive authentication data using Azure Key Vault, and returns
+     * the decrypted configuration.
      */
     @Override
     public Mono<TokenSectionDTO> getTokenSection(String tppId) {
@@ -296,10 +333,7 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * Delete TPP object 
-     * 
-     * @param tppId the identifier of the TPP
-     * @return deleted TPP
+     * {@inheritDoc}
      */
     @Override
     public Mono<TppDTO> deleteTpp(String tppId){
@@ -315,11 +349,20 @@ public class TppServiceImpl implements TppService {
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Mono<NetworkResponseDTO> testConnection(String tppName) {
         return Mono.just(createNetworkResponse(tppName));
     }
 
+    /**
+     * Creates a standardized network response for connectivity testing.
+     * 
+     * @param tppName the name of the TPP for the response message
+     * @return a NetworkResponseDTO containing the test response
+     */
     private NetworkResponseDTO createNetworkResponse(String tppName){
         NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();
         networkResponseDTO.setCode("PAGOPA_NETWORK_TEST");

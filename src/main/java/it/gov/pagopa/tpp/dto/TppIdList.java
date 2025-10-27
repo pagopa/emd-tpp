@@ -6,6 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
+/**
+ * Data Transfer Object representing a collection of TPP identifiers.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

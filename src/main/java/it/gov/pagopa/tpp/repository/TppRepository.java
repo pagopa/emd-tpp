@@ -9,6 +9,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * Repository interface for managing TPP entities in MongoDB.
+ */
 @Repository
 public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
 
