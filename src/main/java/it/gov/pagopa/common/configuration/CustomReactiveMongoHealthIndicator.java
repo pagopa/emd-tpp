@@ -26,7 +26,7 @@ public class CustomReactiveMongoHealthIndicator extends AbstractReactiveHealthIn
      *
      * @param builder the health builder to populate with health information
      * @return a {@link Mono} that emits the Health result when the health check completes. 
-     * The health status will be "UP" if the command executes successfully.
+     *          The health status will be "UP" if the command executes successfully.
      */
     @Override
     protected Mono<Health> doHealthCheck(Health.Builder builder)  {

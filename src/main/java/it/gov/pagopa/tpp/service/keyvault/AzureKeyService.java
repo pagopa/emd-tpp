@@ -115,8 +115,6 @@ public class AzureKeyService {
     /**
      * Sets the KeyAsyncClient for this service.
      * 
-     * This method is primarily used for testing purposes to inject a mock client.
-     * 
      * @param keyClient the KeyAsyncClient to set
      */
     public void setKeyClient(KeyAsyncClient keyClient) {

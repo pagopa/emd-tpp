@@ -67,7 +67,6 @@ public class TppServiceImpl implements TppService {
 
 
     /**
-     * 
      * {@inheritDoc}
      *
      * <p>
@@ -104,7 +103,7 @@ public class TppServiceImpl implements TppService {
      * Checks the cache for TPP entities corresponding to the provided IDs.
      * 
      * @param tppIdList the list of TPP identifiers to check in cache
-     * @return a Mono containing a list of cached TppDTO entities
+     * @return a {@link Mono} containing a list of cached {@link TppDTO} entities
      */
     private Mono<List<TppDTO>> checkMapForTppIds(List<String> tppIdList) {
         return Flux.fromIterable(tppIdList)
@@ -199,7 +198,6 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * 
      * {@inheritDoc}
      *
      * Creates a new TPP entity with encrypted token section and Azure Key Vault key generation.
@@ -207,7 +205,6 @@ public class TppServiceImpl implements TppService {
      * This method creates a new RSA key in Azure Key Vault, encrypts the token section,
      * and saves the TPP entity to the database. It includes duplicate detection based
      * on entity ID to prevent multiple registrations.
-     * 
      */
     @Override
     public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
@@ -228,7 +225,7 @@ public class TppServiceImpl implements TppService {
      * 
      * @param tppDTO the TPP data for creation
      * @param tppId the TPP identifier
-     * @return a Mono containing the created Tpp entity
+     * @return a {@link Mono} containing the created {@link Tpp} entity
      */
     private Mono<Tpp> createAndSaveNewTpp(TppDTO tppDTO, String tppId) {
         log.info("[TPP-SERVICE][UPSERT] Creating new entry with generated tppId: {}", tppId);
@@ -246,12 +243,10 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * 
      * {@inheritDoc}
      *
      * The operation also updates the last modification timestamp.
-     * 
-     * */
+     */
     @Override
     public Mono<TppDTO> updateState(String tppId, Boolean state) {
         log.info("[TPP-SERVICE][UPDATE-STATE] Received request to update state for tppId: {}", tppId);
@@ -285,16 +280,14 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
-     * 
      * {@inheritDoc}
      *
-     * 
      * This method allows TPP lookup using the entity's fiscal code rather than
      * the internal TPP identifier. Returns TPP information without sensitive
      * token section data.
      * 
      * @param entityId the fiscal code/entity identifier of the TPP
-     * @return a Mono containing the TppDTOWithoutTokenSection
+     * @return a {@link Mono} containing the {@link TppDTOWithoutTokenSection}
      * @throws TPP_NOT_ONBOARDED if the TPP is not found in the database
      */
     @Override
@@ -361,7 +354,7 @@ public class TppServiceImpl implements TppService {
      * Creates a standardized network response for connectivity testing.
      * 
      * @param tppName the name of the TPP for the response message
-     * @return a NetworkResponseDTO containing the test response
+     * @return a {@link NetworkResponseDTO} containing the test response
      */
     private NetworkResponseDTO createNetworkResponse(String tppName){
         NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();

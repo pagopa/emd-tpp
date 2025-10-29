@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * Service interface for managing TPP operations.
- * 
  */
 public interface TppService {
 
