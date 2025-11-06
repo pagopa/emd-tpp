@@ -1140,6 +1140,20 @@
       "groupId": "com.google.errorprone",
       "version": "2.21.1",
       "sha256": "0fPGaqkaxSVJ4Arjsgi6S5r31y1o8jBkNVO-s45hGKw="
+    },
+    {
+      "id": "org.testcontainers:junit-jupiter:jar:1.21.3",
+      "artifactId": "junit-jupiter",
+      "groupId": "org.testcontainers",
+      "version": "1.21.3",
+      "sha256": "Q2Mqrndt7Otwf-WlziVpGOvxLCKC8W3VEM1TVzVszdA="
+    },
+    {
+      "id": "org.testcontainers:mongodb:jar:1.21.3",
+      "artifactId": "mongodb",
+      "groupId": "org.testcontainers",
+      "version": "1.21.3",
+      "sha256": "lXk-RQKuDz7fvf3BuhCdstUFGQTOtCy3MOwSRWOwMhY="
     }
   ]
 }
