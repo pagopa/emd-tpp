@@ -152,8 +152,8 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED ===");
     }
 
-    //ttpId and state
-        @Test
+    // ttpId and state
+    @Test
     void testFindByTppIdAndStateTrue() {
         log.info("=== EXECUTING findByTppIdInAndStateTrue ===");
         List<String> tppIdList = new ArrayList<>();
