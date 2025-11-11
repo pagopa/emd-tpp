@@ -491,13 +491,6 @@
       "sha256": "38QcgX-_p2BXr2_-Q3nbympeFrjoffi92iPzcXVsLQk="
     },
     {
-      "id": "net.java.dev.jna:jna:jar:5.13.0",
-      "artifactId": "jna",
-      "groupId": "net.java.dev.jna",
-      "version": "5.13.0",
-      "sha256": "ZtT4GaBipRodVie__CP6xV0Wd_Dgof66FEqr3WcKZLs="
-    },
-    {
       "id": "net.java.dev.jna:jna-platform:jar:5.6.0",
       "artifactId": "jna-platform",
       "groupId": "net.java.dev.jna",
@@ -617,13 +610,6 @@
       "sha256": "OFFSOiAaDUglwlphpu3FBxKCWjm9PQM5G5jEjKPLOWw="
     },
     {
-      "id": "org.hamcrest:hamcrest-core:jar:2.2",
-      "artifactId": "hamcrest-core",
-      "groupId": "org.hamcrest",
-      "version": "2.2",
-      "sha256": "CU9dkrS32ciiv1PMadNWJDronDSZRXvLS5L37Tv5WHk="
-    },
-    {
       "id": "com.fasterxml.jackson.core:jackson-databind:jar:2.17.2",
       "artifactId": "jackson-databind",
       "groupId": "com.fasterxml.jackson.core",
@@ -706,13 +692,6 @@
       "groupId": "org.jetbrains.kotlin",
       "version": "1.9.25",
       "sha256": "-c3Nv_H13oU4CuUml35oNybCqkLbHtbm5Qronklulf0="
-    },
-    {
-      "id": "org.jetbrains:annotations:jar:13.0",
-      "artifactId": "annotations",
-      "groupId": "org.jetbrains",
-      "version": "13.0",
-      "sha256": "rOKhDcji1f00kl7KwD5JiLLA-FFlDJS4zvSbob0RFHg="
     },
     {
       "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.9.25",
@@ -1140,6 +1119,90 @@
       "groupId": "com.google.errorprone",
       "version": "2.21.1",
       "sha256": "0fPGaqkaxSVJ4Arjsgi6S5r31y1o8jBkNVO-s45hGKw="
+    },
+    {
+      "id": "org.testcontainers:junit-jupiter:jar:1.21.3",
+      "artifactId": "junit-jupiter",
+      "groupId": "org.testcontainers",
+      "version": "1.21.3",
+      "sha256": "Q2Mqrndt7Otwf-WlziVpGOvxLCKC8W3VEM1TVzVszdA="
+    },
+    {
+      "id": "org.testcontainers:testcontainers:jar:1.21.3",
+      "artifactId": "testcontainers",
+      "groupId": "org.testcontainers",
+      "version": "1.21.3",
+      "sha256": "75NN2sb0J1nXHDA6KERUSlbPOBszQ3FJlV09jJkr7F0="
+    },
+    {
+      "id": "junit:junit:jar:4.13.2",
+      "artifactId": "junit",
+      "groupId": "junit",
+      "version": "4.13.2",
+      "sha256": "jklbY0Rp1k-4rPo0laBly6zIoP_1XOHjEAe-TBbcV9M="
+    },
+    {
+      "id": "org.hamcrest:hamcrest-core:jar:2.2",
+      "artifactId": "hamcrest-core",
+      "groupId": "org.hamcrest",
+      "version": "2.2",
+      "sha256": "CU9dkrS32ciiv1PMadNWJDronDSZRXvLS5L37Tv5WHk="
+    },
+    {
+      "id": "org.apache.commons:commons-compress:jar:1.24.0",
+      "artifactId": "commons-compress",
+      "groupId": "org.apache.commons",
+      "version": "1.24.0",
+      "sha256": "-_LF0nXlE8CPTk-1OXJtvzrCFCr5VrqT77mDJE8MNr0="
+    },
+    {
+      "id": "org.rnorth.duct-tape:duct-tape:jar:1.0.8",
+      "artifactId": "duct-tape",
+      "groupId": "org.rnorth.duct-tape",
+      "version": "1.0.8",
+      "sha256": "Mc7xLd7JedH4bXz3CMQaF9pSPQXGhf1mQunQsq3bckA="
+    },
+    {
+      "id": "org.jetbrains:annotations:jar:17.0.0",
+      "artifactId": "annotations",
+      "groupId": "org.jetbrains",
+      "version": "17.0.0",
+      "sha256": "GV-w2gRtVbsELpFUNITPHaaLArt6-_4DHyKeRayEs_I="
+    },
+    {
+      "id": "com.github.docker-java:docker-java-api:jar:3.4.2",
+      "artifactId": "docker-java-api",
+      "groupId": "com.github.docker-java",
+      "version": "3.4.2",
+      "sha256": "Z4nWj5WQTPJ0pkEP38xVMJdryUGXyFaQlFm7jGTbVXs="
+    },
+    {
+      "id": "com.github.docker-java:docker-java-transport-zerodep:jar:3.4.2",
+      "artifactId": "docker-java-transport-zerodep",
+      "groupId": "com.github.docker-java",
+      "version": "3.4.2",
+      "sha256": "WCt3LgxS-p0kcQYX72EGVUZe3ZopMLDbdfyGZ9ao0Cs="
+    },
+    {
+      "id": "com.github.docker-java:docker-java-transport:jar:3.4.2",
+      "artifactId": "docker-java-transport",
+      "groupId": "com.github.docker-java",
+      "version": "3.4.2",
+      "sha256": "vJmBIk_cLUcmVm_HI0cGAc6xQ3gmXIZbTCAxRqTjl2U="
+    },
+    {
+      "id": "net.java.dev.jna:jna:jar:5.13.0",
+      "artifactId": "jna",
+      "groupId": "net.java.dev.jna",
+      "version": "5.13.0",
+      "sha256": "ZtT4GaBipRodVie__CP6xV0Wd_Dgof66FEqr3WcKZLs="
+    },
+    {
+      "id": "org.testcontainers:mongodb:jar:1.21.3",
+      "artifactId": "mongodb",
+      "groupId": "org.testcontainers",
+      "version": "1.21.3",
+      "sha256": "lXk-RQKuDz7fvf3BuhCdstUFGQTOtCy3MOwSRWOwMhY="
     }
   ]
 }
