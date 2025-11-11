@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
+/**
+ * Data Transfer Object (DTO) representing a base message structure for TPP communication.
+ */ 
 @AllArgsConstructor
 @Data
 @NoArgsConstructor

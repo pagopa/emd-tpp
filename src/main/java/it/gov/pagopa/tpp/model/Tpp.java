@@ -10,6 +10,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
+/**
+ * Represents a TPP entity stored in MongoDB.
+ */
 @Document(collection = "tpp")
 @Data
 @NoArgsConstructor
