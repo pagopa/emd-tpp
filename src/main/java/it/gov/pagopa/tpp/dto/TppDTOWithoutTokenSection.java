@@ -12,6 +12,9 @@ import lombok.experimental.SuperBuilder;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
+/**
+ * Data Transfer Object representing a TPP entity without token information.
+ */
 @Data
 @SuperBuilder
 @NoArgsConstructor

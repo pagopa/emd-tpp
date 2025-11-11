@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents a contact entity containing basic contact information.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

@@ -4,9 +4,21 @@ import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.model.Tpp;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class responsible for mapping {@link Tpp} domain objects to {@link TppDTOWithoutTokenSection} 
+ * data transfer objects.
+ */ 
 @Service
 public class TppWithoutTokenSectionObjectToDTOMapper {
 
+    /**
+     * Maps a {@link Tpp} domain object to its corresponding {@link TppDTOWithoutTokenSection} 
+     * representation.
+     * 
+     * @param tpp the domain entity containing complete TPP information to be selectively mapped
+     * @return a new {@link TppDTOWithoutTokenSection} instance containing all 
+     *         properties from the input domain object
+     */
     public TppDTOWithoutTokenSection map(Tpp tpp){
         return TppDTOWithoutTokenSection.builder()
                 .state(tpp.getState())

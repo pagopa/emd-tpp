@@ -2,6 +2,10 @@ package it.gov.pagopa.common.utils;
 
 import java.time.ZoneId;
 
+/**
+ * Common constants class containing application-wide constant values, 
+ * including exception codes and timezone configurations.
+ */
 public class CommonConstants {
 
 
