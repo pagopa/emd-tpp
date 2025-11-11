@@ -47,13 +47,13 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
 
     @BeforeEach
     void setup() {
-        // Drop collection
+        // Clean up previous test data by dropping the entire collection
         StepVerifier.create(
             mongoTemplate.dropCollection(COLLECTION_NAME)
                 .onErrorResume(e -> Mono.empty())
         ).verifyComplete();
 
-        // Insert test data 
+        // Create first TPP entity with state=TRUE for testing active TPPs
         Tpp testTpp = Tpp.builder()
             .state(true)
                 .tppId(TPP_ID)
@@ -62,7 +62,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
-                .state(Boolean.TRUE)
+                .state(Boolean.TRUE)  // This TPP is active
                 .businessName("businessName")
                 .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID)
@@ -71,6 +71,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .agentDeepLinks(new HashMap<>())
                 .build();
 
+        // Create second TPP entity with state=FALSE for testing inactive TPPs
         Tpp testTpp2 = Tpp.builder()
             .state(true)
                 .tppId(TPP_ID_2)
@@ -79,7 +80,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
-                .state(Boolean.FALSE)
+                .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
                 .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_2)
@@ -88,13 +89,20 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .agentDeepLinks(new HashMap<>())
                 .build();
 
+        // Insert both test entities into MongoDB
         StepVerifier.create(
             mongoTemplate.save(testTpp, COLLECTION_NAME)
             .then(mongoTemplate.save(testTpp2, COLLECTION_NAME))
         ).expectNextCount(1).verifyComplete();
     }
 
-    //tppId
+    /**
+     * Test Case: Successful TPP lookup by tppId
+     * 
+     * Scenario: Query for an existing TPP using its unique tppId
+     * Expected: Should find and return the TPP entity with matching tppId
+     * MongoDB Query: db.tpp.findOne({"tppId": "tppId"})
+     */
     @Test
     void testFindByTppId() {
         log.info("=== EXECUTING findByTppId ===");
@@ -111,6 +119,13 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED - CHECK LOGS ABOVE FOR QUERY DETAILS ===");
     }
 
+    /**
+     * Test Case: TPP lookup failure by non-existent tppId
+     * 
+     * Scenario: Query for a TPP that doesn't exist in the database
+     * Expected: Should return empty Mono (no results)
+     * Purpose: Verify that the query handles missing records gracefully
+     */
     @Test
     void testFindByTppIdNotFound() {
         log.info("=== EXECUTING findByTppId (not found) ===");
@@ -123,7 +138,13 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED ===");
     }
 
-    // entityId
+    /**
+     * Test Case: Successful TPP lookup by entityId
+     * 
+     * Scenario: Query for an existing TPP using its entityId (business identifier)
+     * Expected: Should find and return the TPP entity with matching entityId
+     * MongoDB Query: db.tpp.findOne({"entityId": "entityId"})
+     */
     @Test
     void testFindByEntityId() {
         log.info("=== EXECUTING findByEntityId ===");
@@ -140,6 +161,13 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED - CHECK LOGS ABOVE FOR QUERY DETAILS ===");
     }
 
+    /**
+     * Test Case: TPP lookup failure by non-existent entityId
+     * 
+     * Scenario: Query for a TPP using an entityId that doesn't exist
+     * Expected: Should return empty Mono (no results)
+     * Purpose: Verify error handling for invalid entityId lookups
+     */
     @Test
     void testFindByEntityIdNotFound() {
         log.info("=== EXECUTING findByEntityId (not found) ===");
@@ -152,12 +180,22 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED ===");
     }
 
-    // ttpId and state
+    /**
+     * Test Case: Find active TPPs by tppId list
+     * 
+     * Scenario: Query for TPPs that are in a given list of tppIds AND have state=true
+     * Expected: Should return only active TPPs (state=true) that match the tppId list
+     * MongoDB Query: db.tpp.find({"tppId": {$in: ["tppId"]}, "state": true})
+     * 
+     * Business Logic: Only active/enabled TPPs should be returned, even if inactive
+     * TPPs exist with matching tppIds
+     */
     @Test
     void testFindByTppIdAndStateTrue() {
         log.info("=== EXECUTING findByTppIdInAndStateTrue ===");
         List<String> tppIdList = new ArrayList<>();
-        tppIdList.add(TPP_ID);
+        tppIdList.add(TPP_ID);  // This TPP has state=true, so should be found
+        
         StepVerifier.create(
                 repository.findByTppIdInAndStateTrue(tppIdList)
             )
@@ -170,11 +208,22 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED - CHECK LOGS ABOVE FOR QUERY DETAILS ===");
     }
 
+    /**
+     * Test Case: Filter out inactive TPPs from tppId list query
+     * 
+     * Scenario: Query for TPPs using a tppId that exists but has state=false
+     * Expected: Should return empty result because TPP is inactive (state=false)
+     * Purpose: Verify that the state filter correctly excludes inactive TPPs
+     * 
+     * Business Logic: Even if a TPP exists with the requested tppId, it should
+     * not be returned if it's marked as inactive (state=false)
+     */
     @Test
     void testFindByTppIdAndStateTrueNotFound() {
         log.info("=== EXECUTING findByTppIdInAndStateTrue (not found) ===");
         List<String> tppIdList = new ArrayList<>();
-        tppIdList.add(TPP_ID_2);
+        tppIdList.add(TPP_ID_2);  // This TPP has state=false, so should NOT be found
+        
         StepVerifier.create(
                 repository.findByTppIdInAndStateTrue(tppIdList)
             )
