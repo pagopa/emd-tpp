@@ -4,9 +4,19 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.model.Tpp;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class responsible for mapping {@link TppDTO} 
+ * data transfer objects to {@link Tpp} domain objects.
+ */
 @Service
 public class TppDTOToObjectMapper {
 
+    /**
+     * Maps a {@link TppDTO} to its corresponding {@link Tpp} domain object with business rule application.
+     * 
+     * @param tppDTO the DTO containing complete TPP information to be mapped
+     * @return a new {@link Tpp} domain object containing all mapped properties from the input DTO
+     */
     public Tpp map(TppDTO tppDTO){
         return Tpp.builder()
                 .state(true)

@@ -3,6 +3,12 @@ package it.gov.pagopa.common.web.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Specialized client exception that includes structured error information for HTTP response bodies.
+ * <p>
+ * It is specifically designed for scenarios where detailed error information should be included 
+ * in the HTTP response body. It provides both an error code and a human-readable message.
+ */
 @Getter
 public class ClientExceptionWithBody extends ClientException {
   private final String code;

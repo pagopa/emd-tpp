@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Data Transfer Object (DTO) representing an authentication token response.
+ */
 @Data
 @Getter
 @NoArgsConstructor
