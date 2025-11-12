@@ -57,6 +57,16 @@ public interface TppService {
     Mono<TppDTO> updateState(String tppId, Boolean state);
 
     /**
+     * Updates the isPaymentEnabled of a specific TPP.
+     * 
+     * @param tppId the TPP identifier
+     * @param isPaymentEnabled the new isPaymentEnabled to set (true for enabled, false for disabled)
+     * @return a {@link Mono} containing the updated {@link TppDTO}
+     */
+    Mono<TppDTO> updateIsPaymentEnabled(String tppId, Boolean isPaymentEnabled);
+
+
+    /**
      * Retrieves TPP details excluding the token section.
      * 
      * @param tppId the TPP identifier

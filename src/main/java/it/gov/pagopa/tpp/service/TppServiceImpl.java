@@ -266,6 +266,28 @@ public class TppServiceImpl implements TppService {
 
     /**
      * {@inheritDoc}
+     *
+     * The operation also updates the last modification timestamp.
+     */
+    @Override
+    public Mono<TppDTO> updateIsPaymentEnabled(String tppId, Boolean isPaymentEnabled) {
+        log.info("[TPP-SERVICE][UPDATE-IS-PAYMENT-ENABLED] Received request to update isPaymentEnabled for tppId: {}", tppId);
+
+        return tppRepository.findByTppId(tppId)
+                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
+                        "Tpp not found during isPaymentEnabled update process")))
+                .flatMap(tpp -> {
+                    tpp.setIsPaymentEnabled(isPaymentEnabled);
+                    tpp.setLastUpdateDate(LocalDateTime.now());
+                    return tppRepository.save(tpp);
+                })
+                .map(mapperToDTO::map)
+                .doOnSuccess(updatedTpp -> log.info("[TPP-SERVICE][UPDATE-IS-PAYMENT-ENABLED] isPaymentEnabled updated for tppId: {}", updatedTpp.getTppId()))
+                .doOnError(error -> log.error("[TPP-SERVICE][UPDATE-IS-PAYMENT-ENABLED] Error updating isPaymentEnabled for tppId {}: {}", tppId, error.getMessage()));
+    }
+
+    /**
+     * {@inheritDoc}
      */
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {

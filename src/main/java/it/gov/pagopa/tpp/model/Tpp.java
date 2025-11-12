@@ -35,4 +35,5 @@ public class Tpp {
     private LocalDateTime lastUpdateDate;
     private String paymentButton;
     private HashMap<String, String> agentDeepLinks;
+    private Boolean isPaymentEnabled;
 }

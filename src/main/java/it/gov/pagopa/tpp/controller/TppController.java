@@ -39,6 +39,16 @@ public interface TppController {
     Mono<ResponseEntity<TppDTO>> updateState(@Valid @RequestBody TppUpdateState tppUpdateState);
 
     /**
+     * Update the isPaymentEnabled of an existing TPP.
+     *
+     * @param tppUpdateIsPaymentEnabled to update
+     * @return a {@link Mono} containing a {@link ResponseEntity} with 
+     *          the updated {@link TppDTO} if successful
+     */
+    @PutMapping()
+    Mono<ResponseEntity<TppDTO>> updateIsPaymentEnabled(@Valid @RequestBody TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled);
+
+    /**
      * Creates and saves a new tpp
      *
      * @param tppDTO to save
