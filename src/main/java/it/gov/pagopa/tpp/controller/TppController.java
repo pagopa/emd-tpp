@@ -45,7 +45,7 @@ public interface TppController {
      * @return a {@link Mono} containing a {@link ResponseEntity} with 
      *          the updated {@link TppDTO} if successful
      */
-    @PutMapping()
+    @PutMapping("/isPaymentEnabled")
     Mono<ResponseEntity<TppDTO>> updateIsPaymentEnabled(@Valid @RequestBody TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled);
 
     /**
