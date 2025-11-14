@@ -36,6 +36,7 @@ public class TppObjectToDTOMapper {
                 .tokenSection(tpp.getTokenSection())
                 .paymentButton(tpp.getPaymentButton())
                 .agentDeepLinks(tpp.getAgentDeepLinks())
+                .isPaymentEnabled(tpp.getIsPaymentEnabled())
                 .build();
     }
 }

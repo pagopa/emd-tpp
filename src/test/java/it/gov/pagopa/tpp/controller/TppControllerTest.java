@@ -128,6 +128,25 @@ class TppControllerTest {
     }
 
     @Test
+    void isPaymentEnabled_Ok()  {
+        Mockito.when(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getIsPaymentEnabled()))
+                .thenReturn(Mono.just(MOCK_TPP_DTO));
+
+        webClient.put()
+                .uri("/emd/tpp/isPaymentEnabled")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(MOCK_TPP_DTO)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTO.class)
+                .consumeWith(response -> {
+                    TppDTO resultResponse = response.getResponseBody();
+                    Assertions.assertNotNull(resultResponse);
+                    Assertions.assertEquals(MOCK_TPP_DTO,resultResponse);
+                });
+    }
+
+    @Test
     void getTppDetails_Ok()  {
         Mockito.when(tppService.getTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION));

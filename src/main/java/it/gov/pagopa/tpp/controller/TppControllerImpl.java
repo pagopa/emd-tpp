@@ -48,6 +48,15 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
+    public Mono<ResponseEntity<TppDTO>> updateIsPaymentEnabled(TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled) {
+        return tppService.updateIsPaymentEnabled(inputSanitization(tppUpdateIsPaymentEnabled.getTppId()), tppUpdateIsPaymentEnabled.getIsPaymentEnabled())
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Mono<ResponseEntity<TppDTO>> save(TppDTO tppDTO) {
         return tppService.createNewTpp(tppDTO, String.format("%s-%d", UUID.randomUUID(), System.currentTimeMillis()))
                 .map(ResponseEntity::ok);

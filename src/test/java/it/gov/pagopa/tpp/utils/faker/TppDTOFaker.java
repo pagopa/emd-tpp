@@ -32,6 +32,7 @@ public class TppDTOFaker {
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})
+                .isPaymentEnabled(bias)
                 .build();
     }
 
@@ -74,6 +75,7 @@ public class TppDTOFaker {
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(null)
+                .isPaymentEnabled(bias)
                 .build();
     }
 
