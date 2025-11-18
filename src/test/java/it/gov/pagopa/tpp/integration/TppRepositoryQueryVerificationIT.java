@@ -67,7 +67,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
-                .paymentButton("paymentButton")
+                .pspDenomination("paymentButton")
                 .agentDeepLinks(new HashMap<>())
                 .build();
 
@@ -85,7 +85,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_2)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
-                .paymentButton("paymentButton")
+                .pspDenomination("paymentButton")
                 .agentDeepLinks(new HashMap<>())
                 .build();
 

@@ -30,7 +30,7 @@ public class TppDTOToObjectMapper {
                 .contact(tppDTO.getContact())
                 .entityId(tppDTO.getEntityId())
                 .tokenSection(tppDTO.getTokenSection())
-                .paymentButton(tppDTO.getPaymentButton())
+                .pspDenomination(tppDTO.getPspDenomination())
                 .agentDeepLinks(tppDTO.getAgentDeepLinks())
                 .build();
     }
