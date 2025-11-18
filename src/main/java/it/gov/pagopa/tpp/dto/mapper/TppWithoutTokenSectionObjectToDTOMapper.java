@@ -33,7 +33,7 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
                 .entityId(tpp.getEntityId())
                 .creationDate(tpp.getCreationDate())
                 .lastUpdateDate(tpp.getLastUpdateDate())
-                .paymentButton(tpp.getPaymentButton())
+                .pspDenomination(tpp.getPspDenomination())
                 .agentDeepLinks(tpp.getAgentDeepLinks())
                 .build();
     }
