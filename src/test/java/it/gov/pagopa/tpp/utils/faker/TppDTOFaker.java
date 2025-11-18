@@ -28,7 +28,7 @@ public class TppDTOFaker {
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
-                .paymentButton("#button")
+                .pspDenomination("#button")
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})

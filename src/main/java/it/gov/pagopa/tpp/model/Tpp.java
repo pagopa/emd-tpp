@@ -33,7 +33,7 @@ public class Tpp {
     private TokenSection tokenSection;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
-    private String paymentButton;
+    private String pspDenomination;
     private HashMap<String, String> agentDeepLinks;
     private Boolean isPaymentEnabled;
 }

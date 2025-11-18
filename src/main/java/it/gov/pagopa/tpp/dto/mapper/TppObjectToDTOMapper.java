@@ -34,7 +34,7 @@ public class TppObjectToDTOMapper {
                 .creationDate(tpp.getCreationDate())
                 .lastUpdateDate(tpp.getLastUpdateDate())
                 .tokenSection(tpp.getTokenSection())
-                .paymentButton(tpp.getPaymentButton())
+                .pspDenomination(tpp.getPspDenomination())
                 .agentDeepLinks(tpp.getAgentDeepLinks())
                 .isPaymentEnabled(tpp.getIsPaymentEnabled())
                 .build();

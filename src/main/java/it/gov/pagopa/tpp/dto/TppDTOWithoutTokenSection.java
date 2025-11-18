@@ -49,8 +49,8 @@ public class TppDTOWithoutTokenSection {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;
 
-    @NotNull(message = "Payment Button must not be null")
-    private String paymentButton;
+    @NotNull(message = "pspDenomination must not be null")
+    private String pspDenomination;
 
     @NotNull(message = "Agent Deep Link must not be null")
     private HashMap<String, String> agentDeepLinks;
