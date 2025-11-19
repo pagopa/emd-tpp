@@ -218,8 +218,11 @@ class TppServiceTest {
                 .thenReturn(Mono.just(MOCK_TPP));
         Mockito.when(tppRepository.save(any()))
                 .thenReturn(Mono.just(MOCK_TPP));
-        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getIsPaymentEnabled()))
-                .expectNextMatches(result -> result.getTppId().equals(MOCK_TPP_DTO.getTppId()))
+        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled()))
+                .expectNextMatches(result -> {
+                                return result.getTppId().equals(MOCK_TPP_DTO.getTppId()) &&
+                                        result.getIsPaymentEnabled().equals(MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled());
+                        })
                 .verifyComplete();
     }
 
@@ -228,7 +231,7 @@ class TppServiceTest {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
                 .thenReturn(Mono.empty());
 
-        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getIsPaymentEnabled()))
+        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled()))
                 .expectErrorMatches(throwable ->
                         throwable instanceof ClientExceptionWithBody &&
                                 ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))

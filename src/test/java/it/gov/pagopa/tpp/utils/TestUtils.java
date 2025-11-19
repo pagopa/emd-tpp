@@ -4,6 +4,7 @@ import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppIdList;
+import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
 import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.utils.faker.*;
 import it.gov.pagopa.tpp.model.Tpp;
@@ -24,5 +25,6 @@ public class TestUtils {
     public static final List<String> MOCK_TPP_ID_STRING_LIST = List.of(MOCK_TPP_DTO.getTppId());
     public static final TppIdList MOCK_TPP_ID_LIST = new TppIdList(MOCK_TPP_ID_STRING_LIST);
     public static final String MOCK_WRONG_ID = "wrong";
+    public static final TppUpdateIsPaymentEnabled MOCK_IS_PAYMENT_ENABLED = TppUpdateIsPaymentEnabledFaker.mockInstance(true);
 
 }
