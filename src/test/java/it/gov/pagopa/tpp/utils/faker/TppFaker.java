@@ -32,6 +32,7 @@ public class TppFaker {
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})
+                .isPaymentEnabled(bias)
                 .build();
     }
 }

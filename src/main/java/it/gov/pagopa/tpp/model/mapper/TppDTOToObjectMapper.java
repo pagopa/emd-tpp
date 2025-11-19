@@ -32,6 +32,7 @@ public class TppDTOToObjectMapper {
                 .tokenSection(tppDTO.getTokenSection())
                 .pspDenomination(tppDTO.getPspDenomination())
                 .agentDeepLinks(tppDTO.getAgentDeepLinks())
+                .isPaymentEnabled(tppDTO.getIsPaymentEnabled())
                 .build();
     }
 

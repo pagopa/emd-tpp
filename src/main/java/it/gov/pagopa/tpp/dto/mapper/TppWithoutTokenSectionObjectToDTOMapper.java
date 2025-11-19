@@ -35,6 +35,7 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
                 .lastUpdateDate(tpp.getLastUpdateDate())
                 .pspDenomination(tpp.getPspDenomination())
                 .agentDeepLinks(tpp.getAgentDeepLinks())
+                .isPaymentEnabled(tpp.getIsPaymentEnabled())
                 .build();
     }
 }

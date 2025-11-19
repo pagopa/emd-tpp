@@ -31,6 +31,7 @@ public class TppDTOWithoutTokenSectionFaker {
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})
+                .isPaymentEnabled(bias)
                 .build();
     }
 

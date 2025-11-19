@@ -213,6 +213,32 @@ class TppServiceTest {
     }
 
     @Test
+    void updateIsPaymentEnabled_Ok() {
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
+                .thenReturn(Mono.just(MOCK_TPP));
+        Mockito.when(tppRepository.save(any()))
+                .thenReturn(Mono.just(MOCK_TPP));
+        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled()))
+                .expectNextMatches(result -> {
+                                return result.getTppId().equals(MOCK_TPP_DTO.getTppId()) &&
+                                        result.getIsPaymentEnabled().equals(MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled());
+                        })
+                .verifyComplete();
+    }
+
+    @Test
+    void updateIsPaymentEnabled_Ok_TppNotOnboarded() {
+        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled()))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+                .verify();
+    }
+
+    @Test
     void getTppDetails_Ok() {
         Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
                 .thenReturn(Mono.just(MOCK_TPP));
