@@ -9,7 +9,5 @@ import lombok.Data;
 @Data
 public class TppUpdateIsPaymentEnabled {
     @NotNull
-    private String tppId;
-    @NotNull
     private Boolean isPaymentEnabled;
 }

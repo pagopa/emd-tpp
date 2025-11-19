@@ -41,12 +41,13 @@ public interface TppController {
     /**
      * Update the isPaymentEnabled of an existing TPP.
      *
+     * @param tppId       of the TPP to update
      * @param tppUpdateIsPaymentEnabled to update
      * @return a {@link Mono} containing a {@link ResponseEntity} with 
-     *          the updated {@link TppDTO} if successful
+     *         204 No Content if the update is successful
      */
-    @PutMapping("/isPaymentEnabled")
-    Mono<ResponseEntity<TppDTO>> updateIsPaymentEnabled(@Valid @RequestBody TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled);
+    @PutMapping("/{tppId}/payment-enabled")
+    Mono<ResponseEntity<Void>> updateIsPaymentEnabled(@Valid @PathVariable String tppId, @Valid @RequestBody TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled);
 
     /**
      * Creates and saves a new tpp

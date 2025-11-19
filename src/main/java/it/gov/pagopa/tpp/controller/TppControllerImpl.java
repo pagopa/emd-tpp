@@ -2,6 +2,8 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.*;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -48,9 +50,9 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
-    public Mono<ResponseEntity<TppDTO>> updateIsPaymentEnabled(TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled) {
-        return tppService.updateIsPaymentEnabled(inputSanitization(tppUpdateIsPaymentEnabled.getTppId()), tppUpdateIsPaymentEnabled.getIsPaymentEnabled())
-                .map(ResponseEntity::ok);
+    public Mono<ResponseEntity<Void>> updateIsPaymentEnabled(String tppId, TppUpdateIsPaymentEnabled tppUpdateIsPaymentEnabled) {
+        return tppService.updateIsPaymentEnabled(inputSanitization(tppId), tppUpdateIsPaymentEnabled.getIsPaymentEnabled())
+               .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     /**
