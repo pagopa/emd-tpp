@@ -52,13 +52,11 @@ public class TppObjectToDTOMapper {
             ? tpp.getMessageTemplate()
             : defaultTemplateContent;
 
-        if (log.isDebugEnabled()) {
-            log.debug("[TPP-MAPPER][MAP] EntityId: {} - TppId: {}. Template Source: {}",
+            log.info("[TPP-MAPPER][MAP] EntityId: {} - TppId: {}. Template Source: {}",
                 tpp.getEntityId(),
                 tpp.getTppId(),
                 hasCustomTemplate ? "CUSTOM_DB" : "DEFAULT_FILE"
             );
-        }
 
         return TppDTO.builder()
             .state(tpp.getState())

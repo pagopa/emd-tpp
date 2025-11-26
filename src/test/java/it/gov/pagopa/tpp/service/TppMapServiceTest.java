@@ -1,8 +1,8 @@
 package it.gov.pagopa.tpp.service;
 
-
 import com.github.benmanes.caffeine.cache.Caffeine;
 import it.gov.pagopa.tpp.model.TokenSection;
+import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.repository.TppRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,9 +22,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
-        TokenSectionCryptService.class,
-        TppRepository.class,
-        Caffeine.class
+    TokenSectionCryptService.class,
+    TppRepository.class,
+    Caffeine.class
 })
 class TppMapServiceTest {
 
@@ -34,27 +34,31 @@ class TppMapServiceTest {
     @MockBean
     private TokenSectionCryptService tokenSectionCryptService;
 
-
     private TppMapService tppMapService;
+
+    private Tpp tpp;
 
     @BeforeEach
     void setUp(){
-        when(tppRepository.findAll()).thenReturn(Flux.just(MOCK_TPP,MOCK_TPP));
-        when(tokenSectionCryptService.keyDecrypt(any(TokenSection.class),anyString())).thenReturn(Mono.just(true));
+        tpp = getMockTpp();
+
+        when(tppRepository.findAll()).thenReturn(Flux.just(tpp, tpp));
+
+        when(tokenSectionCryptService.keyDecrypt(any(TokenSection.class), anyString()))
+            .thenReturn(Mono.just(true));
+
         tppMapService = new TppMapService(tppRepository, tokenSectionCryptService);
         tppMapService.resetCache();
     }
 
-
     @Test
     void testGetFromCache(){
-        assertEquals(MOCK_TPP, tppMapService.getFromMap("tppId"));
+        assertEquals(tpp, tppMapService.getFromMap(tpp.getTppId()));
     }
 
     @Test
     void removeFromMap(){
-        tppMapService.removeFromMap("tppId");
-        assertNull(tppMapService.getFromMap("tppId"));
+        tppMapService.removeFromMap(tpp.getTppId());
+        assertNull(tppMapService.getFromMap(tpp.getTppId()));
     }
-
 }

@@ -217,6 +217,7 @@ public class TppServiceImpl implements TppService {
                         return Mono.error(exceptionMap.throwException(ExceptionName.TPP_ALREADY_ONBOARDED,
                                 ExceptionMessage.TPP_ALREADY_ONBOARDED));
                     }
+                    log.info("oooo {}", result);
                     return Mono.just(mapperToDTO.map(result));
                 });
     }
