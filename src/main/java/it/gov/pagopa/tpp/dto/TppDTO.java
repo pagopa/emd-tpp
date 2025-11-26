@@ -61,4 +61,5 @@ public class TppDTO {
     @NotNull(message = "IsPaymentEnabled must not be null")
     private Boolean isPaymentEnabled;
 
+    private String messageTemplate;
 }

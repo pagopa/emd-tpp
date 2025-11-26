@@ -155,6 +155,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setLegalAddress(tppDTOWithoutTokenSection.getLegalAddress());
                     existingTpp.setPspDenomination(tppDTOWithoutTokenSection.getPspDenomination());
                     existingTpp.setAgentDeepLinks(tppDTOWithoutTokenSection.getAgentDeepLinks());
+                    existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
                     return tppRepository.save(existingTpp)
                             .map(tppWithoutTokenSectionMapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}" ,savedTpp.getTppId()))

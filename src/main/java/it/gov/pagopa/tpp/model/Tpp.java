@@ -36,4 +36,5 @@ public class Tpp {
     private String pspDenomination;
     private HashMap<String, String> agentDeepLinks;
     private Boolean isPaymentEnabled;
+    private String messageTemplate;
 }

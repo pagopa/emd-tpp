@@ -57,4 +57,6 @@ public class TppDTOWithoutTokenSection {
 
     @NotNull(message = "IsPaymentEnabled must not be null")
     private Boolean isPaymentEnabled;
+
+    private String messageTemplate;
 }
