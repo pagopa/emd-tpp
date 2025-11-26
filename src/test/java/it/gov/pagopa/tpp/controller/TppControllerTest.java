@@ -60,8 +60,6 @@ class TppControllerTest {
 
     @Test
     void deleteTpp_ok() {
-        // Qui il service ritorna il DTO completo, ma il controller (presumibilmente)
-        // restituisce quello senza token section o la verifica lo richiede.
         TppDTO serviceResponse = getMockTppDto();
         TppDTOWithoutTokenSection expectedResponse = getMockTppDtoWithoutTokenSection();
 
