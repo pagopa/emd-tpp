@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/pagopa/emd-tpp/compare/v1.1.0...v1.2.0) (2025-11-27)
+
+
+### Features
+
+* [MMC-276] Make message editable for each TPP and fix tpp cache sync ([#76](https://github.com/pagopa/emd-tpp/issues/76)) ([fb8dbf5](https://github.com/pagopa/emd-tpp/commit/fb8dbf59066198ebdf753a92c8916c70c480b017))
+
 ## [1.1.0](https://github.com/pagopa/emd-tpp/compare/v1.0.5...v1.1.0) (2025-11-19)
 
 
