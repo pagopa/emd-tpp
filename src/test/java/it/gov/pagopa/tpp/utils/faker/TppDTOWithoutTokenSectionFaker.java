@@ -31,6 +31,7 @@ public class TppDTOWithoutTokenSectionFaker {
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})
+                .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(bias)
                 .build();
     }
@@ -56,6 +57,8 @@ public class TppDTOWithoutTokenSectionFaker {
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})
+                .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
+                .isPaymentEnabled(bias)
                 .build();
     }
 

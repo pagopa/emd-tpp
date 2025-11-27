@@ -4,9 +4,13 @@ import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
+import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.mapper.TokenSectionObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppWithoutTokenSectionObjectToDTOMapper;
+import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
@@ -28,15 +32,15 @@ import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
-        TppServiceImpl.class,
-        TppObjectToDTOMapper.class,
-        TppDTOToObjectMapper.class,
-        TokenSectionObjectToDTOMapper.class,
-        TokenSectionDTOToObjectMapper.class,
-        TppWithoutTokenSectionObjectToDTOMapper.class,
-        AzureKeyService.class,
-        TppMapService.class,
-        ExceptionMap.class
+    TppServiceImpl.class,
+    TppObjectToDTOMapper.class,
+    TppDTOToObjectMapper.class,
+    TokenSectionObjectToDTOMapper.class,
+    TokenSectionDTOToObjectMapper.class,
+    TppWithoutTokenSectionObjectToDTOMapper.class,
+    AzureKeyService.class,
+    TppMapService.class,
+    ExceptionMap.class
 })
 class TppServiceTest {
 
@@ -70,238 +74,337 @@ class TppServiceTest {
 
     @Test
     void getEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(MOCK_TPP_ID_STRING_LIST))
-                .thenReturn(Flux.fromIterable(MOCK_TPP_LIST));
+        Mockito.when(tppRepository.findByTppIdInAndStateTrue(getMockTppIdStringList()))
+            .thenReturn(Flux.fromIterable(getMockTppList()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(tppService.getEnabledList(MOCK_TPP_ID_STRING_LIST))
-                .expectNextMatches(response -> response.equals(MOCK_TPP_DTO_LIST))
-                .verifyComplete();
+        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
+            .expectNextMatches(response -> response.equals(getMockTppDtoList()))
+            .verifyComplete();
     }
 
     @Test
     void createTpp_AlreadyExist() {
         Mockito.when(tppRepository.findByEntityId(any()))
-                .thenReturn(Mono.just(MOCK_TPP));
+            .thenReturn(Mono.just(getMockTpp()));
 
-        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_WRONG_ID))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_ALREADY_ONBOARDED"))
-                .verify();
+        StepVerifier.create(tppService.createNewTpp(getMockTppDto(), MOCK_WRONG_ID))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_ALREADY_ONBOARDED"))
+            .verify();
     }
 
     @Test
     void createTpp_Ok() {
+        TppDTO inputDto = getMockTppDto();
+        Tpp mockTppEntity = getMockTpp();
+
         Mockito.when(tppRepository.findByEntityId(any()))
-                .thenReturn(Mono.empty());
+            .thenReturn(Mono.empty());
         Mockito.when(tppRepository.save(any()))
-                .thenReturn(Mono.just(MOCK_TPP));
+            .thenReturn(Mono.just(mockTppEntity));
         Mockito.when(azureKeyService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
-        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO, MOCK_TPP_DTO.getTppId()))
-                .expectNextMatches(response -> {
-                    response.setLastUpdateDate(null);
-                    return response.equals(MOCK_TPP_DTO);
-                })
-                .verifyComplete();
+        StepVerifier.create(tppService.createNewTpp(inputDto, inputDto.getTppId()))
+            .expectNextMatches(response -> {
+                response.setLastUpdateDate(null);
+                return response.equals(getMockTppDto());
+            })
+            .verifyComplete();
     }
 
     @Test
     void createTpp_MissingTokenSection() {
-        Mockito.when(tppRepository.findByEntityId(MOCK_TPP_DTO_NO_TOKEN_SECTION.getEntityId()))
-                .thenReturn(Mono.empty());
+        TppDTO tppNoToken = getMockTppDtoNoTokenSection();
+        TppDTO tppDto = getMockTppDto();
 
-        StepVerifier.create(tppService.createNewTpp(MOCK_TPP_DTO_NO_TOKEN_SECTION, MOCK_TPP_DTO.getTppId()))
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
-                .verify();
+        Mockito.when(tppRepository.findByEntityId(tppNoToken.getEntityId()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.createNewTpp(tppNoToken, tppDto.getTppId()))
+            .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+            .verify();
     }
 
     @Test
     void updateTppDetails_Ok() {
-        Mockito.when(tppRepository.findByTppId(any()))
-                .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(tppRepository.save(Mockito.any()))
-                .thenReturn(Mono.just(MOCK_TPP));
+        TppDTOWithoutTokenSection inputDto = getMockTppDtoWithoutTokenSection();
+        Tpp mockTpp = getMockTpp();
 
-        StepVerifier.create(tppService.updateTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION))
-                .expectNextMatches(response -> {
-                    response.setLastUpdateDate(null);
-                    return response.equals(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION);
-                })
-                .verifyComplete();
+        Mockito.when(tppRepository.findByTppId(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(Mockito.any()))
+            .thenReturn(Mono.just(mockTpp));
+
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateTppDetails(inputDto))
+            .expectNextMatches(response -> {
+                response.setLastUpdateDate(null);
+                return response.equals(getMockTppDtoWithoutTokenSection());
+            })
+            .verifyComplete();
     }
 
     @Test
     void updateTppDetails_TppNotFound() {
         Mockito.when(tppRepository.findByTppId(Mockito.any()))
-                .thenReturn(Mono.empty());
+            .thenReturn(Mono.empty());
 
-
-        StepVerifier.create(tppService.updateTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
-                .verify();
+        StepVerifier.create(tppService.updateTppDetails(getMockTppDtoWithoutTokenSection()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
     }
 
     @Test
     void updateTppDetails_NoTppId() {
-        StepVerifier.create(tppService.updateTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION_NO_ID))
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
-                .verify();
+        StepVerifier.create(tppService.updateTppDetails(getMockTppDtoWithoutTokenSectionNoId()))
+            .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+            .verify();
     }
 
     @Test
     void updateTokenSection_Ok() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP));
+        TppDTO tppDto = getMockTppDto();
+        Tpp mockTpp = getMockTpp();
+        TokenSectionDTO tokenSectionDTO = getMockTokenSectionDto();
+
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
         Mockito.when(tppRepository.save(Mockito.any()))
-                .thenReturn(Mono.just(MOCK_TPP));
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
         Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
 
-        StepVerifier.create(tppService.updateTokenSection(MOCK_TPP_DTO.getTppId(), MOCK_TOKEN_SECTION_DTO))
-                .expectNextMatches(result -> result.equals(MOCK_TOKEN_SECTION_DTO))
-                .verifyComplete();
-      }
+        StepVerifier.create(tppService.updateTokenSection(tppDto.getTppId(), tokenSectionDTO))
+            .expectNextMatches(result -> result.equals(getMockTokenSectionDto()))
+            .verifyComplete();
+    }
 
     @Test
     void updateTokenSection_NoTppId() {
-        StepVerifier.create(tppService.updateTokenSection(null, MOCK_TOKEN_SECTION_DTO))
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
-                .verify();
+        StepVerifier.create(tppService.updateTokenSection(null, getMockTokenSectionDto()))
+            .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+            .verify();
     }
 
     @Test
     void updateTokenSection_TppNotFound() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.empty());
+        TppDTO tppDto = getMockTppDto();
+        TokenSectionDTO tokenSectionDTO = getMockTokenSectionDto();
 
-        StepVerifier.create(tppService.updateTokenSection(MOCK_TPP_DTO.getTppId(), MOCK_TOKEN_SECTION_DTO))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
-                .verify();
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.updateTokenSection(tppDto.getTppId(), tokenSectionDTO))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
     }
 
     @Test
     void updateState_Ok() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP));
+        TppDTO tppDto = getMockTppDto();
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
         Mockito.when(tppRepository.save(any()))
-                .thenReturn(Mono.just(MOCK_TPP));
-        StepVerifier.create(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))
-                .expectNextMatches(result -> result.getTppId().equals(MOCK_TPP_DTO.getTppId()))
-                .verifyComplete();
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateState(tppDto.getTppId(), tppDto.getState()))
+            .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
+            .verifyComplete();
     }
 
     @Test
     void updateState_TppNotOnboarded() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.empty());
+        TppDTO tppDto = getMockTppDto();
 
-        StepVerifier.create(tppService.updateState(MOCK_TPP_DTO.getTppId(), MOCK_TPP_DTO.getState()))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
-                .verify();
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.updateState(tppDto.getTppId(), tppDto.getState()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
     }
 
     @Test
     void updateIsPaymentEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP));
+        TppDTO tppDto = getMockTppDto();
+        Tpp mockTpp = getMockTpp();
+        var isPaymentEnabled = getMockIsPaymentEnabled();
+
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
         Mockito.when(tppRepository.save(any()))
-                .thenReturn(Mono.just(MOCK_TPP));
-        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled()))
-                .expectNextMatches(result -> {
-                                return result.getTppId().equals(MOCK_TPP_DTO.getTppId()) &&
-                                        result.getIsPaymentEnabled().equals(MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled());
-                        })
-                .verifyComplete();
+            .thenReturn(Mono.just(mockTpp));
+
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateIsPaymentEnabled(tppDto.getTppId(), isPaymentEnabled.getIsPaymentEnabled()))
+            .expectNextMatches(result -> {
+                return result.getTppId().equals(tppDto.getTppId()) &&
+                    result.getIsPaymentEnabled().equals(isPaymentEnabled.getIsPaymentEnabled());
+            })
+            .verifyComplete();
     }
 
     @Test
     void updateIsPaymentEnabled_Ok_TppNotOnboarded() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.empty());
+        TppDTO tppDto = getMockTppDto();
+        var isPaymentEnabled = getMockIsPaymentEnabled();
 
-        StepVerifier.create(tppService.updateIsPaymentEnabled(MOCK_TPP_DTO.getTppId(), MOCK_IS_PAYMENT_ENABLED.getIsPaymentEnabled()))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
-                .verify();
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.empty());
+
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateIsPaymentEnabled(tppDto.getTppId(), isPaymentEnabled.getIsPaymentEnabled()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
     }
 
     @Test
-    void getTppDetails_Ok() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP));
+    void getTppDetailsFromCache_Ok() {
+        TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+        TppDTO tppDto = getMockTppDto();
 
-        StepVerifier.create(tppService.getTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .expectNextMatches(result -> result.getTppId().equals(MOCK_TPP_DTO.getTppId()))
-                .verifyComplete();
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.just(getMockTpp()));
+
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+            .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
+            .verifyComplete();
+    }
+
+    @Test
+    void getTppDetailsFromDB_Ok() {
+        TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+        TppDTO tppDto = getMockTppDto();
+
+        Mockito.when(tppRepository.findByTppId(tppDtoNoToken.getTppId()))
+            .thenReturn(Mono.just(getMockTpp()));
+
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+            .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
+            .verifyComplete();
     }
 
     @Test
     void getTppDetails_TppNotOnboarded() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .thenReturn(Mono.empty());
+        TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
 
-        StepVerifier.create(tppService.getTppDetails(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
-                .verify();
+        Mockito.when(tppRepository.findByTppId(tppDtoNoToken.getTppId()))
+            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
     }
 
     @Test
     void getTppByEntityId_Ok() {
-        Mockito.when(tppRepository.findByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
-                .thenReturn(Mono.just(MOCK_TPP));
+        TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
 
-        StepVerifier.create(tppService.getTppByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
-                .expectNextCount(1)
-                .verifyComplete();
+        Mockito.when(tppRepository.findByEntityId(tppDtoNoToken.getEntityId()))
+            .thenReturn(Mono.just(getMockTpp()));
+
+        StepVerifier.create(tppService.getTppByEntityId(tppDtoNoToken.getEntityId()))
+            .expectNextCount(1)
+            .verifyComplete();
     }
 
     @Test
     void getTppByEntityId_TppNotOnboarded() {
-        Mockito.when(tppRepository.findByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
-                .thenReturn(Mono.empty());
+        TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
 
-        StepVerifier.create(tppService.getTppByEntityId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getEntityId()))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof ClientExceptionWithBody &&
-                                ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
-                .verify();
+        Mockito.when(tppRepository.findByEntityId(tppDtoNoToken.getEntityId()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.getTppByEntityId(tppDtoNoToken.getEntityId()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
     }
 
     @Test
-    void getTokenSection_Ok() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP));
+    void getTokenSectionFromDB_Ok() {
+        TppDTO tppDto = getMockTppDto();
+
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.just(getMockTpp()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
-        StepVerifier.create(tppService.getTokenSection(MOCK_TPP_DTO.getTppId()))
-                .expectNextMatches(result -> result.equals(MOCK_TOKEN_SECTION_DTO))
-                .verifyComplete();
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.getTokenSection(tppDto.getTppId()))
+            .expectNextMatches(result -> result.equals(getMockTokenSectionDto()))
+            .verifyComplete();
+    }
+
+    @Test
+    void getTokenSectionFromCache_Ok() {
+        TppDTO tppDto = getMockTppDto();
+
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.just(getMockTpp()));
+
+        StepVerifier.create(tppService.getTokenSection(tppDto.getTppId()))
+            .expectNextMatches(result -> result.equals(getMockTokenSectionDto()))
+            .verifyComplete();
     }
 
     @Test
     void getTokenSection_TppNotFound() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO.getTppId()))
-                .thenReturn(Mono.empty());
+        TppDTO tppDto = getMockTppDto();
 
-        StepVerifier.create(tppService.getTokenSection(MOCK_TPP_DTO.getTppId()))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof RuntimeException &&
-                                throwable.getMessage().contains("Tpp not found during get process"))
-                .verify();
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.empty());
+
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.getTokenSection(tppDto.getTppId()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof RuntimeException &&
+                    throwable.getMessage().contains("Tpp not found during get process"))
+            .verify();
     }
 
 
@@ -311,21 +414,22 @@ class TppServiceTest {
         networkResponseDTO.setMessage("tppName ha raggiunto i nostri sistemi");
         networkResponseDTO.setCode("PAGOPA_NETWORK_TEST");
         StepVerifier.create(tppService.testConnection("tppName"))
-                .expectNext(networkResponseDTO)
-                .verifyComplete();
+            .expectNext(networkResponseDTO)
+            .verifyComplete();
     }
 
     @Test
     void deleteTpp_OK() {
-        Mockito.when(tppRepository.findByTppId(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .thenReturn(Mono.just(MOCK_TPP));
-        Mockito.when(tppRepository.delete(MOCK_TPP)).thenReturn(Mono.empty());
+        TppDTOWithoutTokenSection tppDto = getMockTppDtoWithoutTokenSection();
+        Tpp mockTpp = getMockTpp();
 
-        StepVerifier.create(tppService.deleteTpp(MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION.getTppId()))
-                .expectNextCount(1)
-                .verifyComplete();
+        Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+
+        Mockito.when(tppRepository.delete(mockTpp)).thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.deleteTpp(tppDto.getTppId()))
+            .expectNextCount(1)
+            .verifyComplete();
     }
-
 }
-
-

@@ -12,19 +12,54 @@ import it.gov.pagopa.tpp.model.Tpp;
 import java.util.List;
 
 public class TestUtils {
-
-    public static final TppDTO MOCK_TPP_DTO = TppDTOFaker.mockInstance(true);
-    public static final TppDTO MOCK_TPP_DTO_NO_TOKEN_SECTION = TppDTOFaker.mockInstanceWithNoTokenSection(true);
-    public static final TppDTOWithoutTokenSection MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION = TppDTOWithoutTokenSectionFaker.mockInstance(true);
-    public static final TppDTOWithoutTokenSection MOCK_TPP_DTO_WITHOUT_TOKEN_SECTION_NO_ID = TppDTOWithoutTokenSectionFaker.mockInstanceWithNoTppId(true);
-    public static final TokenSectionDTO MOCK_TOKEN_SECTION_DTO = TokenSectionDTOFaker.mockInstance();
-    public static final TokenSection MOCK_TOKEN_SECTION = TokenSectionFaker.mockInstance();
-    public static final Tpp MOCK_TPP = TppFaker.mockInstance(true);
-    public static final List<TppDTO> MOCK_TPP_DTO_LIST = List.of(MOCK_TPP_DTO);
-    public static final List<Tpp> MOCK_TPP_LIST = List.of(TppFaker.mockInstance(true));
-    public static final List<String> MOCK_TPP_ID_STRING_LIST = List.of(MOCK_TPP_DTO.getTppId());
-    public static final TppIdList MOCK_TPP_ID_LIST = new TppIdList(MOCK_TPP_ID_STRING_LIST);
     public static final String MOCK_WRONG_ID = "wrong";
-    public static final TppUpdateIsPaymentEnabled MOCK_IS_PAYMENT_ENABLED = TppUpdateIsPaymentEnabledFaker.mockInstance(true);
 
+
+    public static TppDTO getMockTppDto() {
+        return TppDTOFaker.mockInstance(true);
+    }
+
+    public static TppDTO getMockTppDtoNoTokenSection() {
+        return TppDTOFaker.mockInstanceWithNoTokenSection(true);
+    }
+
+    public static TppDTOWithoutTokenSection getMockTppDtoWithoutTokenSection() {
+        return TppDTOWithoutTokenSectionFaker.mockInstance(true);
+    }
+
+    public static TppDTOWithoutTokenSection getMockTppDtoWithoutTokenSectionNoId() {
+        return TppDTOWithoutTokenSectionFaker.mockInstanceWithNoTppId(true);
+    }
+
+    public static TokenSectionDTO getMockTokenSectionDto() {
+        return TokenSectionDTOFaker.mockInstance();
+    }
+
+    public static TokenSection getMockTokenSection() {
+        return TokenSectionFaker.mockInstance();
+    }
+
+    public static Tpp getMockTpp() {
+        return TppFaker.mockInstance(true);
+    }
+
+    public static List<TppDTO> getMockTppDtoList() {
+        return List.of(getMockTppDto());
+    }
+
+    public static List<Tpp> getMockTppList() {
+        return List.of(TppFaker.mockInstance(true));
+    }
+
+    public static List<String> getMockTppIdStringList() {
+        return List.of(getMockTppDto().getTppId());
+    }
+
+    public static TppIdList getMockTppIdList() {
+        return new TppIdList(getMockTppIdStringList());
+    }
+
+    public static TppUpdateIsPaymentEnabled getMockIsPaymentEnabled() {
+        return TppUpdateIsPaymentEnabledFaker.mockInstance(true);
+    }
 }

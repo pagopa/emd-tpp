@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.service;
 import com.azure.security.keyvault.keys.cryptography.CryptographyAsyncClient;
 import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
+import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,8 +21,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
-        AzureKeyService.class,
-        TokenSectionCryptService.class
+    AzureKeyService.class,
+    TokenSectionCryptService.class
 })
 class TokenSectionCryptServiceTest {
 
@@ -30,6 +31,7 @@ class TokenSectionCryptServiceTest {
 
     @Mock
     private KeyVaultKey mockKeyVaultKey;
+
     @Mock
     private CryptographyAsyncClient mockCryptographyClient;
 
@@ -38,27 +40,28 @@ class TokenSectionCryptServiceTest {
 
     @Test
     void testKeyEncrypt(){
+        TokenSection tokenSection = getMockTokenSection();
 
         when(azureKeyService.buildCryptographyClient(mockKeyVaultKey)).thenReturn(mockCryptographyClient);
-        when(azureKeyService.encrypt(any(byte[].class), eq(EncryptionAlgorithm.RSA_OAEP_256), eq(mockCryptographyClient))).thenReturn(Mono.just("test"));
+        when(azureKeyService.encrypt(any(byte[].class), eq(EncryptionAlgorithm.RSA_OAEP_256), eq(mockCryptographyClient)))
+            .thenReturn(Mono.just("test"));
 
-        Boolean result = tppTokenSectionCryptService.keyEncrypt(MOCK_TOKEN_SECTION,mockKeyVaultKey).block();
+        Boolean result = tppTokenSectionCryptService.keyEncrypt(tokenSection, mockKeyVaultKey).block();
 
         assertTrue(result);
     }
 
     @Test
     void testKeyDecrypt(){
+        TokenSection tokenSection = getMockTokenSection();
 
         when(azureKeyService.getKey("tppId")).thenReturn(Mono.just(mockKeyVaultKey));
         when(azureKeyService.buildCryptographyClient(mockKeyVaultKey)).thenReturn(mockCryptographyClient);
-        when(azureKeyService.decrypt(anyString(), eq(EncryptionAlgorithm.RSA_OAEP_256), eq(mockCryptographyClient))).thenReturn(Mono.just("test"));
+        when(azureKeyService.decrypt(anyString(), eq(EncryptionAlgorithm.RSA_OAEP_256), eq(mockCryptographyClient)))
+            .thenReturn(Mono.just("test"));
 
-        Boolean result = tppTokenSectionCryptService.keyDecrypt(MOCK_TOKEN_SECTION, "tppId").block();
+        Boolean result = tppTokenSectionCryptService.keyDecrypt(tokenSection, "tppId").block();
 
         assertTrue(result);
-
     }
-
-
 }

@@ -32,6 +32,7 @@ public class TppDTOFaker {
                 .agentDeepLinks(new HashMap<>() {{
                     put("agent", "link");
                 }})
+                .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(bias)
                 .build();
     }
@@ -54,6 +55,8 @@ public class TppDTOFaker {
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
+                .isPaymentEnabled(bias)
+                .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .build();
     }
 
@@ -76,6 +79,7 @@ public class TppDTOFaker {
                 .creationDate(null)
                 .tokenSection(null)
                 .isPaymentEnabled(bias)
+                .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .build();
     }
 
