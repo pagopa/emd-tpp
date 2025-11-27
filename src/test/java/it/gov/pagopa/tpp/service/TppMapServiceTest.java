@@ -13,6 +13,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,13 +53,22 @@ class TppMapServiceTest {
     }
 
     @Test
-    void testGetFromCache(){
-        assertEquals(tpp, tppMapService.getFromMap(tpp.getTppId()));
+    void testGetFromCache() {
+        tppMapService.addToMap(tpp).block();
+
+        StepVerifier.create(tppMapService.getFromMap(tpp.getTppId()))
+            .expectNext(tpp)
+            .verifyComplete();
     }
 
     @Test
-    void removeFromMap(){
+    void removeFromMap() {
+        tppMapService.addToMap(tpp).block();
+
         tppMapService.removeFromMap(tpp.getTppId());
-        assertNull(tppMapService.getFromMap(tpp.getTppId()));
+
+        StepVerifier.create(tppMapService.getFromMap(tpp.getTppId()))
+            .expectNextCount(0)
+            .verifyComplete();
     }
 }

@@ -55,7 +55,7 @@ public class TppMapService {
                 .filter(Tpp::getState)
                 .buffer(100)
                 .flatMap(this::addToMap)
-                .then(Mono.fromRunnable(() -> log.info("[MAP-INITIALIZER] Population complete")))
+                .then(Mono.fromRunnable(() -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete")))
                 .subscribe();
     }
 
@@ -66,7 +66,7 @@ public class TppMapService {
     public void resetCache() {
         tppCache.invalidateAll();
         populateMap();
-        log.info("[CACHE-RESET] Cache reset at 4 AM");
+        log.info("[TPP-MAP][CACHE-RESET] Cache reset at 4 AM");
     }
 
     /**
@@ -95,30 +95,24 @@ public class TppMapService {
     public Mono<Boolean> addToMap(Tpp tpp) {
         String tppId = tpp.getTppId();
         return tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
-                .flatMap(decryptionResult -> {
-                    if (tppCache.asMap().putIfAbsent(tppId, tpp) != null) {
-                        log.info("Duplicate TPP ID: {}", tppId);
-                        return Mono.just(true);
-                    } else {
-                        log.info("Added TPP ID: {}", tppId);
-                        return Mono.just(false);
-                    }
-
-                })
-                .onErrorResume(e -> {
-                    log.error("Decryption failed for TPP ID: {}", tppId, e);
-                    return Mono.just(false);
-                });
+            .flatMap(decryptionResult -> {
+                tppCache.put(tppId, tpp);
+                log.info("[TPP-MAP][ADD] Updated/Added TPP ID in cache: {}", tppId);
+                return Mono.just(true);
+            })
+            .onErrorResume(e -> {
+                log.error("[TPP-MAP][ADD] Decryption failed for TPP ID: {}", tppId, e);
+                return Mono.just(false);
+            });
     }
 
     /**
-     * Retrieves a TPP entity from the cache by its identifier.
-     * 
-     * @param tppId the TPP identifier to look up
-     * @return the cached TPP entity if present, null otherwise
+     * Retrieves a TPP entity from the cache by its identifier reactively.
+     * * @param tppId the TPP identifier to look up
+     * @return a Mono containing the cached TPP entity if present, or Mono.empty() otherwise
      */
-    public Tpp getFromMap(String tppId) {
-        return tppCache.getIfPresent(tppId);
+    public Mono<Tpp> getFromMap(String tppId) {
+        return Mono.justOrEmpty(tppCache.getIfPresent(tppId));
     }
 
     /**

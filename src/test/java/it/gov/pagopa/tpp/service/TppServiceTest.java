@@ -78,6 +78,7 @@ class TppServiceTest {
             .thenReturn(Flux.fromIterable(getMockTppList()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
 
         StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
             .expectNextMatches(response -> response.equals(getMockTppDtoList()))
@@ -108,6 +109,8 @@ class TppServiceTest {
         Mockito.when(azureKeyService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
         StepVerifier.create(tppService.createNewTpp(inputDto, inputDto.getTppId()))
             .expectNextMatches(response -> {
@@ -139,6 +142,9 @@ class TppServiceTest {
             .thenReturn(Mono.just(mockTpp));
         Mockito.when(tppRepository.save(Mockito.any()))
             .thenReturn(Mono.just(mockTpp));
+
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
         StepVerifier.create(tppService.updateTppDetails(inputDto))
             .expectNextMatches(response -> {
@@ -177,6 +183,8 @@ class TppServiceTest {
             .thenReturn(Mono.just(mockTpp));
         Mockito.when(tppRepository.save(Mockito.any()))
             .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
         Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
@@ -217,6 +225,8 @@ class TppServiceTest {
             .thenReturn(Mono.just(mockTpp));
         Mockito.when(tppRepository.save(any()))
             .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
         StepVerifier.create(tppService.updateState(tppDto.getTppId(), tppDto.getState()))
             .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
@@ -248,6 +258,9 @@ class TppServiceTest {
         Mockito.when(tppRepository.save(any()))
             .thenReturn(Mono.just(mockTpp));
 
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
         StepVerifier.create(tppService.updateIsPaymentEnabled(tppDto.getTppId(), isPaymentEnabled.getIsPaymentEnabled()))
             .expectNextMatches(result -> {
                 return result.getTppId().equals(tppDto.getTppId()) &&
@@ -264,6 +277,9 @@ class TppServiceTest {
         Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
             .thenReturn(Mono.empty());
 
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
         StepVerifier.create(tppService.updateIsPaymentEnabled(tppDto.getTppId(), isPaymentEnabled.getIsPaymentEnabled()))
             .expectErrorMatches(throwable ->
                 throwable instanceof ClientExceptionWithBody &&
@@ -272,12 +288,30 @@ class TppServiceTest {
     }
 
     @Test
-    void getTppDetails_Ok() {
+    void getTppDetailsFromCache_Ok() {
+        TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+        TppDTO tppDto = getMockTppDto();
+
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.just(getMockTpp()));
+
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+            .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
+            .verifyComplete();
+    }
+
+    @Test
+    void getTppDetailsFromDB_Ok() {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
         TppDTO tppDto = getMockTppDto();
 
         Mockito.when(tppRepository.findByTppId(tppDtoNoToken.getTppId()))
             .thenReturn(Mono.just(getMockTpp()));
+
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
 
         StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
             .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
@@ -289,6 +323,8 @@ class TppServiceTest {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
 
         Mockito.when(tppRepository.findByTppId(tppDtoNoToken.getTppId()))
+            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap(any()))
             .thenReturn(Mono.empty());
 
         StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
@@ -325,12 +361,29 @@ class TppServiceTest {
     }
 
     @Test
-    void getTokenSection_Ok() {
+    void getTokenSectionFromDB_Ok() {
         TppDTO tppDto = getMockTppDto();
 
         Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
             .thenReturn(Mono.just(getMockTpp()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.getTokenSection(tppDto.getTppId()))
+            .expectNextMatches(result -> result.equals(getMockTokenSectionDto()))
+            .verifyComplete();
+    }
+
+    @Test
+    void getTokenSectionFromCache_Ok() {
+        TppDTO tppDto = getMockTppDto();
+
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.getFromMap(any()))
+            .thenReturn(Mono.just(getMockTpp()));
 
         StepVerifier.create(tppService.getTokenSection(tppDto.getTppId()))
             .expectNextMatches(result -> result.equals(getMockTokenSectionDto()))
@@ -342,6 +395,9 @@ class TppServiceTest {
         TppDTO tppDto = getMockTppDto();
 
         Mockito.when(tppRepository.findByTppId(tppDto.getTppId()))
+            .thenReturn(Mono.empty());
+
+        Mockito.when(tppMapService.getFromMap(any()))
             .thenReturn(Mono.empty());
 
         StepVerifier.create(tppService.getTokenSection(tppDto.getTppId()))

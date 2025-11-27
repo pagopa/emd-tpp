@@ -107,16 +107,11 @@ public class TppServiceImpl implements TppService {
      */
     private Mono<List<TppDTO>> checkMapForTppIds(List<String> tppIdList) {
         return Flux.fromIterable(tppIdList)
-                .flatMap(tppId -> {
-                    Tpp tpp = tppMapService.getFromMap(tppId);
-                    if (tpp != null) {
-                        log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp.getTppId());
-                        return Mono.just(mapperToDTO.map(tpp));
-                    } else {
-                        return Mono.empty();
-                    }
-                })
-                .collectList();
+            .flatMap(tppId -> tppMapService.getFromMap(tppId)
+                    .doOnNext(tpp -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp.getTppId()))
+                    .map(mapperToDTO::map)
+            )
+            .collectList();
     }
 
     /**
@@ -157,6 +152,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setAgentDeepLinks(tppDTOWithoutTokenSection.getAgentDeepLinks());
                     existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
                     return tppRepository.save(existingTpp)
+                            .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .map(tppWithoutTokenSectionMapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}" ,savedTpp.getTppId()))
                             .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}" , existingTpp.getTppId(), error.getMessage()));
@@ -190,6 +186,7 @@ public class TppServiceImpl implements TppService {
                                 existingTpp.setTokenSection(tokenSection);
 
                                 return tppRepository.save(existingTpp)
+                                        .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                                         .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
                                         .doOnSuccess(updatedTokenSection -> log.info("[TPP-SERVICE][UPDATE] Updated TokenSection for tppId: {}", existingTpp.getTppId()))
                                         .doOnError(error -> log.error("[TPP-SERVICE][UPDATE] Error updating TokenSection for tppId {}: {}",  existingTpp.getTppId(), error.getMessage()));
@@ -209,7 +206,6 @@ public class TppServiceImpl implements TppService {
      */
     @Override
     public Mono<TppDTO> createNewTpp(TppDTO tppDTO, String tppId) {
-
          return tppRepository.findByEntityId(tppDTO.getEntityId())
                 .switchIfEmpty(Mono.defer(() -> createAndSaveNewTpp(tppDTO, tppId)))
                 .flatMap(result -> {
@@ -238,6 +234,7 @@ public class TppServiceImpl implements TppService {
                     tppToSave.setLastUpdateDate(LocalDateTime.now());
                     tppToSave.setCreationDate(LocalDateTime.now());
                     return tppRepository.save(tppToSave)
+                            .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
                             .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}", tppToSave.getTppId(), error.getMessage()));
                 });
@@ -260,6 +257,7 @@ public class TppServiceImpl implements TppService {
                     tpp.setLastUpdateDate(LocalDateTime.now());
                     return tppRepository.save(tpp);
                 })
+                .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                 .map(mapperToDTO::map)
                 .doOnSuccess(updatedTpp -> log.info("[TPP-SERVICE][UPDATE-STATE] State updated for tppId: {}", updatedTpp.getTppId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][UPDATE-STATE] Error updating state for tppId {}: {}", tppId, error.getMessage()));
@@ -282,6 +280,7 @@ public class TppServiceImpl implements TppService {
                     tpp.setLastUpdateDate(LocalDateTime.now());
                     return tppRepository.save(tpp);
                 })
+                .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                 .map(mapperToDTO::map)
                 .doOnSuccess(updatedTpp -> log.info("[TPP-SERVICE][UPDATE-IS-PAYMENT-ENABLED] isPaymentEnabled updated for tppId: {}", updatedTpp.getTppId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][UPDATE-IS-PAYMENT-ENABLED] Error updating isPaymentEnabled for tppId {}: {}", tppId, error.getMessage()));
@@ -294,12 +293,19 @@ public class TppServiceImpl implements TppService {
     public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
         log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", tppId);
 
-        return tppRepository.findByTppId(tppId)
-                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        TPP_NOT_FOUND)))
-                .map(tppWithoutTokenSectionMapperToDTO::map)
-                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppDTO.getTppId()))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
+        return tppMapService.getFromMap(tppId)
+            .map(tpp -> {
+                log.info("[TPP-SERVICE][GET] Found TPP in MAP for tppId: {}", tppId);
+                return tppWithoutTokenSectionMapperToDTO.map(tpp);
+            })
+            .switchIfEmpty(Mono.defer(() ->
+                tppRepository.findByTppId(tppId)
+                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, TPP_NOT_FOUND)))
+                    .flatMap(dbTpp -> tppMapService.addToMap(dbTpp).thenReturn(dbTpp))
+                    .map(tppWithoutTokenSectionMapperToDTO::map)
+            ))
+            .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppDTO.getTppId()))
+            .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
     }
 
     /**
@@ -336,16 +342,20 @@ public class TppServiceImpl implements TppService {
     public Mono<TokenSectionDTO> getTokenSection(String tppId) {
         log.info("[TPP-SERVICE][GET] Received request to get TokenSection for tppId: {}", tppId);
 
-        return tppRepository.findByTppId(tppId)
-                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
+        return tppMapService.getFromMap(tppId)
+            .map(tpp -> {
+                log.info("[TPP-SERVICE][GET] Found TokenSection in MAP for tppId: {}", tppId);
+                return tokenSectionMapperToDTO.map(tpp.getTokenSection());
+            })
+            .switchIfEmpty(Mono.defer(() ->
+                tppRepository.findByTppId(tppId)
+                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
-                .flatMap(tpp -> {
-                    TokenSection tokenSection = tpp.getTokenSection();
-                    return tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
-                            .map(decryptionResult -> tokenSectionMapperToDTO.map(tokenSection));
-                })
-                .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
+                    .flatMap(dbTpp -> tppMapService.addToMap(dbTpp).thenReturn(dbTpp))
+                    .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
+            ))
+            .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][GET] Found TokenSection for tppId: {}", tppId))
+            .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TokenSection for tppId {}: {}", tppId, error.getMessage()));
     }
 
     /**
@@ -358,7 +368,10 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         TPP_NOT_FOUND)))
-                .flatMap(tpp -> tppRepository.delete(tpp).then(Mono.just(mapperToDTO.map(tpp))))
+                .flatMap(tpp -> tppRepository.delete(tpp)
+                    .then(Mono.fromRunnable(() -> tppMapService.removeFromMap(tppId)))
+                    .thenReturn(mapperToDTO.map(tpp))
+                )
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}",tppId))
                 .doOnError(error -> log.error("[TPP-SERVICE][DELETE] Error Delete TPP for tppId {}: {}",tppId, error.getMessage()));
 
