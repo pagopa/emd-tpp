@@ -2,7 +2,9 @@ package it.gov.pagopa.tpp.utils.faker;
 
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
+import it.gov.pagopa.tpp.model.AgentDeepLink;
 import it.gov.pagopa.tpp.model.Contact;
+import it.gov.pagopa.tpp.model.VersionDetails;
 
 import java.util.HashMap;
 
@@ -13,6 +15,10 @@ public class TppDTOFaker {
     public static TppDTO mockInstance(Boolean bias) {
 
         Contact contact = new Contact("name","number", "email");
+        VersionDetails versionDetails = new VersionDetails("linkVersion");
+        AgentDeepLink agentDeepLink = new AgentDeepLink("ios", new HashMap<>() {{
+            put("v1", versionDetails);
+        }});
 
         return TppDTO.builder()
                 .tppId("tppId")
@@ -30,7 +36,7 @@ public class TppDTOFaker {
                 .tokenSection(TokenSectionFaker.mockInstance())
                 .pspDenomination("#button")
                 .agentDeepLinks(new HashMap<>() {{
-                    put("agent", "link");
+                    put("agent", agentDeepLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(bias)
