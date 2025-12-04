@@ -151,6 +151,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setPspDenomination(tppDTOWithoutTokenSection.getPspDenomination());
                     existingTpp.setAgentDeepLinks(tppDTOWithoutTokenSection.getAgentDeepLinks());
                     existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
+                    existingTpp.setIsPaymentEnabled(tppDTOWithoutTokenSection.getIsPaymentEnabled());
                     return tppRepository.save(existingTpp)
                             .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .map(tppWithoutTokenSectionMapperToDTO::map)
