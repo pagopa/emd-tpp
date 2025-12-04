@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/pagopa/emd-tpp/compare/v1.2.0...v1.2.1) (2025-12-04)
+
+
+### Bug Fixes
+
+* [MMC-265] add IsPaymentenabled in updateTppDetails ([#79](https://github.com/pagopa/emd-tpp/issues/79)) ([6874829](https://github.com/pagopa/emd-tpp/commit/68748290784dca585dfee837225d1ca18e3ed5b4))
+
 ## [1.2.0](https://github.com/pagopa/emd-tpp/compare/v1.1.0...v1.2.0) (2025-11-27)
 
 
