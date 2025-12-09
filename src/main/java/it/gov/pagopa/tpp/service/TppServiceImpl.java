@@ -150,6 +150,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setLegalAddress(tppDTOWithoutTokenSection.getLegalAddress());
                     existingTpp.setPspDenomination(tppDTOWithoutTokenSection.getPspDenomination());
                     existingTpp.setAgentDeepLinks(tppDTOWithoutTokenSection.getAgentDeepLinks());
+                    existingTpp.setAgentLinks(tppDTOWithoutTokenSection.getAgentLinks());
                     existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
                     existingTpp.setIsPaymentEnabled(tppDTOWithoutTokenSection.getIsPaymentEnabled());
                     return tppRepository.save(existingTpp)
