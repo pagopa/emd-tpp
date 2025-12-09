@@ -35,6 +35,9 @@ public class TppDTOWithoutTokenSectionFaker {
                 .creationDate(null)
                 .pspDenomination("#button")
                 .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
+                .agentLinks(new HashMap<>() {{
                     put("agent", agentDeepLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
@@ -65,6 +68,9 @@ public class TppDTOWithoutTokenSectionFaker {
                 .creationDate(null)
                 .pspDenomination("#button")
                 .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
+                .agentLinks(new HashMap<>() {{
                     put("agent", agentDeepLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")

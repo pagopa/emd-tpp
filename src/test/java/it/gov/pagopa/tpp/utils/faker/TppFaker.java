@@ -37,6 +37,9 @@ public class TppFaker {
                 .tokenSection(TokenSectionFaker.mockInstance())
                 .pspDenomination("#button")
                 .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
+                .agentLinks(new HashMap<>() {{
                     put("agent", agentDeepLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")

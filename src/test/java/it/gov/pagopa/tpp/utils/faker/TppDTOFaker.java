@@ -15,7 +15,7 @@ public class TppDTOFaker {
     public static TppDTO mockInstance(Boolean bias) {
 
         Contact contact = new Contact("name","number", "email");
-        VersionDetails versionDetails = new VersionDetails("linkVersion");
+        VersionDetails versionDetails = new VersionDetails("1.0.0");
         AgentDeepLink agentDeepLink = new AgentDeepLink("ios", new HashMap<>() {{
             put("v1", versionDetails);
         }});
@@ -36,6 +36,9 @@ public class TppDTOFaker {
                 .tokenSection(TokenSectionFaker.mockInstance())
                 .pspDenomination("#button")
                 .agentDeepLinks(new HashMap<>() {{
+                    put("agent", "link");
+                }})
+                .agentLinks(new HashMap<>() {{
                     put("agent", agentDeepLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
