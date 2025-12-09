@@ -35,7 +35,7 @@ public class Tpp {
     private LocalDateTime lastUpdateDate;
     private String pspDenomination;
     private HashMap<String, String> agentDeepLinks;
-    private HashMap<String, AgentDeepLink> agentLinks;
+    private HashMap<String, AgentLink> agentLinks;
     private Boolean isPaymentEnabled;
     private String messageTemplate;
 }

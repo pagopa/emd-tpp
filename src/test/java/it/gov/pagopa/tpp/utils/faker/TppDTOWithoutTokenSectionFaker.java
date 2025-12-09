@@ -2,7 +2,7 @@ package it.gov.pagopa.tpp.utils.faker;
 
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
-import it.gov.pagopa.tpp.model.AgentDeepLink;
+import it.gov.pagopa.tpp.model.AgentLink;
 import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
@@ -16,7 +16,7 @@ public class TppDTOWithoutTokenSectionFaker {
 
         Contact contact = new Contact("name","number", "email");
         VersionDetails versionDetails = new VersionDetails("linkVersion");
-        AgentDeepLink agentDeepLink = new AgentDeepLink("ios", new HashMap<>() {{
+        AgentLink agentLink = new AgentLink("ios", new HashMap<>() {{
             put("v1", versionDetails);
         }});
 
@@ -38,7 +38,7 @@ public class TppDTOWithoutTokenSectionFaker {
                     put("agent", "link");
                 }})
                 .agentLinks(new HashMap<>() {{
-                    put("agent", agentDeepLink);
+                    put("agent", agentLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(bias)
@@ -49,7 +49,7 @@ public class TppDTOWithoutTokenSectionFaker {
 
         Contact contact = new Contact("name","number", "email");
         VersionDetails versionDetails = new VersionDetails("linkVersion");
-        AgentDeepLink agentDeepLink = new AgentDeepLink("ios", new HashMap<>() {{
+        AgentLink agentLink = new AgentLink("ios", new HashMap<>() {{
             put("v1", versionDetails);
         }});
         
@@ -71,7 +71,7 @@ public class TppDTOWithoutTokenSectionFaker {
                     put("agent", "link");
                 }})
                 .agentLinks(new HashMap<>() {{
-                    put("agent", agentDeepLink);
+                    put("agent", agentLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(bias)
