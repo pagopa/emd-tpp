@@ -15,7 +15,7 @@ public class TppDTOFaker {
     public static TppDTO mockInstance(Boolean bias) {
 
         Contact contact = new Contact("name","number", "email");
-        VersionDetails versionDetails = new VersionDetails("1.0.0");
+        VersionDetails versionDetails = new VersionDetails("linkVersion");
         AgentLink agentLink = new AgentLink("ios", new HashMap<>() {{
             put("v1", versionDetails);
         }});

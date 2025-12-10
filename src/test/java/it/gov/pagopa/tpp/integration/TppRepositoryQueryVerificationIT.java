@@ -69,6 +69,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
                 .agentDeepLinks(new HashMap<>())
+                .agentLinks(new HashMap<>())
                 .build();
 
         // Create second TPP entity with state=FALSE for testing inactive TPPs
@@ -87,6 +88,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
                 .agentDeepLinks(new HashMap<>())
+                .agentLinks(new HashMap<>())
                 .build();
 
         // Insert both test entities into MongoDB

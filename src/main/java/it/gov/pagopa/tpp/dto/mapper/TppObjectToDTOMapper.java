@@ -74,6 +74,7 @@ public class TppObjectToDTOMapper {
             .tokenSection(tpp.getTokenSection())
             .pspDenomination(tpp.getPspDenomination())
             .agentDeepLinks(tpp.getAgentDeepLinks())
+            .agentLinks(tpp.getAgentLinks())
             .isPaymentEnabled(tpp.getIsPaymentEnabled())
             .messageTemplate(templateToUse)
             .build();
