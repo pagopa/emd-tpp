@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/pagopa/emd-tpp/compare/v1.2.1...v1.3.0) (2025-12-10)
+
+
+### Features
+
+* [MMC-279] update agent deep link to allow link versioning ([#82](https://github.com/pagopa/emd-tpp/issues/82)) ([109491c](https://github.com/pagopa/emd-tpp/commit/109491c248a9fd3f6f16101f005e32f2f1272ab2))
+
 ## [1.2.1](https://github.com/pagopa/emd-tpp/compare/v1.2.0...v1.2.1) (2025-12-04)
 
 
