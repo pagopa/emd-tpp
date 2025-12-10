@@ -35,9 +35,6 @@ public class TppDTOFaker {
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
                 .pspDenomination("#button")
-                .agentDeepLinks(new HashMap<>() {{
-                    put("agent", "link");
-                }})
                 .agentLinks(new HashMap<>() {{
                     put("agent", agentLink);
                 }})
