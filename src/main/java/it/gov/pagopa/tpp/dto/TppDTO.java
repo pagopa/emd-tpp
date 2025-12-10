@@ -1,6 +1,7 @@
 package it.gov.pagopa.tpp.dto;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
+import it.gov.pagopa.tpp.model.AgentLink;
 import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.TokenSection;
 import jakarta.validation.constraints.NotBlank;
@@ -55,8 +56,8 @@ public class TppDTO {
     @NotNull(message = "pspDenomination must not be null")
     private String pspDenomination;
 
-    @NotNull(message = "Agent Deep Link must not be null")
-    private HashMap<String, String> agentDeepLinks;
+    @NotNull(message = "Agent Link must not be null")
+    private HashMap<String, AgentLink> agentLinks;
 
     @NotNull(message = "IsPaymentEnabled must not be null")
     private Boolean isPaymentEnabled;
