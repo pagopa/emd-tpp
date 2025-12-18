@@ -15,29 +15,27 @@ import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.List;
+
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.mockito.ArgumentMatchers.any;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {
+@SpringBootTest(classes = {
     TppServiceImpl.class,
-    TppObjectToDTOMapper.class,
     TppDTOToObjectMapper.class,
     TokenSectionObjectToDTOMapper.class,
     TokenSectionDTOToObjectMapper.class,
-    TppWithoutTokenSectionObjectToDTOMapper.class,
     AzureKeyService.class,
     TppMapService.class,
     ExceptionMap.class
@@ -56,6 +54,12 @@ class TppServiceTest {
     @MockBean
     private TokenSectionCryptService tokenSectionCryptService;
 
+    @MockBean
+    private TppObjectToDTOMapper mapperToDTO;
+
+    @MockBean
+    private TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO;
+
     @Autowired
     private TppDTOToObjectMapper mapperToObject;
 
@@ -71,6 +75,50 @@ class TppServiceTest {
     @Mock
     private KeyVaultKey keyVault;
 
+    @BeforeEach
+    void setUp() {
+        Mockito.when(mapperToDTO.map(any(Tpp.class))).thenAnswer(invocation -> {
+            Tpp tpp = invocation.getArgument(0);
+            TppDTO dto = new TppDTO();
+            dto.setTppId(tpp.getTppId());
+            dto.setState(tpp.getState());
+            dto.setEntityId(tpp.getEntityId());
+            dto.setBusinessName(tpp.getBusinessName());
+            dto.setMessageUrl(tpp.getMessageUrl());
+            dto.setAuthenticationUrl(tpp.getAuthenticationUrl());
+            dto.setIdPsp(tpp.getIdPsp());
+            dto.setLegalAddress(tpp.getLegalAddress());
+            dto.setAuthenticationType(tpp.getAuthenticationType());
+            dto.setContact(tpp.getContact());
+            dto.setTokenSection(tpp.getTokenSection());
+            dto.setPspDenomination(tpp.getPspDenomination());
+            dto.setAgentLinks(tpp.getAgentLinks());
+            dto.setMessageTemplate(tpp.getMessageTemplate());
+            dto.setIsPaymentEnabled(tpp.getIsPaymentEnabled());
+            return dto;
+        });
+
+        Mockito.when(tppWithoutTokenSectionMapperToDTO.map(any(Tpp.class))).thenAnswer(invocation -> {
+            Tpp tpp = invocation.getArgument(0);
+            TppDTOWithoutTokenSection dto = new TppDTOWithoutTokenSection();
+            dto.setTppId(tpp.getTppId());
+            dto.setState(tpp.getState());
+            dto.setEntityId(tpp.getEntityId());
+            dto.setBusinessName(tpp.getBusinessName());
+            dto.setMessageUrl(tpp.getMessageUrl());
+            dto.setAuthenticationUrl(tpp.getAuthenticationUrl());
+            dto.setIdPsp(tpp.getIdPsp());
+            dto.setLegalAddress(tpp.getLegalAddress());
+            dto.setAuthenticationType(tpp.getAuthenticationType());
+            dto.setContact(tpp.getContact());
+            dto.setPspDenomination(tpp.getPspDenomination());
+            dto.setAgentLinks(tpp.getAgentLinks());
+            dto.setMessageTemplate(tpp.getMessageTemplate());
+            dto.setIsPaymentEnabled(tpp.getIsPaymentEnabled());
+            return dto;
+        });
+    }
+
 
     @Test
     void getEnabled_Ok() {
@@ -82,6 +130,52 @@ class TppServiceTest {
 
         StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
             .expectNextMatches(response -> response.equals(getMockTppDtoList()))
+            .verifyComplete();
+    }
+
+    @Test
+    void getEnabled_FiltersDisabledTppFromCache() {
+        Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.just(getMockTppDisabled()));
+
+        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
+            .expectNextMatches(response -> response.isEmpty())
+            .verifyComplete();
+    }
+
+    @Test
+    void getEnabled_MixedCacheAndRepository_WithMixedStates() {
+        // Scenario: 4 TPP IDs requested
+        // - tpp1: in cache with state=true -> should be returned
+        // - tpp2: in cache with state=false -> should be filtered out
+        // - tpp3: not in cache, fetched from DB with state=true -> should be returned
+        // - tpp4: not in cache, not in DB -> should not be returned
+        List<String> requestedTppIds = List.of("tpp1", "tpp2", "tpp3", "tpp4");
+
+        Tpp tpp1InCache = getMockTpp("tpp1", true);
+        Tpp tpp2InCacheDisabled = getMockTpp("tpp2", false);
+        Tpp tpp3FromDb = getMockTpp("tpp3", true);
+
+        // Mock cache: tpp1 and tpp2 are in cache
+        Mockito.when(tppMapService.getFromMap("tpp1")).thenReturn(Mono.just(tpp1InCache));
+        Mockito.when(tppMapService.getFromMap("tpp2")).thenReturn(Mono.just(tpp2InCacheDisabled));
+        Mockito.when(tppMapService.getFromMap("tpp3")).thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap("tpp4")).thenReturn(Mono.empty());
+
+        // Mock repository: only tpp3 found (tpp4 not found), query only for enabled TPPs
+        Mockito.when(tppRepository.findByTppIdInAndStateTrue(any()))
+            .thenReturn(Flux.just(tpp3FromDb));
+
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+
+        StepVerifier.create(tppService.getEnabledList(requestedTppIds))
+            .expectNextMatches(response ->
+                response.size() == 2 &&
+                response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp1")) &&
+                response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp3")) &&
+                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp2")) &&
+                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp4"))
+            )
             .verifyComplete();
     }
 

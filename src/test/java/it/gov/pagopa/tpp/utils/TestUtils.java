@@ -43,6 +43,14 @@ public class TestUtils {
         return TppFaker.mockInstance(true);
     }
 
+    public static Tpp getMockTppDisabled() {
+        return TppFaker.mockInstance(false);
+    }
+
+    public static Tpp getMockTpp(String tppId, Boolean state) {
+        return TppFaker.mockInstance(tppId, state);
+    }
+
     public static List<TppDTO> getMockTppDtoList() {
         return List.of(getMockTppDto());
     }
