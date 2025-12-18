@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/pagopa/emd-tpp/compare/v1.3.0...v1.3.1) (2025-12-18)
+
+
+### Bug Fixes
+
+* [MMC-281] handle tpp message send disable when tpp state is false ([#85](https://github.com/pagopa/emd-tpp/issues/85)) ([d95e5c4](https://github.com/pagopa/emd-tpp/commit/d95e5c4465f812d5c855f6ec398a6d91cdfc2f90))
+
 ## [1.3.0](https://github.com/pagopa/emd-tpp/compare/v1.2.1...v1.3.0) (2025-12-10)
 
 
