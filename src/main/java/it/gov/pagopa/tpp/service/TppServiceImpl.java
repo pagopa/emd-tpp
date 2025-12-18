@@ -70,9 +70,9 @@ public class TppServiceImpl implements TppService {
      * {@inheritDoc}
      *
      * <p>
-     * This method first checks the cache for requested TPP IDs, then fetches any missing
-     * entries from the database. Missing entries are automatically cached after retrieval
-     * with their token sections decrypted for immediate use.
+     * This method first checks the cache for requested TPP IDs, filtering only those with state=true,
+     * then fetches any missing entries from the database. Missing entries are automatically cached
+     * after retrieval with their token sections decrypted for immediate use.
      */
     @Override
     public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
@@ -81,8 +81,11 @@ public class TppServiceImpl implements TppService {
         return checkMapForTppIds(tppIdList)
                 .flatMap(cacheResult -> {
                     List<String> missingTppIds = getMissingTppIds(tppIdList, cacheResult);
+                    List<TppDTO> enabledTppsInCache = cacheResult.stream()
+                            .filter(TppDTO::getState)
+                            .collect(Collectors.toList());
                     if (missingTppIds.isEmpty()) {
-                        return Mono.just(cacheResult);
+                        return Mono.just(enabledTppsInCache);
                     }
                     log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}",missingTppIds);
                     return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
@@ -91,8 +94,8 @@ public class TppServiceImpl implements TppService {
                             )
                             .collectList()
                             .flatMap(tppDTOList -> {
-                                cacheResult.addAll(tppDTOList);
-                                return Mono.just(cacheResult);
+                                enabledTppsInCache.addAll(tppDTOList);
+                                return Mono.just(enabledTppsInCache);
                             });
                 })
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Retrival ended"))
@@ -108,7 +111,7 @@ public class TppServiceImpl implements TppService {
     private Mono<List<TppDTO>> checkMapForTppIds(List<String> tppIdList) {
         return Flux.fromIterable(tppIdList)
             .flatMap(tppId -> tppMapService.getFromMap(tppId)
-                    .doOnNext(tpp -> log.info("[TPP-SERVICE][GET-ENABLED] Found TPP in MAP: {}", tpp.getTppId()))
+                    .doOnNext(tpp -> log.info("[TPP-SERVICE][CHECK-MAP] Found TPP in MAP: {}", tpp.getTppId()))
                     .map(mapperToDTO::map)
             )
             .collectList();

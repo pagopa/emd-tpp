@@ -13,6 +13,10 @@ public class TppFaker {
 
     private TppFaker(){}
     public static Tpp mockInstance(Boolean bias){
+        return mockInstance("tppId", bias);
+    }
+
+    public static Tpp mockInstance(String tppId, Boolean state){
 
         Contact contact = new Contact("name","number", "email");
         VersionDetails versionDetails = new VersionDetails("linkVersion");
@@ -22,13 +26,13 @@ public class TppFaker {
 
         return Tpp.builder()
                 .id("id")
-                .tppId("tppId")
+                .tppId(tppId)
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
                 .idPsp("idPsp")
                 .legalAddress("legalAddress")
                 .authenticationType(AuthenticationType.OAUTH2)
-                .state(bias)
+                .state(state)
                 .entityId("entityId01234567")
                 .businessName("businessName")
                 .contact(contact)
@@ -40,7 +44,7 @@ public class TppFaker {
                     put("agent", agentLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
-                .isPaymentEnabled(bias)
+                .isPaymentEnabled(state)
                 .build();
     }
 }
