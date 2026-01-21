@@ -81,7 +81,7 @@ public interface TppController {
         description = "Update the isPaymentEnabled of an existing TPP."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Tpp updated successfully",
+        @ApiResponse(responseCode = "204", description = "Tpp updated successfully",
             content = @Content(schema = @Schema(implementation = TppDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid Tpp Id")
     })
