@@ -26,6 +26,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
@@ -121,25 +122,33 @@ class TppServiceTest {
 
 
     @Test
-    void getEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(getMockTppIdStringList()))
-            .thenReturn(Flux.fromIterable(getMockTppList()));
+    void filterEnabled_Ok() {
+        Mockito.when(tppRepository.findEnabledOrWhitelisted(any(), any()))
+                .thenReturn(Flux.fromIterable(getMockTppList()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
-            .expectNextMatches(response -> response.equals(getMockTppDtoList()))
-            .verifyComplete();
+        StepVerifier.create(tppService.filterEnabledList(getMockTppIdStringList(), "recipientId"))
+                .expectNextMatches(response -> response.size() == 1)
+                .verifyComplete();
     }
 
     @Test
-    void getEnabled_FiltersDisabledTppFromCache() {
-        Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.just(getMockTppDisabled()));
+    void filterEnabled_Whitelisted_Ok() {
+        Tpp tpp = getMockTpp();
+        tpp.setState(false);
+        tpp.setWhitelistRecipient(List.of("recipientId"));
 
-        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
-            .expectNextMatches(response -> response.isEmpty())
-            .verifyComplete();
+        Mockito.when(tppRepository.findEnabledOrWhitelisted(any(), any()))
+                .thenReturn(Flux.just(tpp));
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.filterEnabledList(List.of(tpp.getTppId()), "recipientId"))
+                .expectNextMatches(response -> response.size() == 1 && response.get(0).getTppId().equals(tpp.getTppId()))
+                .verifyComplete();
     }
 
     @Test
@@ -162,13 +171,13 @@ class TppServiceTest {
         Mockito.when(tppMapService.getFromMap("tpp4")).thenReturn(Mono.empty());
 
         // Mock repository: only tpp3 found (tpp4 not found), query only for enabled TPPs
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(any()))
+        Mockito.when(tppRepository.findEnabledOrWhitelisted(any(), any()))
             .thenReturn(Flux.just(tpp3FromDb));
 
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
 
-        StepVerifier.create(tppService.getEnabledList(requestedTppIds))
+        StepVerifier.create(tppService.filterEnabledList(requestedTppIds, "recipientId"))
             .expectNextMatches(response ->
                 response.size() == 2 &&
                 response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp1")) &&
@@ -525,5 +534,28 @@ class TppServiceTest {
         StepVerifier.create(tppService.deleteTpp(tppDto.getTppId()))
             .expectNextCount(1)
             .verifyComplete();
+    }
+
+    @Test
+    void addRecipientToWhitelist_Ok() {
+        Tpp mockTpp = getMockTpp();
+        Mockito.when(tppRepository.findByTppId(any())).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any())).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+
+        StepVerifier.create(tppService.addRecipientToWhitelist("tppId", "newRecipient"))
+                .verifyComplete();
+    }
+
+    @Test
+    void removeRecipientFromWhitelist_Ok() {
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setWhitelistRecipient(new ArrayList<>(List.of("recipientId")));
+        Mockito.when(tppRepository.findByTppId(any())).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any())).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+
+        StepVerifier.create(tppService.removeRecipientFromWhitelist("tppId", "recipientId"))
+                .verifyComplete();
     }
 }

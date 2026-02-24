@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Data Transfer Object representing a TPP entity without token information.
@@ -60,4 +61,5 @@ public class TppDTOWithoutTokenSection {
     private Boolean isPaymentEnabled;
 
     private String messageTemplate;
+    private List<String> whitelistRecipient;
 }

@@ -64,7 +64,7 @@ public class TestUtils {
     }
 
     public static TppIdList getMockTppIdList() {
-        return new TppIdList(getMockTppIdStringList());
+        return new TppIdList(getMockTppIdStringList(), "recipientId");
     }
 
     public static TppUpdateIsPaymentEnabled getMockIsPaymentEnabled() {

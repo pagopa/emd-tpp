@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -35,8 +36,16 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
 
     private static final String TPP_ID = "tppId";
     private static final String TPP_ID_2 = "tppId_2";
+    private static final String TPP_ID_3 = "tppId_3";
+    private static final String TPP_ID_4 = "tppId_4";
+    private static final String TPP_ID_5 = "tppId_5";
+    private static final String TPP_ID_6 = "tppId_6";
     private static final String ENTITY_ID = "entityId";
     private static final String ENTITY_ID_2 = "entityId_2";
+    private static final String ENTITY_ID_3 = "entityId_3";
+    private static final String ENTITY_ID_4 = "entityId_4";
+    private static final String ENTITY_ID_5 = "entityId_5";
+    private static final String ENTITY_ID_6 = "entityId_6";
     private static final String COLLECTION_NAME = "tpp";
 
     @Autowired
@@ -89,10 +98,86 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
                 .agentLinks(new HashMap<>())
                 .build();
 
-        // Insert both test entities into MongoDB
+        // Create third TPP entity with state=FALSE but with recipient in whitelist
+        Tpp testTpp3 = Tpp.builder()
+                .tppId(TPP_ID_3)
+                .idPsp("idPsp")
+                .messageUrl("messageUrl")
+                .legalAddress("legalAddress")
+                .authenticationUrl("authenticationUrl")
+                .authenticationType(AuthenticationType.OAUTH2)
+                .state(Boolean.FALSE)
+                .businessName("businessName")
+                .contact(new Contact("name","number","email"))
+                .entityId(ENTITY_ID_3)
+                .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
+                .pspDenomination("paymentButton")
+                .agentLinks(new HashMap<>())
+                .whitelistRecipient(List.of("whitelistUser"))
+                .build();
+
+        // Create fourth TPP entity with state=TRUE and recipient in whitelist (redundant match)
+        Tpp testTpp4 = Tpp.builder()
+                .tppId(TPP_ID_4)
+                .idPsp("idPsp")
+                .messageUrl("messageUrl")
+                .legalAddress("legalAddress")
+                .authenticationUrl("authenticationUrl")
+                .authenticationType(AuthenticationType.OAUTH2)
+                .state(Boolean.TRUE)
+                .businessName("businessName")
+                .contact(new Contact("name","number","email"))
+                .entityId(ENTITY_ID_4)
+                .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
+                .pspDenomination("paymentButton")
+                .agentLinks(new HashMap<>())
+                .whitelistRecipient(List.of("whitelistUser"))
+                .build();
+
+        // Create fifth TPP entity with state=FALSE, recipient in whitelist but we won't pass its ID in some tests
+        Tpp testTpp5 = Tpp.builder()
+                .tppId(TPP_ID_5)
+                .idPsp("idPsp")
+                .messageUrl("messageUrl")
+                .legalAddress("legalAddress")
+                .authenticationUrl("authenticationUrl")
+                .authenticationType(AuthenticationType.OAUTH2)
+                .state(Boolean.FALSE)
+                .businessName("businessName")
+                .contact(new Contact("name","number","email"))
+                .entityId(ENTITY_ID_5)
+                .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
+                .pspDenomination("paymentButton")
+                .agentLinks(new HashMap<>())
+                .whitelistRecipient(List.of("whitelistUser"))
+                .build();
+
+        // Create sixth TPP with multiple whitelisted recipients
+        Tpp testTpp6 = Tpp.builder()
+                .tppId(TPP_ID_6)
+                .idPsp("idPsp")
+                .messageUrl("messageUrl")
+                .legalAddress("legalAddress")
+                .authenticationUrl("authenticationUrl")
+                .authenticationType(AuthenticationType.OAUTH2)
+                .state(Boolean.FALSE)
+                .businessName("businessName")
+                .contact(new Contact("name","number","email"))
+                .entityId(ENTITY_ID_6)
+                .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
+                .pspDenomination("paymentButton")
+                .agentLinks(new HashMap<>())
+                .whitelistRecipient(List.of("userA", "userB", "userC"))
+                .build();
+
+        // Insert test entities into MongoDB
         StepVerifier.create(
             mongoTemplate.save(testTpp, COLLECTION_NAME)
             .then(mongoTemplate.save(testTpp2, COLLECTION_NAME))
+            .then(mongoTemplate.save(testTpp3, COLLECTION_NAME))
+            .then(mongoTemplate.save(testTpp4, COLLECTION_NAME))
+            .then(mongoTemplate.save(testTpp5, COLLECTION_NAME))
+            .then(mongoTemplate.save(testTpp6, COLLECTION_NAME))
         ).expectNextCount(1).verifyComplete();
     }
 
@@ -227,6 +312,72 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         StepVerifier.create(
                 repository.findByTppIdInAndStateTrue(tppIdList)
             )
+            .verifyComplete();
+
+        log.info("=== TEST COMPLETED ===");
+    }
+
+    /**
+     * Test Case: Find enabled or whitelisted TPPs
+     *
+     * Scenario: Query for TPPs in a list, matching either state=true OR recipient being in whitelist
+     */
+    @Test
+    void testFindEnabledOrWhitelisted() {
+        log.info("=== EXECUTING findEnabledOrWhitelisted ===");
+        
+        // Test Case 1: Standard match (Enabled + Whitelisted)
+        List<String> tppIdList = List.of(TPP_ID, TPP_ID_2, TPP_ID_3);
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList, "whitelistUser"))
+            .recordWith(ArrayList::new)
+            .expectNextCount(2)
+            .consumeRecordedWith(results -> {
+                Assertions.assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID)));
+                Assertions.assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3)));
+            })
+            .verifyComplete();
+
+        // Test Case 2: Redundant match (Enabled AND Whitelisted)
+        List<String> tppIdList2 = List.of(TPP_ID_4);
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList2, "whitelistUser"))
+            .assertNext(t -> Assertions.assertEquals(TPP_ID_4, t.getTppId()))
+            .verifyComplete();
+
+        // Test Case 3: Whitelisted but NOT in the provided tppIdList
+        List<String> tppIdList3 = List.of(TPP_ID);
+        // TPP_ID_5 is whitelisted for 'whitelistUser' but its ID is not in the list
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList3, "whitelistUser"))
+            .recordWith(ArrayList::new)
+            .expectNextCount(1)
+            .consumeRecordedWith(results -> {
+                Assertions.assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID)));
+                Assertions.assertTrue(results.stream().noneMatch(t -> t.getTppId().equals(TPP_ID_5)));
+            })
+            .verifyComplete();
+
+        // Test Case 4: No matches (Disabled and Not whitelisted)
+        List<String> tppIdList4 = List.of(TPP_ID_2);
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList4, "whitelistUser"))
+            .verifyComplete();
+
+        // Test Case 5: Empty input list
+        StepVerifier.create(repository.findEnabledOrWhitelisted(List.of(), "whitelistUser"))
+            .verifyComplete();
+
+        // Test Case 6: Null recipient (should only return enabled ones)
+        List<String> tppIdList6 = List.of(TPP_ID, TPP_ID_3);
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList6, null))
+            .assertNext(t -> Assertions.assertEquals(TPP_ID, t.getTppId()))
+            .verifyComplete();
+
+        // Test Case 7: One recipient in a list of multiple whitelisted ones
+        List<String> tppIdList7 = List.of(TPP_ID_6);
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList7, "userB"))
+            .assertNext(t -> Assertions.assertEquals(TPP_ID_6, t.getTppId()))
+            .verifyComplete();
+
+        // Test Case 8: Recipient NOT in the multiple list
+        StepVerifier.create(repository.findEnabledOrWhitelisted(tppIdList7, "userD"))
             .verifyComplete();
 
         log.info("=== TEST COMPLETED ===");

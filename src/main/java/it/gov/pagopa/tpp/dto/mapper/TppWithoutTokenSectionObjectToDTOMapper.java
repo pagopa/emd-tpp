@@ -75,6 +75,7 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
                 .agentLinks(tpp.getAgentLinks())
                 .isPaymentEnabled(tpp.getIsPaymentEnabled())
                 .messageTemplate(templateToUse)
+                .whitelistRecipient(tpp.getWhitelistRecipient())
                 .build();
     }
 }

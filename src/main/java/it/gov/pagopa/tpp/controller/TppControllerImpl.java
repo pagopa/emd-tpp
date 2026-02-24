@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.controller;
 import it.gov.pagopa.tpp.dto.*;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +34,7 @@ public class TppControllerImpl implements TppController {
      */
     @Override
     public Mono<ResponseEntity<List<TppDTO>>> getEnabledList(TppIdList tppIdList) {
-        return tppService.getEnabledList(tppIdList.getIds())
+        return tppService.filterEnabledList(tppIdList.getIds(), inputSanitization(tppIdList.getRecipientId()))
                 .map(ResponseEntity::ok);
     }
 
@@ -125,5 +126,50 @@ public class TppControllerImpl implements TppController {
     public Mono<ResponseEntity<TppDTO>> deleteTpp(String tppId) {
         return tppService.deleteTpp(inputSanitization(tppId))
                 .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Map<String, List<String>>>> getWhitelists() {
+        return tppService.getAllWhitelists()
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<List<String>>> getWhitelistByTppId(String tppId) {
+        return tppService.getWhitelistByTppId(inputSanitization(tppId))
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> addRecipientToWhitelist(String tppId, WhitelistRecipientDTO whitelistRecipientDTO) {
+        return tppService.addRecipientToWhitelist(inputSanitization(tppId), inputSanitization(whitelistRecipientDTO.getRecipientId()))
+                .then(Mono.just(ResponseEntity.noContent().build()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> removeRecipientFromWhitelist(String tppId, String recipientId) {
+        return tppService.removeRecipientFromWhitelist(inputSanitization(tppId), inputSanitization(recipientId))
+                .then(Mono.just(ResponseEntity.noContent().build()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> updateWhitelist(String tppId, List<String> recipientIds) {
+        return tppService.updateWhitelist(inputSanitization(tppId), recipientIds)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

@@ -42,6 +42,7 @@ public class TppDTOToObjectMapper {
                 .agentLinks(tppDTO.getAgentLinks())
                 .isPaymentEnabled(tppDTO.getIsPaymentEnabled())
                 .messageTemplate(tppDTO.getMessageTemplate())
+                .whitelistRecipient(tppDTO.getWhitelistRecipient())
                 .build();
     }
 

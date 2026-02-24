@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
 import java.lang.Runtime.Version;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class TppFaker {
@@ -45,6 +46,7 @@ public class TppFaker {
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(state)
+                .whitelistRecipient(new ArrayList<>())
                 .build();
     }
 }

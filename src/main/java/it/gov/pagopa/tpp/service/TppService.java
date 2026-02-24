@@ -1,12 +1,10 @@
 package it.gov.pagopa.tpp.service;
 
-import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
-import it.gov.pagopa.tpp.dto.TokenSectionDTO;
-import it.gov.pagopa.tpp.dto.TppDTO;
-import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
+import it.gov.pagopa.tpp.dto.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service interface for managing TPP operations.
@@ -17,9 +15,10 @@ public interface TppService {
      * Retrieves a list of enabled TPP entities by their identifiers.
      * 
      * @param tppIdList the list of TPP identifiers to retrieve
+     * @param recipientId the recipient identifier to filter by whitelist
      * @return a {@link Mono} containing a list of enabled {@link TppDTO} entities
      */
-    Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
+    Mono<List<TppDTO>> filterEnabledList(List<String> tppIdList, String recipientId);
 
     /**
      * Creates a new TPP entity with the specified configuration.
@@ -105,5 +104,47 @@ public interface TppService {
      * @return a {@link Mono} containing the deleted {@link TppDTO}
      */
     Mono<TppDTO> deleteTpp(String tppId);
+
+    /**
+     * Retrieves the whitelist of all TPPs.
+     *
+     * @return a {@link Mono} containing a map of TPP IDs to their whitelists
+     */
+    Mono<Map<String, List<String>>> getAllWhitelists();
+
+    /**
+     * Retrieves the whitelist of a specific TPP.
+     *
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing the list of whitelisted recipient IDs
+     */
+    Mono<List<String>> getWhitelistByTppId(String tppId);
+
+    /**
+     * Adds a recipient ID to a TPP's whitelist.
+     *
+     * @param tppId the TPP identifier
+     * @param recipientId the recipient identifier to add
+     * @return a {@link Mono} signaling completion
+     */
+    Mono<Void> addRecipientToWhitelist(String tppId, String recipientId);
+
+    /**
+     * Removes a recipient ID from a TPP's whitelist.
+     *
+     * @param tppId the TPP identifier
+     * @param recipientId the recipient identifier to remove
+     * @return a {@link Mono} signaling completion
+     */
+    Mono<Void> removeRecipientFromWhitelist(String tppId, String recipientId);
+
+    /**
+     * Replaces a TPP's whitelist with a new list of recipient IDs.
+     *
+     * @param tppId the TPP identifier
+     * @param recipientIds the new list of recipient identifiers
+     * @return a {@link Mono} signaling completion
+     */
+    Mono<Void> updateWhitelist(String tppId, List<String> recipientIds);
 
 }

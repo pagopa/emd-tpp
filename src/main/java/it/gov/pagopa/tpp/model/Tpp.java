@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Represents a TPP entity stored in MongoDB.
@@ -37,4 +38,5 @@ public class Tpp {
     private HashMap<String, AgentLink> agentLinks;
     private Boolean isPaymentEnabled;
     private String messageTemplate;
+    private List<String> whitelistRecipient;
 }

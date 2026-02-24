@@ -4,16 +4,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
 
 /**
- * Data Transfer Object representing a collection of TPP identifiers.
+ * Data Transfer Object representing a single recipient ID for whitelist operations.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TppIdList {
+public class WhitelistRecipientDTO {
     @NotNull
-    List<String> ids;
     private String recipientId;
 }

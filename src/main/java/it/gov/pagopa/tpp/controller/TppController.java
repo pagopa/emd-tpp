@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST Controller interface for managing TPP operations. 
@@ -127,4 +128,59 @@ public interface TppController {
      */
     @DeleteMapping("/test/delete/{tppId}")
     Mono<ResponseEntity<TppDTO>> deleteTpp(@PathVariable String tppId);
+
+    /**
+     * Get all whitelists.
+     * Path: GET /emd/tpp/whitelist
+     *
+     * @return a {@link Mono} containing a {@link ResponseEntity} with the map of TPP IDs and their whitelists
+     */
+    @GetMapping("/whitelist")
+    Mono<ResponseEntity<Map<String, List<String>>>> getWhitelists();
+
+    /**
+     * Get whitelist for a specific TPP.
+     * Path: GET /emd/tpp/{tppId}/whitelist
+     *
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing a {@link ResponseEntity} with the list of recipient IDs
+     */
+    @GetMapping("/{tppId}/whitelist")
+    Mono<ResponseEntity<List<String>>> getWhitelistByTppId(@PathVariable String tppId);
+
+    /**
+     * Add a recipient to a TPP's whitelist.
+     * Path: POST /emd/tpp/{tppId}/whitelist
+     * Body: { "recipientId": "string" }
+     *
+     * @param tppId the TPP identifier
+     * @param whitelistRecipientDTO valid recipient information
+     * @return a {@link Mono} containing a {@link ResponseEntity} with status 204
+     */
+    @PostMapping("/{tppId}/whitelist")
+    Mono<ResponseEntity<Void>> addRecipientToWhitelist(@PathVariable String tppId, @Valid @RequestBody WhitelistRecipientDTO whitelistRecipientDTO);
+
+    /**
+     * Remove a recipient from a TPP's whitelist.
+     * Path: DELETE /emd/tpp/{tppId}/whitelist/{recipientId}
+     *
+     * @param tppId the TPP identifier
+     * @param recipientId the recipient identifier to remove
+     * @return a {@link Mono} containing a {@link ResponseEntity} with status 204
+     */
+    @DeleteMapping("/{tppId}/whitelist/{recipientId}")
+    Mono<ResponseEntity<Void>> removeRecipientFromWhitelist(@PathVariable String tppId, @PathVariable String recipientId);
+
+    /**
+     * Update the entire whitelist for a specific TPP.
+     * Path: PUT /emd/tpp/{tppId}/whitelist
+     * Body: [ "id1", "id2" ]
+     *
+     * @param tppId the TPP identifier
+     * @param recipientIds the new list of recipient IDs
+     * @return a {@link Mono} containing a {@link ResponseEntity} with status 204
+     */
+    @PutMapping("/{tppId}/whitelist")
+    Mono<ResponseEntity<Void>> updateWhitelist(@PathVariable String tppId, @RequestBody List<String> recipientIds);
+
 }

@@ -1,12 +1,7 @@
 package it.gov.pagopa.tpp.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
-import it.gov.pagopa.tpp.dto.TokenSectionDTO;
-import it.gov.pagopa.tpp.dto.TppDTO;
-import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
-import it.gov.pagopa.tpp.dto.TppIdList;
-import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
+import it.gov.pagopa.tpp.dto.*;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -217,9 +212,10 @@ class TppControllerTest {
     @Test
     void getEnabled_Ok() {
         TppIdList idList = getMockTppIdList();
+        idList.setRecipientId("recipientId");
         List<TppDTO> dtoList = getMockTppDtoList();
 
-        Mockito.when(tppService.getEnabledList(idList.getIds())).thenReturn(Mono.just(dtoList));
+        Mockito.when(tppService.filterEnabledList(eq(idList.getIds()), anyString())).thenReturn(Mono.just(dtoList));
 
         webClient.post()
             .uri("/emd/tpp/list")
@@ -234,6 +230,19 @@ class TppControllerTest {
                 Assertions.assertEquals(dtoList.size(), resultResponse.size());
                 Assertions.assertTrue(resultResponse.containsAll(dtoList));
             });
+    }
+
+    @Test
+    void addRecipientToWhitelist_NoContent() {
+        WhitelistRecipientDTO dto = new WhitelistRecipientDTO("recipientId");
+        Mockito.when(tppService.addRecipientToWhitelist(anyString(), anyString())).thenReturn(Mono.empty());
+
+        webClient.post()
+                .uri("/emd/tpp/{tppId}/whitelist", "tppId")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dto)
+                .exchange()
+                .expectStatus().isNoContent();
     }
 
     @Test
