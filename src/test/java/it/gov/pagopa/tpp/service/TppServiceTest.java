@@ -95,6 +95,7 @@ class TppServiceTest {
             dto.setAgentLinks(tpp.getAgentLinks());
             dto.setMessageTemplate(tpp.getMessageTemplate());
             dto.setIsPaymentEnabled(tpp.getIsPaymentEnabled());
+            dto.setWhitelistRecipient(tpp.getWhitelistRecipient());
             return dto;
         });
 
@@ -115,6 +116,7 @@ class TppServiceTest {
             dto.setAgentLinks(tpp.getAgentLinks());
             dto.setMessageTemplate(tpp.getMessageTemplate());
             dto.setIsPaymentEnabled(tpp.getIsPaymentEnabled());
+            dto.setWhitelistRecipient(tpp.getWhitelistRecipient());
             return dto;
         });
     }

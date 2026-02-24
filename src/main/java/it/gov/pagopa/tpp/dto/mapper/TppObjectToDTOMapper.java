@@ -76,6 +76,7 @@ public class TppObjectToDTOMapper {
             .agentLinks(tpp.getAgentLinks())
             .isPaymentEnabled(tpp.getIsPaymentEnabled())
             .messageTemplate(templateToUse)
+            .whitelistRecipient(tpp.getWhitelistRecipient())
             .build();
     }
 }

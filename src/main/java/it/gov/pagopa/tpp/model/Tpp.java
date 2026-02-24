@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.model;
 
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -37,4 +38,5 @@ public class Tpp {
     private HashMap<String, AgentLink> agentLinks;
     private Boolean isPaymentEnabled;
     private String messageTemplate;
+    private List<String> whitelistRecipient;
 }

@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class TppDTOFaker {
 
@@ -40,6 +41,7 @@ public class TppDTOFaker {
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .isPaymentEnabled(bias)
+                .whitelistRecipient(List.of())
                 .build();
     }
 
@@ -63,6 +65,7 @@ public class TppDTOFaker {
                 .tokenSection(TokenSectionFaker.mockInstance())
                 .isPaymentEnabled(bias)
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
+                .whitelistRecipient(List.of())
                 .build();
     }
 
@@ -86,6 +89,7 @@ public class TppDTOFaker {
                 .tokenSection(null)
                 .isPaymentEnabled(bias)
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
+                .whitelistRecipient(List.of())
                 .build();
     }
 
