@@ -219,7 +219,7 @@ class TppControllerTest {
         TppIdList idList = getMockTppIdList();
         List<TppDTO> dtoList = getMockTppDtoList();
 
-        Mockito.when(tppService.filterEnabledList(idList.getIds(), idList.getRecipient())).thenReturn(Mono.just(dtoList));
+        Mockito.when(tppService.filterEnabledList(idList.getIds(), idList.getRecipientId())).thenReturn(Mono.just(dtoList));
 
         webClient.post()
             .uri("/emd/tpp/list")

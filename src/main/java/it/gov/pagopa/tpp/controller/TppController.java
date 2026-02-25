@@ -19,7 +19,7 @@ import java.util.List;
 public interface TppController {
 
     /**
-     * Get list of enabled tpp or tpp with whitelistRecipient field containing the recipient
+     * Get list of enabled tpp or tpp with whitelistRecipient field containing the recipientId
      * based on the provided tpp ids.
      *
      * @param tppIdList whose data is to be retrieved

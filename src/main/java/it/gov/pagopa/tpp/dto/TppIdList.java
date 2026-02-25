@@ -21,6 +21,6 @@ public class TppIdList {
      * The recipient used for filtering TPPs based on their whitelistRecipient field.
      */
     @NotNull
-    private String recipient;
+    private String recipientId;
 
 }

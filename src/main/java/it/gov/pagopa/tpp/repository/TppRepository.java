@@ -29,7 +29,7 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
     Flux<Tpp> findByTppIdInAndStateTrue(List<String> tppIds);
 
     /**
-     * Custom query to retrieve active TPPs or those with recipients in the whitelist field  
+     * Custom query to retrieve active TPPs or those with recipientId in the whitelist field  
      */
     @Query(    "{ " + 
                 "  'tppId': { $in: ?0 },  " + 
@@ -38,7 +38,7 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
                 "    { 'whitelistRecipient': ?1 }" + 
                 "  ]" + 
                 "}")
-    Flux<Tpp> findEnabledForRecipient(List<String> tppIds, String recipient);
+    Flux<Tpp> findEnabledForRecipient(List<String> tppIds, String recipientId);
 
     /**
      * Finds a single TPP record by its unique TPP identifier.
