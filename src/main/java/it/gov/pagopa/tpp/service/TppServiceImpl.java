@@ -75,20 +75,20 @@ public class TppServiceImpl implements TppService {
      * after retrieval with their token sections decrypted for immediate use.
      */
     @Override
-    public Mono<List<TppDTO>> getEnabledList(List<String> tppIdList) {
-        log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}", tppIdList);
+    public Mono<List<TppDTO>> filterEnabledList(List<String> tppIdList, String recipient) {
+        log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}, recipient: {}", tppIdList, recipient);
 
         return checkMapForTppIds(tppIdList)
                 .flatMap(cacheResult -> {
                     List<String> missingTppIds = getMissingTppIds(tppIdList, cacheResult);
                     List<TppDTO> enabledTppsInCache = cacheResult.stream()
-                            .filter(TppDTO::getState)
+                            .filter(tpp -> isEnabledForRecipient(tpp, recipient))
                             .collect(Collectors.toList());
                     if (missingTppIds.isEmpty()) {
                         return Mono.just(enabledTppsInCache);
                     }
                     log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}",missingTppIds);
-                    return tppRepository.findByTppIdInAndStateTrue(missingTppIds)
+                    return tppRepository.findEnabledForRecipient(missingTppIds, recipient)
                             .flatMap(tpp -> tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                                     .flatMap(decryptionResult -> tppMapService.addToMap(tpp).map(cachingResult -> mapperToDTO.map(tpp)))
                             )
@@ -134,6 +134,25 @@ public class TppServiceImpl implements TppService {
     }
 
     /**
+     * Determines if a TPP is enabled or if contains the recipient in the whitelist
+     * 
+     * @param tpp the TPP entity to evaluate
+     * @param recipient the recipient to check against the TPP's whitelist
+     **/
+    private boolean isEnabledForRecipient(TppDTO tpp, String recipient) {
+        Boolean state = tpp.getState();
+        
+        // TPP state is true
+        if (Boolean.TRUE.equals(state)) {
+            return true;
+        }
+        
+        // or if recipient is inside the whitelist
+        List<String> whitelist = tpp.getWhitelistRecipient();
+        return whitelist != null && whitelist.contains(recipient);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -155,6 +174,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setAgentLinks(tppDTOWithoutTokenSection.getAgentLinks());
                     existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
                     existingTpp.setIsPaymentEnabled(tppDTOWithoutTokenSection.getIsPaymentEnabled());
+                    existingTpp.setWhitelistRecipient(tppDTOWithoutTokenSection.getWhitelistRecipient());
                     return tppRepository.save(existingTpp)
                             .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .map(tppWithoutTokenSectionMapperToDTO::map)

@@ -13,7 +13,7 @@ import java.util.List;
 
 public class TestUtils {
     public static final String MOCK_WRONG_ID = "wrong";
-
+    public static final String MOCK_RECIPIENT = "Recipient1";
 
     public static TppDTO getMockTppDto() {
         return TppDTOFaker.mockInstance(true);
@@ -64,7 +64,7 @@ public class TestUtils {
     }
 
     public static TppIdList getMockTppIdList() {
-        return new TppIdList(getMockTppIdStringList());
+        return new TppIdList(getMockTppIdStringList(), MOCK_RECIPIENT);
     }
 
     public static TppUpdateIsPaymentEnabled getMockIsPaymentEnabled() {

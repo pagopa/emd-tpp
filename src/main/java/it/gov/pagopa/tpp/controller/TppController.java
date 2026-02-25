@@ -19,14 +19,15 @@ import java.util.List;
 public interface TppController {
 
     /**
-     * Get list of tpp based on the provided tpp ids.
+     * Get list of enabled tpp or tpp with whitelistRecipient field containing the recipient
+     * based on the provided tpp ids.
      *
      * @param tppIdList whose data is to be retrieved
      * @return a {@link Mono} containing a {@link ResponseEntity} with 
      *          a list of {@link TppDTO} objects for found enabled TPPs
      */
     @PostMapping("/list")
-    Mono<ResponseEntity<List<TppDTO>>> getEnabledList(@Valid @RequestBody TppIdList tppIdList);
+    Mono<ResponseEntity<List<TppDTO>>> filterEnabledList(@Valid @RequestBody TppIdList tppIdList);
 
     /**
      * Update the state of an existing TPP.

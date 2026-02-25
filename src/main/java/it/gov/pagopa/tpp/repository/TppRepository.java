@@ -2,6 +2,8 @@ package it.gov.pagopa.tpp.repository;
 
 
 import it.gov.pagopa.tpp.model.Tpp;
+
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -25,6 +27,18 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
      *         or empty Flux if no active TPPs are found for the given IDs
      */
     Flux<Tpp> findByTppIdInAndStateTrue(List<String> tppIds);
+
+    /**
+     * Custom query to retrieve active TPPs or those with recipients in the whitelist field  
+     */
+    @Query(    "{ " + 
+                "  'tppId': { $in: ?0 },  " + 
+                "  $or: [  " + 
+                "    { 'state': true }, " + 
+                "    { 'whitelistRecipient': ?1 }" + 
+                "  ]" + 
+                "}")
+    Flux<Tpp> findEnabledForRecipient(List<String> tppIds, String recipient);
 
     /**
      * Finds a single TPP record by its unique TPP identifier.

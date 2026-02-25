@@ -124,13 +124,13 @@ class TppServiceTest {
 
     @Test
     void getEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(getMockTppIdStringList()))
+        Mockito.when(tppRepository.findEnabledForRecipient(getMockTppIdStringList(), MOCK_RECIPIENT))
             .thenReturn(Flux.fromIterable(getMockTppList()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
+        StepVerifier.create(tppService.filterEnabledList(getMockTppIdStringList(), MOCK_RECIPIENT))
             .expectNextMatches(response -> response.equals(getMockTppDtoList()))
             .verifyComplete();
     }
@@ -139,7 +139,7 @@ class TppServiceTest {
     void getEnabled_FiltersDisabledTppFromCache() {
         Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.just(getMockTppDisabled()));
 
-        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
+        StepVerifier.create(tppService.filterEnabledList(getMockTppIdStringList(), MOCK_RECIPIENT))
             .expectNextMatches(response -> response.isEmpty())
             .verifyComplete();
     }
@@ -147,36 +147,54 @@ class TppServiceTest {
     @Test
     void getEnabled_MixedCacheAndRepository_WithMixedStates() {
         // Scenario: 4 TPP IDs requested
-        // - tpp1: in cache with state=true -> should be returned
-        // - tpp2: in cache with state=false -> should be filtered out
-        // - tpp3: not in cache, fetched from DB with state=true -> should be returned
-        // - tpp4: not in cache, not in DB -> should not be returned
-        List<String> requestedTppIds = List.of("tpp1", "tpp2", "tpp3", "tpp4");
+    
+        List<String> requestedTppIds = List.of("tpp1", "tpp2", "tpp3", "tpp4", "tpp5");
 
+        // - tpp1: in cache with state=true - whitelistRecipient empty -> should be returned
         Tpp tpp1InCache = getMockTpp("tpp1", true);
+
+        // - tpp2: in cache with state=false - whitelistRecipient with recipient -> should be returned
         Tpp tpp2InCacheDisabled = getMockTpp("tpp2", false);
+        tpp2InCacheDisabled.setWhitelistRecipient(List.of(MOCK_RECIPIENT));
+
+        // - tpp3: not in cache, fetched from DB with state=true -> should be returned
         Tpp tpp3FromDb = getMockTpp("tpp3", true);
+
+        // - tpp4: in cache with state=false - whitelistRecipient with not useful recipient -> should be filtered out
+        Tpp tpp4InCacheDisabledWrongRecipient = getMockTpp("tpp4", false);
+        tpp4InCacheDisabledWrongRecipient.setWhitelistRecipient(List.of("OtherRecipient"));
+        
+        // - tpp5: not in cache, fetched from DB with state=false but whitelistRecipient with recipient -> should be returned
+        Tpp tpp5FromDbDisabledWithRecipient = getMockTpp("tpp5", false);
+        tpp5FromDbDisabledWithRecipient.setWhitelistRecipient(List.of(MOCK_RECIPIENT));
+        
+        // - tpp6: not in cache, not in DB -> should not be returned
 
         // Mock cache: tpp1 and tpp2 are in cache
         Mockito.when(tppMapService.getFromMap("tpp1")).thenReturn(Mono.just(tpp1InCache));
         Mockito.when(tppMapService.getFromMap("tpp2")).thenReturn(Mono.just(tpp2InCacheDisabled));
         Mockito.when(tppMapService.getFromMap("tpp3")).thenReturn(Mono.empty());
-        Mockito.when(tppMapService.getFromMap("tpp4")).thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap("tpp4")).thenReturn(Mono.just(tpp4InCacheDisabledWrongRecipient));
+        Mockito.when(tppMapService.getFromMap("tpp5")).thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap("tpp6")).thenReturn(Mono.empty());
+
 
         // Mock repository: only tpp3 found (tpp4 not found), query only for enabled TPPs
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(any()))
-            .thenReturn(Flux.just(tpp3FromDb));
+        Mockito.when(tppRepository.findEnabledForRecipient(any(), any()))
+            .thenReturn(Flux.just(tpp3FromDb, tpp5FromDbDisabledWithRecipient));
 
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
 
-        StepVerifier.create(tppService.getEnabledList(requestedTppIds))
+        StepVerifier.create(tppService.filterEnabledList(requestedTppIds, MOCK_RECIPIENT))
             .expectNextMatches(response ->
-                response.size() == 2 &&
+                // tpp1, tpp2, tpp3 and tpp5 should be returned, tpp4 should be filtered out, tpp6 not found
+                response.size() == 4 &&
                 response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp1")) &&
+                response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp2")) &&
                 response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp3")) &&
-                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp2")) &&
-                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp4"))
+                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp4")) &&
+                response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp5"))
             )
             .verifyComplete();
     }

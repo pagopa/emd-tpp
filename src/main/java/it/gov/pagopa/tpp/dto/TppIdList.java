@@ -13,6 +13,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TppIdList {
+    
     @NotNull
     List<String> ids;
+
+    /**
+     * The recipient used for filtering TPPs based on their whitelistRecipient field.
+     */
+    @NotNull
+    private String recipient;
+
 }

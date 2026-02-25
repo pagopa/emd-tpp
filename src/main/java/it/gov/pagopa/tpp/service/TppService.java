@@ -14,12 +14,12 @@ import java.util.List;
 public interface TppService {
 
     /**
-     * Retrieves a list of enabled TPP entities by their identifiers.
+     * Retrieves a list of eenabled tpp or tpp with whitelistRecipient field containing the recipient.
      * 
      * @param tppIdList the list of TPP identifiers to retrieve
      * @return a {@link Mono} containing a list of enabled {@link TppDTO} entities
      */
-    Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
+    Mono<List<TppDTO>> filterEnabledList(List<String> tppIdList, String recipient);
 
     /**
      * Creates a new TPP entity with the specified configuration.
