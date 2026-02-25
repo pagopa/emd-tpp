@@ -430,7 +430,7 @@ public class TppServiceImpl implements TppService {
                         whitelist = new ArrayList<>();
                     }
                     if (whitelist.contains(recipientId)) {
-                        return Mono.error(exceptionMap.throwException(ExceptionName.GENERIC_ERROR, "Recipient already in whitelist"));
+                        return Mono.error(exceptionMap.throwException(ExceptionName.WHITELIST_RECIPIENT_ALREADY_EXISTS, ExceptionMessage.WHITELIST_RECIPIENT_ALREADY_EXISTS));
                     }
                     whitelist.add(recipientId);
                     tpp.setWhitelistRecipient(whitelist);
@@ -448,7 +448,7 @@ public class TppServiceImpl implements TppService {
                 .flatMap(tpp -> {
                     List<String> whitelist = tpp.getWhitelistRecipient();
                     if (whitelist == null || !whitelist.contains(recipientId)) {
-                        return Mono.error(exceptionMap.throwException(ExceptionName.GENERIC_ERROR, "Recipient not found in whitelist"));
+                        return Mono.error(exceptionMap.throwException(ExceptionName.WHITELIST_RECIPIENT_NOT_FOUND, ExceptionMessage.WHITELIST_RECIPIENT_NOT_FOUND));
                     }
                     whitelist.remove(recipientId);
                     tpp.setWhitelistRecipient(whitelist);

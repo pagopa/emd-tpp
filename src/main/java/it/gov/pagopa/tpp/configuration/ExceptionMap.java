@@ -70,6 +70,22 @@ public class ExceptionMap {
                         message
                 )
         );
+
+        exceptions.put(TppConstants.ExceptionName.WHITELIST_RECIPIENT_ALREADY_EXISTS, message ->
+                new ClientExceptionWithBody(
+                        HttpStatus.CONFLICT,
+                        TppConstants.ExceptionCode.WHITELIST_RECIPIENT_ALREADY_EXISTS,
+                        message
+                )
+        );
+
+        exceptions.put(TppConstants.ExceptionName.WHITELIST_RECIPIENT_NOT_FOUND, message ->
+                new ClientExceptionWithBody(
+                        HttpStatus.NOT_FOUND,
+                        TppConstants.ExceptionCode.WHITELIST_RECIPIENT_NOT_FOUND,
+                        message
+                )
+        );
     }
     /**
      * Creates and returns a runtime exception based on the specified exception key and message.

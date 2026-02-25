@@ -13,6 +13,8 @@ public class TppConstants {
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
 
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
+        public static final String WHITELIST_RECIPIENT_ALREADY_EXISTS = "WHITELIST_RECIPIENT_ALREADY_EXISTS";
+        public static final String WHITELIST_RECIPIENT_NOT_FOUND = "WHITELIST_RECIPIENT_NOT_FOUND";
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
         private ExceptionCode() {}
     }
@@ -25,6 +27,8 @@ public class TppConstants {
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
 
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
+        public static final String WHITELIST_RECIPIENT_ALREADY_EXISTS = "Recipient already in whitelist";
+        public static final String WHITELIST_RECIPIENT_NOT_FOUND = "Recipient not found in whitelist";
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
         private ExceptionMessage() {}
     }
@@ -37,6 +41,8 @@ public class TppConstants {
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
 
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
+        public static final String WHITELIST_RECIPIENT_ALREADY_EXISTS = "WHITELIST_RECIPIENT_ALREADY_EXISTS";
+        public static final String WHITELIST_RECIPIENT_NOT_FOUND = "WHITELIST_RECIPIENT_NOT_FOUND";
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
         private ExceptionName() {}
     }

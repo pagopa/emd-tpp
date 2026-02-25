@@ -548,6 +548,19 @@ class TppServiceTest {
     }
 
     @Test
+    void addRecipientToWhitelist_AlreadyExists() {
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setWhitelistRecipient(new ArrayList<>(List.of("recipientId")));
+        Mockito.when(tppRepository.findByTppId(any())).thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.addRecipientToWhitelist("tppId", "recipientId"))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("WHITELIST_RECIPIENT_ALREADY_EXISTS"))
+                .verify();
+    }
+
+    @Test
     void removeRecipientFromWhitelist_Ok() {
         Tpp mockTpp = getMockTpp();
         mockTpp.setWhitelistRecipient(new ArrayList<>(List.of("recipientId")));
@@ -557,5 +570,18 @@ class TppServiceTest {
 
         StepVerifier.create(tppService.removeRecipientFromWhitelist("tppId", "recipientId"))
                 .verifyComplete();
+    }
+
+    @Test
+    void removeRecipientFromWhitelist_NotFound() {
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setWhitelistRecipient(new ArrayList<>(List.of("otherRecipient")));
+        Mockito.when(tppRepository.findByTppId(any())).thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.removeRecipientFromWhitelist("tppId", "recipientId"))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ClientExceptionWithBody &&
+                                ((ClientExceptionWithBody) throwable).getCode().equals("WHITELIST_RECIPIENT_NOT_FOUND"))
+                .verify();
     }
 }

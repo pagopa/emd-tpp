@@ -246,6 +246,29 @@ class TppControllerTest {
     }
 
     @Test
+    void addRecipientToWhitelist_Conflict() {
+        WhitelistRecipientDTO dto = new WhitelistRecipientDTO("recipientId");
+        
+        // Simulo il comportamento di ExceptionMap che restituisce un ClientExceptionWithBody con HttpStatus.CONFLICT
+        it.gov.pagopa.common.web.exception.ClientExceptionWithBody conflictException = 
+            new it.gov.pagopa.common.web.exception.ClientExceptionWithBody(
+                org.springframework.http.HttpStatus.CONFLICT,
+                it.gov.pagopa.tpp.constants.TppConstants.ExceptionCode.WHITELIST_RECIPIENT_ALREADY_EXISTS,
+                "Recipient already in whitelist"
+            );
+
+        Mockito.when(tppService.addRecipientToWhitelist(anyString(), anyString()))
+                .thenReturn(Mono.error(conflictException));
+
+        webClient.post()
+                .uri("/emd/tpp/{tppId}/whitelist", "tppId")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dto)
+                .exchange()
+                .expectStatus().isEqualTo(org.springframework.http.HttpStatus.CONFLICT);
+    }
+
+    @Test
     void testConnection() {
         NetworkResponseDTO networkResponseDTO = new NetworkResponseDTO();
         networkResponseDTO.setMessage("tppName ha raggiunto i nostri sistemi");
