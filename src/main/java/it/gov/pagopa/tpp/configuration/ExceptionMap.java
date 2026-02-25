@@ -62,6 +62,14 @@ public class ExceptionMap {
                         message
                 )
         );
+
+        exceptions.put(TppConstants.ExceptionName.GENERIC_ERROR, message ->
+                new ClientExceptionWithBody(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        TppConstants.ExceptionCode.GENERIC_ERROR,
+                        message
+                )
+        );
     }
     /**
      * Creates and returns a runtime exception based on the specified exception key and message.
