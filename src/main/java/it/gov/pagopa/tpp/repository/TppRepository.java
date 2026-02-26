@@ -2,7 +2,6 @@ package it.gov.pagopa.tpp.repository;
 
 
 import it.gov.pagopa.tpp.model.Tpp;
-
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
@@ -29,14 +28,14 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
     Flux<Tpp> findByTppIdInAndStateTrue(List<String> tppIds);
 
     /**
-     * Custom query to retrieve active TPPs or those with recipientId in the whitelist field  
+     * Custom query to retrieve active TPPs or those with recipientId in the whitelist field
      */
-    @Query(    "{ " + 
-                "  'tppId': { $in: ?0 },  " + 
-                "  $or: [  " + 
-                "    { 'state': true }, " + 
-                "    { 'whitelistRecipient': ?1 }" + 
-                "  ]" + 
+    @Query(    "{ " +
+                "  'tppId': { $in: ?0 },  " +
+                "  $or: [  " +
+                "    { 'state': true }, " +
+                "    { 'whitelistRecipient': ?1 }" +
+                "  ]" +
                 "}")
     Flux<Tpp> findEnabledForRecipient(List<String> tppIds, String recipientId);
 
@@ -56,4 +55,12 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
      */
     Mono<Tpp> findByEntityId(String entityId);
 
+    /**
+     * Finds all TPPs and returns only their IDs and whitelist recipients.
+     *
+     * @return Flux of all TPP entities with only tppId and whitelistRecipient fields
+     */
+    @Query(value = "{ 'whitelistRecipient': { $exists: true, $ne: [] } }",
+        fields = "{ 'tppId': 1, 'whitelistRecipient': 1 }")
+    Flux<Tpp> findAllWhitelistOfTPPs();
 }

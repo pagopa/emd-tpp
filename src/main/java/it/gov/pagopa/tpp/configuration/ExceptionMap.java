@@ -4,6 +4,8 @@ package it.gov.pagopa.tpp.configuration;
 import it.gov.pagopa.common.web.exception.ClientException;
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.constants.TppConstants;
+import it.gov.pagopa.tpp.constants.TppConstants.ExceptionCode;
+import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,8 @@ public class ExceptionMap {
      * <ul>
      *   <li>TPP_NOT_ONBOARDED - HTTP 404 with NOT_FOUND status for missing TPPs</li>
      *   <li>TPP_ALREADY_ONBOARDED - HTTP 403 with FORBIDDEN status for duplicate onboarding</li>
+     *   <li>RECIPIENT_NOT_FOUND - HTTP 404 with NOT_FOUND status for missing recipient</li>
+     *   <li>RECIPIENT_ALREADY_PRESENT - HTTP 409 with CONFLICT status for recipient already present</li>
      * </ul>
      */
     public ExceptionMap() {
@@ -62,6 +66,23 @@ public class ExceptionMap {
                         message
                 )
         );
+
+        exceptions.put(ExceptionName.RECIPIENT_NOT_FOUND, message ->
+            new ClientExceptionWithBody(
+                HttpStatus.NOT_FOUND,
+                TppConstants.ExceptionCode.RECIPIENT_NOT_FOUND,
+                message
+            )
+        );
+
+        exceptions.put(ExceptionName.RECIPIENT_ALREADY_PRESENT, message ->
+            new ClientExceptionWithBody(
+                HttpStatus.CONFLICT,
+                ExceptionCode.RECIPIENT_ALREADY_PRESENT,
+                message
+            )
+        );
+
     }
     /**
      * Creates and returns a runtime exception based on the specified exception key and message.

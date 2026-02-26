@@ -2,18 +2,21 @@ package it.gov.pagopa.tpp.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
+import it.gov.pagopa.tpp.dto.RecipientIdOnWhitelistDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppIdList;
 import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
@@ -256,4 +259,93 @@ class TppControllerTest {
                 Assertions.assertEquals(networkResponseDTO.getCode(), resultResponse.getCode());
             });
     }
+
+  @Test
+  void getAllWhitelistRecipientId_Ok() {
+    Map<String, List<String>> whitelistMap = Map.of(
+        "TPP001", List.of("REC001", "REC002"),
+        "TPP002", List.of("REC003")
+    );
+
+    Mockito.when(tppService.getAllWhitelistRecipientId())
+        .thenReturn(Mono.just(whitelistMap));
+
+    webClient.get()
+        .uri("/emd/tpp/whitelist")
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(new ParameterizedTypeReference<Map<String, List<String>>>() {})
+        .consumeWith(response -> {
+          Map<String, List<String>> resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertEquals(whitelistMap.size(), resultResponse.size());
+          Assertions.assertEquals(whitelistMap, resultResponse);
+        });
+  }
+
+  @Test
+  void getTppWhitelistRecipientId_Ok() {
+    List<String> recipientIds = List.of("REC001", "REC002", "REC003");
+
+    Mockito.when(tppService.getTppWhitelistRecipientId("tppId"))
+        .thenReturn(Mono.just(recipientIds));
+
+    webClient.get()
+        .uri("/emd/tpp/{tppId}/whitelist", "tppId")
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(new ParameterizedTypeReference<List<String>>() {})
+        .consumeWith(response -> {
+          List<String> resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertEquals(recipientIds.size(), resultResponse.size());
+          Assertions.assertTrue(resultResponse.containsAll(recipientIds));
+        });
+  }
+
+  @Test
+  void insertRecipientIdOnWhitelist_Created() {
+    RecipientIdOnWhitelistDTO recipientDto = new RecipientIdOnWhitelistDTO();
+    recipientDto.setRecipientId("REC001");
+
+    Mockito.when(tppService.insertRecipientIdOnWhitelist("tppId", "REC001"))
+        .thenReturn(Mono.empty());
+
+    webClient.post()
+        .uri("/emd/tpp/{tppId}/whitelist", "tppId")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(recipientDto)
+        .exchange()
+        .expectStatus().isCreated()
+        .expectBody().isEmpty();
+  }
+
+  @Test
+  void removeRecipientIdOnWhitelist_NoContent() {
+    Mockito.when(tppService.removeRecipientIdOnWhitelist("tppId", "recipientId"))
+        .thenReturn(Mono.empty());
+
+    webClient.delete()
+        .uri("/emd/tpp/{tppId}/whitelist/{recipientId}", "tppId", "recipientId")
+        .exchange()
+        .expectStatus().isNoContent()
+        .expectBody().isEmpty();
+  }
+
+  @Test
+  void updateRecipientIdOnWhitelist_NoContent() {
+    List<String> recipientIds = List.of("REC001", "REC002", "REC003");
+
+    Mockito.when(tppService.updateRecipientIdOnWhitelist("tppId", recipientIds))
+        .thenReturn(Mono.empty());
+
+    webClient.put()
+        .uri("/emd/tpp/{tppId}/whitelist", "tppId")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(recipientIds)
+        .exchange()
+        .expectStatus().isNoContent()
+        .expectBody().isEmpty();
+  }
+
 }
