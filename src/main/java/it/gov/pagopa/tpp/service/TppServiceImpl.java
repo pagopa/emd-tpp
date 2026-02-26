@@ -1,5 +1,6 @@
 package it.gov.pagopa.tpp.service;
 
+import it.gov.pagopa.common.utils.Utils;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
@@ -76,7 +77,8 @@ public class TppServiceImpl implements TppService {
      */
     @Override
     public Mono<List<TppDTO>> filterEnabledList(List<String> tppIdList, String recipientId) {
-        log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}, recipientId: {}", tppIdList, recipientId);
+        String hashedRecipientId = Utils.createSHA256(recipientId);
+        log.info("[TPP-SERVICE][GET-ENABLED] Received tppIdList: {}, recipientId: {}", tppIdList, hashedRecipientId);
 
         return checkMapForTppIds(tppIdList)
                 .flatMap(cacheResult -> {
