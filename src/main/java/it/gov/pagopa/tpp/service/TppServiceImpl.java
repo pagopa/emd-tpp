@@ -17,6 +17,9 @@ import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -50,7 +53,6 @@ public class TppServiceImpl implements TppService {
     private final TppMapService tppMapService;
     private final TokenSectionCryptService tokenSectionCryptService;
     private final AzureKeyService azureKeyService;
-    private static final String TPP_NOT_FOUND = "Tpp not found during get process";
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO, TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO, TokenSectionObjectToDTOMapper tokenSectionMapperToDTO,
                           TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureKeyService azureKeyService, TppMapService tppMapService, TokenSectionCryptService tokenSectionCryptService) {
@@ -326,7 +328,7 @@ public class TppServiceImpl implements TppService {
             })
             .switchIfEmpty(Mono.defer(() ->
                 tppRepository.findByTppId(tppId)
-                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, TPP_NOT_FOUND)))
+                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
                     .flatMap(dbTpp -> tppMapService.addToMap(dbTpp).thenReturn(dbTpp))
                     .map(tppWithoutTokenSectionMapperToDTO::map)
             ))
@@ -351,7 +353,7 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByEntityId(entityId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        TPP_NOT_FOUND)))
+                    ExceptionMessage.TPP_NOT_FOUND)))
                 .map(tppWithoutTokenSectionMapperToDTO::map)
                 .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}",tppDTO.getEntityId()))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
@@ -376,7 +378,7 @@ public class TppServiceImpl implements TppService {
             .switchIfEmpty(Mono.defer(() ->
                 tppRepository.findByTppId(tppId)
                     .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        TPP_NOT_FOUND)))
+                        ExceptionMessage.TPP_NOT_FOUND)))
                     .flatMap(dbTpp -> tppMapService.addToMap(dbTpp).thenReturn(dbTpp))
                     .map(tpp -> tokenSectionMapperToDTO.map(tpp.getTokenSection()))
             ))
@@ -393,7 +395,7 @@ public class TppServiceImpl implements TppService {
 
         return tppRepository.findByTppId(tppId)
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                        TPP_NOT_FOUND)))
+                    ExceptionMessage.TPP_NOT_FOUND)))
                 .flatMap(tpp -> tppRepository.delete(tpp)
                     .then(Mono.fromRunnable(() -> tppMapService.removeFromMap(tppId)))
                     .thenReturn(mapperToDTO.map(tpp))
@@ -425,5 +427,122 @@ public class TppServiceImpl implements TppService {
         return networkResponseDTO;
     }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Mono<Map<String, List<String>>> getAllWhitelistRecipientId() {
+    log.info("[TPP-SERVICE][WHITELIST-GET-ALL] Retrieving all whitelist recipientIds");
 
+
+    return tppRepository.findAllWhitelistOfTPPs()
+        .collectMap(
+            Tpp::getTppId,
+            tpp -> tpp.getWhitelistRecipient() != null ? tpp.getWhitelistRecipient() : new ArrayList<String>()
+        )
+        .defaultIfEmpty(new HashMap<>())
+        .doOnSuccess(map -> log.info("[TPP-SERVICE][WHITELIST-GET-ALL] Retrieved whitelist for {} TPPs", map.size()))
+        .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-GET-ALL] Error retrieving all whitelists: {}", error.getMessage()));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Mono<List<String>> getTppWhitelistRecipientId(String tppId) {
+    log.info("[TPP-SERVICE][WHITELIST-GET] Retrieving whitelist for tppId: {}", tppId);
+
+    return tppRepository.findByTppId(tppId)
+        .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
+        .map(tpp -> tpp.getWhitelistRecipient() != null ? tpp.getWhitelistRecipient() : new ArrayList<String>())
+        .doOnSuccess(list -> log.info("[TPP-SERVICE][WHITELIST-GET] Found {} recipientIds for tppId: {}", list.size(), tppId))
+        .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-GET] Error retrieving whitelist for tppId {}: {}", tppId, error.getMessage()));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Mono<TppDTO> insertRecipientIdOnWhitelist(String tppId, String recipientId) {
+    String hashedRecipientId = Utils.createSHA256(recipientId);
+    log.info("[TPP-SERVICE][WHITELIST-INSERT] Inserting recipientId {} for tppId: {}", hashedRecipientId, tppId);
+
+    return tppRepository.findByTppId(tppId)
+        .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
+        .flatMap(tpp -> {
+          List<String> whitelist = tpp.getWhitelistRecipient() != null
+              ? new ArrayList<>(tpp.getWhitelistRecipient())
+              : new ArrayList<>();
+
+          if (whitelist.contains(recipientId)) {
+            return Mono.error(exceptionMap.throwException(
+                ExceptionName.RECIPIENT_ALREADY_PRESENT,
+                ExceptionMessage.RECIPIENT_ALREADY_PRESENT));
+          }
+
+          whitelist.add(recipientId);
+          tpp.setWhitelistRecipient(whitelist);
+          tpp.setLastUpdateDate(LocalDateTime.now());
+
+          return tppRepository.save(tpp)
+              .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
+              .map(mapperToDTO::map);
+        })
+        .doOnSuccess(tppDto -> log.info("[TPP-SERVICE][WHITELIST-INSERT] Inserted recipientId {} for tppId: {}", hashedRecipientId, tppId))
+        .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-INSERT] Error inserting recipientId {} for tppId {}: {}", hashedRecipientId, tppId, error.getMessage()));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Mono<TppDTO> removeRecipientIdOnWhitelist(String tppId, String recipientId) {
+    String hashedRecipientId = Utils.createSHA256(recipientId);
+    log.info("[TPP-SERVICE][WHITELIST-REMOVE] Removing recipientId {} for tppId: {}", hashedRecipientId, tppId);
+
+    return tppRepository.findByTppId(tppId)
+        .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
+        .flatMap(tpp -> {
+          List<String> whitelist = tpp.getWhitelistRecipient() != null
+              ? new ArrayList<>(tpp.getWhitelistRecipient())
+              : new ArrayList<>();
+
+          if (!whitelist.contains(recipientId)) {
+            return Mono.error(exceptionMap.throwException(
+                ExceptionName.RECIPIENT_NOT_FOUND,
+                ExceptionMessage.RECIPIENT_NOT_FOUND));
+          }
+
+          whitelist.remove(recipientId);
+          tpp.setWhitelistRecipient(whitelist);
+          tpp.setLastUpdateDate(LocalDateTime.now());
+
+          return tppRepository.save(tpp)
+              .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
+              .map(mapperToDTO::map);
+        })
+        .doOnSuccess(tppDto -> log.info("[TPP-SERVICE][WHITELIST-REMOVE] Removed recipientId {} for tppId: {}", hashedRecipientId, tppId))
+        .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-REMOVE] Error removing recipientId {} for tppId {}: {}", hashedRecipientId, tppId, error.getMessage()));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Mono<TppDTO> updateRecipientIdOnWhitelist(String tppId, List<String> recipientIds) {
+    log.info("[TPP-SERVICE][WHITELIST-UPDATE] Replacing whitelist for tppId: {}", tppId);
+
+    return tppRepository.findByTppId(tppId)
+        .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
+        .flatMap(tpp -> {
+          tpp.setWhitelistRecipient(recipientIds != null ? new ArrayList<>(recipientIds) : new ArrayList<>());
+          tpp.setLastUpdateDate(LocalDateTime.now());
+
+          return tppRepository.save(tpp)
+              .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
+              .map(mapperToDTO::map);
+        })
+        .doOnSuccess(tppDto -> log.info("[TPP-SERVICE][WHITELIST-UPDATE] Replaced whitelist for tppId: {}", tppId))
+        .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-UPDATE] Error replacing whitelist for tppId {}: {}", tppId, error.getMessage()));
+  }
 }
