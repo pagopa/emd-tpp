@@ -367,4 +367,62 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         log.info("=== TEST COMPLETED ===");
     }
 
+    /**
+     * Test Case: Find all TPPs with non-empty whitelist recipients <br/>
+     *
+     * Scenario: Query for TPPs that have whitelistRecipient field with at least one entry <br/>
+     * Expected: Should return only TPPs with populated whitelistRecipient, projecting only tppId and whitelistRecipient fields <br/>
+     *
+     * Business Logic: Only TPPs with configured whitelist recipients should be returned,
+     * and only the relevant fields (tppId, whitelistRecipient)
+     */
+    @Test
+    void testFindAllWhitelistOfTPPs() {
+        log.info("=== EXECUTING findAllWhitelistOfTPPs ===");
+
+        StepVerifier.create(
+                repository.findAllWhitelistOfTPPs()
+            )
+            .recordWith(ArrayList::new)
+            .expectNextCount(2)
+            .consumeRecordedWith(results -> {
+                assert results.stream().allMatch(tpp ->
+                    tpp.getWhitelistRecipient() != null && !tpp.getWhitelistRecipient().isEmpty()
+                ) : "All TPPs should have non-empty whitelistRecipient";
+
+                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3));
+                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_4));
+            })
+            .verifyComplete();
+
+        log.info("=== TEST COMPLETED ===");
+    }
+
+    /**
+     * Test Case: No TPPs with whitelist recipients
+     *
+     * Scenario: Query when no TPPs have populated whitelistRecipient field
+     * Expected: Should return empty Flux
+     * Purpose: Verify query handles empty result set correctly
+     */
+    @Test
+    void testFindAllWhitelistOfTPPs_NoResults() {
+        log.info("=== EXECUTING findAllWhitelistOfTPPs (no results) ===");
+
+        // Clean up Before test, remove all TPPs to ensure no whitelist recipients are present
+        StepVerifier.create(
+            mongoTemplate.dropCollection(COLLECTION_NAME)
+                .then(mongoTemplate.save(Tpp.builder()
+                    .tppId(TPP_ID)
+                    .state(Boolean.TRUE)
+                    .entityId(ENTITY_ID)
+                    .build(), COLLECTION_NAME))
+        ).expectNextCount(1).verifyComplete();
+
+        StepVerifier.create(repository.findAllWhitelistOfTPPs())
+            .expectNextCount(0)
+            .verifyComplete();
+
+        log.info("=== TEST COMPLETED ===");
+    }
 }
