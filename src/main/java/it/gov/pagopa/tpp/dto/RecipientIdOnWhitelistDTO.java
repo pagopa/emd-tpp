@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class RecipientIdOnWhitelistDTO {
 
-  @NotBlank
+  @NotBlank(message = "recipientId must not be blank")
   private String recipientId;
 }
