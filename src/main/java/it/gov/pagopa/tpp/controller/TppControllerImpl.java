@@ -34,7 +34,7 @@ public class TppControllerImpl implements TppController {
      */
     @Override
     public Mono<ResponseEntity<List<TppDTO>>> filterEnabledList(TppIdList tppIdList) {
-        return tppService.filterEnabledList(tppIdList.getIds(), tppIdList.getRecipientId())
+        return tppService.filterEnabledList(inputSanitization(tppIdList.getIds()), tppIdList.getRecipientId())
                 .map(ResponseEntity::ok);
     }
 
