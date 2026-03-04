@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/pagopa/emd-tpp/compare/v1.3.2...v1.4.0) (2026-03-04)
+
+
+### Features
+
+* add recipient whitelist to enable message sending for TPPs with state at false ([#91](https://github.com/pagopa/emd-tpp/issues/91)) ([912f0bf](https://github.com/pagopa/emd-tpp/commit/912f0bf0ddeba95f2e4f711d055273041667a8ec))
+
 ## [1.3.2](https://github.com/pagopa/emd-tpp/compare/v1.3.1...v1.3.2) (2026-02-10)
 
 
