@@ -15,6 +15,7 @@ import it.gov.pagopa.tpp.model.mapper.TokenSectionDTOToObjectMapper;
 import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
+import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -95,6 +96,7 @@ class TppServiceTest {
             dto.setAgentLinks(tpp.getAgentLinks());
             dto.setMessageTemplate(tpp.getMessageTemplate());
             dto.setIsPaymentEnabled(tpp.getIsPaymentEnabled());
+            dto.setWhitelistRecipient(tpp.getWhitelistRecipient());
             return dto;
         });
 
@@ -115,6 +117,7 @@ class TppServiceTest {
             dto.setAgentLinks(tpp.getAgentLinks());
             dto.setMessageTemplate(tpp.getMessageTemplate());
             dto.setIsPaymentEnabled(tpp.getIsPaymentEnabled());
+            dto.setWhitelistRecipient(tpp.getWhitelistRecipient());
             return dto;
         });
     }
@@ -122,13 +125,13 @@ class TppServiceTest {
 
     @Test
     void getEnabled_Ok() {
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(getMockTppIdStringList()))
+        Mockito.when(tppRepository.findEnabledForRecipient(getMockTppIdStringList(), MOCK_RECIPIENT))
             .thenReturn(Flux.fromIterable(getMockTppList()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
+        StepVerifier.create(tppService.filterEnabledList(getMockTppIdStringList(), MOCK_RECIPIENT))
             .expectNextMatches(response -> response.equals(getMockTppDtoList()))
             .verifyComplete();
     }
@@ -137,7 +140,7 @@ class TppServiceTest {
     void getEnabled_FiltersDisabledTppFromCache() {
         Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.just(getMockTppDisabled()));
 
-        StepVerifier.create(tppService.getEnabledList(getMockTppIdStringList()))
+        StepVerifier.create(tppService.filterEnabledList(getMockTppIdStringList(), MOCK_RECIPIENT))
             .expectNextMatches(response -> response.isEmpty())
             .verifyComplete();
     }
@@ -145,36 +148,54 @@ class TppServiceTest {
     @Test
     void getEnabled_MixedCacheAndRepository_WithMixedStates() {
         // Scenario: 4 TPP IDs requested
-        // - tpp1: in cache with state=true -> should be returned
-        // - tpp2: in cache with state=false -> should be filtered out
-        // - tpp3: not in cache, fetched from DB with state=true -> should be returned
-        // - tpp4: not in cache, not in DB -> should not be returned
-        List<String> requestedTppIds = List.of("tpp1", "tpp2", "tpp3", "tpp4");
+    
+        List<String> requestedTppIds = List.of("tpp1", "tpp2", "tpp3", "tpp4", "tpp5");
 
+        // - tpp1: in cache with state=true - whitelistRecipient empty -> should be returned
         Tpp tpp1InCache = getMockTpp("tpp1", true);
+
+        // - tpp2: in cache with state=false - whitelistRecipient with recipient -> should be returned
         Tpp tpp2InCacheDisabled = getMockTpp("tpp2", false);
+        tpp2InCacheDisabled.setWhitelistRecipient(List.of(MOCK_RECIPIENT));
+
+        // - tpp3: not in cache, fetched from DB with state=true -> should be returned
         Tpp tpp3FromDb = getMockTpp("tpp3", true);
+
+        // - tpp4: in cache with state=false - whitelistRecipient with not useful recipient -> should be filtered out
+        Tpp tpp4InCacheDisabledWrongRecipient = getMockTpp("tpp4", false);
+        tpp4InCacheDisabledWrongRecipient.setWhitelistRecipient(List.of("OtherRecipient"));
+        
+        // - tpp5: not in cache, fetched from DB with state=false but whitelistRecipient with recipient -> should be returned
+        Tpp tpp5FromDbDisabledWithRecipient = getMockTpp("tpp5", false);
+        tpp5FromDbDisabledWithRecipient.setWhitelistRecipient(List.of(MOCK_RECIPIENT));
+        
+        // - tpp6: not in cache, not in DB -> should not be returned
 
         // Mock cache: tpp1 and tpp2 are in cache
         Mockito.when(tppMapService.getFromMap("tpp1")).thenReturn(Mono.just(tpp1InCache));
         Mockito.when(tppMapService.getFromMap("tpp2")).thenReturn(Mono.just(tpp2InCacheDisabled));
         Mockito.when(tppMapService.getFromMap("tpp3")).thenReturn(Mono.empty());
-        Mockito.when(tppMapService.getFromMap("tpp4")).thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap("tpp4")).thenReturn(Mono.just(tpp4InCacheDisabledWrongRecipient));
+        Mockito.when(tppMapService.getFromMap("tpp5")).thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getFromMap("tpp6")).thenReturn(Mono.empty());
+
 
         // Mock repository: only tpp3 found (tpp4 not found), query only for enabled TPPs
-        Mockito.when(tppRepository.findByTppIdInAndStateTrue(any()))
-            .thenReturn(Flux.just(tpp3FromDb));
+        Mockito.when(tppRepository.findEnabledForRecipient(any(), any()))
+            .thenReturn(Flux.just(tpp3FromDb, tpp5FromDbDisabledWithRecipient));
 
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
 
-        StepVerifier.create(tppService.getEnabledList(requestedTppIds))
+        StepVerifier.create(tppService.filterEnabledList(requestedTppIds, MOCK_RECIPIENT))
             .expectNextMatches(response ->
-                response.size() == 2 &&
+                // tpp1, tpp2, tpp3 and tpp5 should be returned, tpp4 should be filtered out, tpp6 not found
+                response.size() == 4 &&
                 response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp1")) &&
+                response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp2")) &&
                 response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp3")) &&
-                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp2")) &&
-                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp4"))
+                response.stream().noneMatch(tpp -> tpp.getTppId().equals("tpp4")) &&
+                response.stream().anyMatch(tpp -> tpp.getTppId().equals("tpp5"))
             )
             .verifyComplete();
     }
@@ -524,6 +545,221 @@ class TppServiceTest {
 
         StepVerifier.create(tppService.deleteTpp(tppDto.getTppId()))
             .expectNextCount(1)
+            .verifyComplete();
+    }
+
+    // ==================== WHITELIST TESTS ====================
+
+    @Test
+    void getAllWhitelistRecipientId_Ok() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.findAllWhitelistOfTPPs())
+            .thenReturn(Flux.just(mockTpp));
+
+        StepVerifier.create(tppService.getAllWhitelistRecipientId())
+            .expectNextMatches(result ->
+                result.containsKey(mockTpp.getTppId()) &&
+                    result.get(mockTpp.getTppId()).equals(mockTpp.getWhitelistRecipient())
+            )
+            .verifyComplete();
+    }
+
+    @Test
+    void getAllWhitelistRecipientId_EmptyRepository() {
+        Mockito.when(tppRepository.findAllWhitelistOfTPPs())
+            .thenReturn(Flux.empty());
+
+        StepVerifier.create(tppService.getAllWhitelistRecipientId())
+            .expectNextMatches(result -> result.isEmpty())
+            .verifyComplete();
+    }
+
+    @Test
+    void getAllWhitelistRecipientId_NullWhitelist() {
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setWhitelistRecipient(null);
+
+        Mockito.when(tppRepository.findAllWhitelistOfTPPs())
+            .thenReturn(Flux.just(mockTpp));
+
+        StepVerifier.create(tppService.getAllWhitelistRecipientId())
+            .expectNextMatches(result ->
+                result.containsKey(mockTpp.getTppId()) &&
+                    result.get(mockTpp.getTppId()).isEmpty()
+            )
+            .verifyComplete();
+    }
+
+    @Test
+    void getTppWhitelistRecipientId_Ok() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.getTppWhitelistRecipientId(mockTpp.getTppId()))
+            .expectNextMatches(result -> result.equals(mockTpp.getWhitelistRecipient()))
+            .verifyComplete();
+    }
+
+    @Test
+    void getTppWhitelistRecipientId_NullWhitelist() {
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setWhitelistRecipient(null);
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.getTppWhitelistRecipientId(mockTpp.getTppId()))
+            .expectNextMatches(List::isEmpty)
+            .verifyComplete();
+    }
+
+    @Test
+    void getTppWhitelistRecipientId_TppNotFound() {
+        Mockito.when(tppRepository.findByTppId(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.getTppWhitelistRecipientId("unknownTppId"))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
+    }
+
+    @Test
+    void insertRecipientIdOnWhitelist_Ok() {
+        Tpp mockTpp = getMockTpp();
+        String newRecipientId = "newRecipient123";
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.insertRecipientIdOnWhitelist(mockTpp.getTppId(), newRecipientId))
+            .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+    }
+
+    @Test
+    void insertRecipientIdOnWhitelist_TppNotFound() {
+        Mockito.when(tppRepository.findByTppId(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.insertRecipientIdOnWhitelist("unknownTppId", "recipientId"))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
+    }
+
+    @Test
+    void insertRecipientIdOnWhitelist_RecipientAlreadyPresent() {
+        Tpp mockTpp = getMockTpp();
+        String existingRecipient = "existingRecipient";
+        mockTpp.setWhitelistRecipient(new ArrayList<>(List.of(existingRecipient)));
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.insertRecipientIdOnWhitelist(mockTpp.getTppId(), existingRecipient))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("RECIPIENT_ALREADY_PRESENT"))
+            .verify();
+    }
+
+    @Test
+    void removeRecipientIdOnWhitelist_Ok() {
+        Tpp mockTpp = getMockTpp();
+        String existingRecipient = "existingRecipient";
+        mockTpp.setWhitelistRecipient(new ArrayList<>(List.of(existingRecipient)));
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.removeRecipientIdOnWhitelist(mockTpp.getTppId(), existingRecipient))
+            .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+    }
+
+    @Test
+    void removeRecipientIdOnWhitelist_TppNotFound() {
+        Mockito.when(tppRepository.findByTppId(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.removeRecipientIdOnWhitelist("unknownTppId", "recipientId"))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
+    }
+
+    @Test
+    void removeRecipientIdOnWhitelist_RecipientNotFound() {
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setWhitelistRecipient(new ArrayList<>());
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.removeRecipientIdOnWhitelist(mockTpp.getTppId(), "nonExistentRecipient"))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("RECIPIENT_NOT_FOUND"))
+            .verify();
+    }
+
+    @Test
+    void updateRecipientIdOnWhitelist_Ok() {
+        Tpp mockTpp = getMockTpp();
+        List<String> newWhitelist = List.of("recipient1", "recipient2");
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateRecipientIdOnWhitelist(mockTpp.getTppId(), newWhitelist))
+            .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+    }
+
+    @Test
+    void updateRecipientIdOnWhitelist_TppNotFound() {
+        Mockito.when(tppRepository.findByTppId(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.updateRecipientIdOnWhitelist("unknownTppId", List.of("recipient1")))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
+            .verify();
+    }
+
+    @Test
+    void updateRecipientIdOnWhitelist_NullList() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateRecipientIdOnWhitelist(mockTpp.getTppId(), null))
+            .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
             .verifyComplete();
     }
 }

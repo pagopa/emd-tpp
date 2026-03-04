@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Utility class providing common helper methods for SHA-256 hash generation
@@ -64,6 +66,14 @@ public class Utils {
         if (message != null)
            return message.replace("\n", " ").replace("\r", " ");
        return "[EMD][WARNING] Null log";
+    }
+
+    public static List<String> inputSanitization(List<String> messageList){
+        if (messageList != null)
+            return messageList.stream()
+                    .map(Utils::inputSanitization)
+                    .collect(Collectors.toList());
+        return List.of("[EMD][WARNING] Null log");
     }
 
 }

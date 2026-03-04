@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.controller;
 import it.gov.pagopa.tpp.dto.*;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,8 +33,8 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
-    public Mono<ResponseEntity<List<TppDTO>>> getEnabledList(TppIdList tppIdList) {
-        return tppService.getEnabledList(tppIdList.getIds())
+    public Mono<ResponseEntity<List<TppDTO>>> filterEnabledList(TppIdList tppIdList) {
+        return tppService.filterEnabledList(inputSanitization(tppIdList.getIds()), tppIdList.getRecipientId())
                 .map(ResponseEntity::ok);
     }
 
@@ -125,5 +126,50 @@ public class TppControllerImpl implements TppController {
     public Mono<ResponseEntity<TppDTO>> deleteTpp(String tppId) {
         return tppService.deleteTpp(inputSanitization(tppId))
                 .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Map<String, List<String>>>> getAllWhitelistRecipientId() {
+        return tppService.getAllWhitelistRecipientId()
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<List<String>>> getTppWhitelistRecipientId(String tppId) {
+        return tppService.getTppWhitelistRecipientId(inputSanitization(tppId))
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> insertRecipientIdOnWhitelist(String tppId, RecipientIdOnWhitelistDTO recipientIdOnWhitelistDTO) {
+        return tppService.insertRecipientIdOnWhitelist(inputSanitization(tppId), inputSanitization(recipientIdOnWhitelistDTO.getRecipientId()))
+                .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> removeRecipientIdOnWhitelist(String tppId, String recipientId) {
+        return tppService.removeRecipientIdOnWhitelist(inputSanitization(tppId), inputSanitization(recipientId))
+                .then(Mono.just(ResponseEntity.noContent().build()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> updateRecipientIdOnWhitelist(String tppId, List<String> recipientIds) {
+        return tppService.updateRecipientIdOnWhitelist(inputSanitization(tppId), recipientIds)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

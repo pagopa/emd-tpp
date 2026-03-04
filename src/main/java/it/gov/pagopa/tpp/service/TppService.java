@@ -1,9 +1,11 @@
 package it.gov.pagopa.tpp.service;
 
+import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -14,12 +16,12 @@ import java.util.List;
 public interface TppService {
 
     /**
-     * Retrieves a list of enabled TPP entities by their identifiers.
+     * Retrieves a list of eenabled tpp or tpp with whitelistRecipient field containing the recipientId.
      * 
      * @param tppIdList the list of TPP identifiers to retrieve
      * @return a {@link Mono} containing a list of enabled {@link TppDTO} entities
      */
-    Mono<List<TppDTO>> getEnabledList(List<String> tppIdList);
+    Mono<List<TppDTO>> filterEnabledList(List<String> tppIdList, String recipientId);
 
     /**
      * Creates a new TPP entity with the specified configuration.
@@ -106,4 +108,54 @@ public interface TppService {
      */
     Mono<TppDTO> deleteTpp(String tppId);
 
+    /**
+     * Retrieves all whitelist recipientIds grouped by tppId.
+     *
+     * @return a {@link Mono} containing a map of tppId -> list of recipientIds.
+     *         Returns an empty map if no whitelist is configured at system level.
+     */
+    Mono<Map<String, List<String>>> getAllWhitelistRecipientId();
+
+    /**
+     * Retrieves the whitelist recipientIds for a specific TPP.
+     *
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing the flat list of recipientIds on whitelist.
+     *         Returns an empty list if the TPP exists but has no whitelist entries.
+     * @throws TPP_NOT_ONBOARDED if the TPP does not exist
+     */
+    Mono<List<String>> getTppWhitelistRecipientId(String tppId);
+
+    /**
+     * Adds a single recipientId to the whitelist of a specific TPP.
+     *
+     * @param tppId       the TPP identifier
+     * @param recipientId the recipientId to add
+     * @return a {@link Mono} that completes empty when the insertion is successful
+     * @throws TPP_NOT_ONBOARDED         if the TPP does not exist
+     * @throws RECIPIENT_ALREADY_PRESENT if the recipientId is already in the whitelist
+     */
+    Mono<TppDTO> insertRecipientIdOnWhitelist(String tppId, String recipientId);
+
+    /**
+     * Removes a single recipientId from the whitelist of a specific TPP.
+     *
+     * @param tppId       the TPP identifier
+     * @param recipientId the recipientId to remove
+     * @return a {@link Mono} that completes empty when the removal is successful
+     * @throws TPP_NOT_ONBOARDED   if the TPP does not exist
+     * @throws RECIPIENT_NOT_FOUND if the recipientId is not present in the whitelist
+     */
+    Mono<TppDTO> removeRecipientIdOnWhitelist(String tppId, String recipientId);
+
+    /**
+     * Replaces the entire whitelist of a specific TPP with the provided list.
+     * Passing an empty list will clear the whitelist.
+     *
+     * @param tppId        the TPP identifier
+     * @param recipientIds the new list of recipientIds to set (can be empty)
+     * @return a {@link Mono} that completes empty when the update is successful
+     * @throws TPP_NOT_ONBOARDED if the TPP does not exist
+     */
+    Mono<TppDTO> updateRecipientIdOnWhitelist(String tppId, List<String> recipientIds);
 }

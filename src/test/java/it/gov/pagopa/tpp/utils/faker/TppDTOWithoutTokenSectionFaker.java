@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class TppDTOWithoutTokenSectionFaker {
 
@@ -38,6 +39,7 @@ public class TppDTOWithoutTokenSectionFaker {
                     put("agent", agentLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
+                .whitelistRecipient(List.of())
                 .isPaymentEnabled(bias)
                 .build();
     }
@@ -68,6 +70,7 @@ public class TppDTOWithoutTokenSectionFaker {
                     put("agent", agentLink);
                 }})
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
+                .whitelistRecipient(List.of())
                 .isPaymentEnabled(bias)
                 .build();
     }

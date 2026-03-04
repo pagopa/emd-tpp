@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.*;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -19,14 +20,15 @@ import java.util.List;
 public interface TppController {
 
     /**
-     * Get list of tpp based on the provided tpp ids.
+     * Get list of enabled tpp or tpp with whitelistRecipient field containing the recipientId
+     * based on the provided tpp ids.
      *
      * @param tppIdList whose data is to be retrieved
      * @return a {@link Mono} containing a {@link ResponseEntity} with 
      *          a list of {@link TppDTO} objects for found enabled TPPs
      */
     @PostMapping("/list")
-    Mono<ResponseEntity<List<TppDTO>>> getEnabledList(@Valid @RequestBody TppIdList tppIdList);
+    Mono<ResponseEntity<List<TppDTO>>> filterEnabledList(@Valid @RequestBody TppIdList tppIdList);
 
     /**
      * Update the state of an existing TPP.
@@ -127,4 +129,54 @@ public interface TppController {
      */
     @DeleteMapping("/test/delete/{tppId}")
     Mono<ResponseEntity<TppDTO>> deleteTpp(@PathVariable String tppId);
+
+    /**
+     * Get all whitelist recipientId for all tpp
+     *
+     * @return a {@link Mono} containing a {@link ResponseEntity} with a map where the key is the
+     *         tppId and the value is a list of recipientId on whitelist for that tpp.
+     *         Returns an empty map if no whitelist is configured.
+     */
+    @GetMapping("/whitelist")
+    Mono<ResponseEntity<Map<String, List<String>>>> getAllWhitelistRecipientId();
+
+    /**
+     * Get all recipientId on whitelist for a specific tpp
+     *
+     * @param tppId to get whitelist recipientId for
+     * @return a {@link Mono} containing a {@link ResponseEntity} with a list of recipientId
+     *         on whitelist for the specified tpp. Returns an empty list if no entries are present.
+     */
+    @GetMapping("/{tppId}/whitelist")
+    Mono<ResponseEntity<List<String>>> getTppWhitelistRecipientId(@PathVariable String tppId);
+
+    /**
+     * Add a recipientId to whitelist for a specific tpp
+     *
+     * @param tppId                    of the tpp for which the recipientId is to be added on whitelist
+     * @param recipientIdOnWhitelistDTO containing the recipientId to add
+     * @return a {@link Mono} containing a {@link ResponseEntity} with 201 Created if successful
+     */
+    @PostMapping("/{tppId}/whitelist")
+    Mono<ResponseEntity<Void>> insertRecipientIdOnWhitelist(@PathVariable String tppId, @Valid @RequestBody RecipientIdOnWhitelistDTO recipientIdOnWhitelistDTO);
+
+    /**
+     * Removes a recipientId from whitelist for a specific tpp
+     *
+     * @param tppId       of the tpp from which the recipientId is to be removed
+     * @param recipientId to be removed from whitelist
+     * @return a {@link Mono} containing a {@link ResponseEntity} with 204 No Content if successful
+     */
+    @DeleteMapping("/{tppId}/whitelist/{recipientId}")
+    Mono<ResponseEntity<Void>> removeRecipientIdOnWhitelist(@PathVariable String tppId, @PathVariable String recipientId);
+
+    /**
+     * Replace the entire whitelist of a specific tpp with the provided list.
+     *
+     * @param tppId        of the tpp whose whitelist is to be replaced
+     * @param recipientIds new list of recipientId to set on whitelist
+     * @return a {@link Mono} containing a {@link ResponseEntity} with 204 No Content if successful
+     */
+    @PutMapping("/{tppId}/whitelist")
+    Mono<ResponseEntity<Void>> updateRecipientIdOnWhitelist(@PathVariable String tppId, @RequestBody List<String> recipientIds);
 }
