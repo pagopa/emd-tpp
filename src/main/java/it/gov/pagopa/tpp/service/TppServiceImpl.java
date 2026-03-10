@@ -19,6 +19,7 @@ import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -535,7 +536,7 @@ public class TppServiceImpl implements TppService {
     return tppRepository.findByTppId(tppId)
         .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
         .flatMap(tpp -> {
-          tpp.setWhitelistRecipient(recipientIds != null ? new ArrayList<>(recipientIds) : new ArrayList<>());
+          tpp.setWhitelistRecipient(recipientIds != null ? new ArrayList<>(new HashSet<>(recipientIds)) : new ArrayList<>());
           tpp.setLastUpdateDate(LocalDateTime.now());
 
           return tppRepository.save(tpp)
