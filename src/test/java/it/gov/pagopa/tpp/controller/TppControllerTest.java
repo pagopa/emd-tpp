@@ -321,6 +321,23 @@ class TppControllerTest {
   }
 
   @Test
+  void insertRecipientIdOnWhitelist_Created_Removing_Spaces() {
+    RecipientIdOnWhitelistDTO recipientDto = new RecipientIdOnWhitelistDTO();
+    recipientDto.setRecipientId("  REC001  ");
+
+    Mockito.when(tppService.insertRecipientIdOnWhitelist("tppId", "REC001"))
+        .thenReturn(Mono.empty());
+
+    webClient.post()
+        .uri("/emd/tpp/{tppId}/whitelist", "tppId")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(recipientDto)
+        .exchange()
+        .expectStatus().isCreated()
+        .expectBody().isEmpty();
+  }
+
+  @Test
   void removeRecipientIdOnWhitelist_NoContent() {
     Mockito.when(tppService.removeRecipientIdOnWhitelist("tppId", "recipientId"))
         .thenReturn(Mono.empty());

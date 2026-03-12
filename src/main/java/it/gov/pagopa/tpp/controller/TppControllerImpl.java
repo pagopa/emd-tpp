@@ -151,7 +151,7 @@ public class TppControllerImpl implements TppController {
      */
     @Override
     public Mono<ResponseEntity<Void>> insertRecipientIdOnWhitelist(String tppId, RecipientIdOnWhitelistDTO recipientIdOnWhitelistDTO) {
-        return tppService.insertRecipientIdOnWhitelist(inputSanitization(tppId), inputSanitization(recipientIdOnWhitelistDTO.getRecipientId()))
+        return tppService.insertRecipientIdOnWhitelist(inputSanitization(tppId), inputSanitization(recipientIdOnWhitelistDTO.getRecipientId().trim()))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()));
     }
 

@@ -31,6 +31,7 @@ import java.util.List;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @SpringBootTest(classes = {
     TppServiceImpl.class,
@@ -733,6 +734,30 @@ class TppServiceTest {
         StepVerifier.create(tppService.updateRecipientIdOnWhitelist(mockTpp.getTppId(), newWhitelist))
             .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
             .verifyComplete();
+    }
+
+    @Test
+    void updateRecipientIdOnWhitelist_remove_duplicate() {
+            Tpp mockTpp = getMockTpp();
+            List<String> newWhitelist = List.of("recipient1", "recipient2", "recipient1");
+
+            Mockito.when(tppRepository.findByTppId(mockTpp.getTppId()))
+                .thenReturn(Mono.just(mockTpp));
+            Mockito.when(tppRepository.save(any()))
+                .thenReturn(Mono.just(mockTpp));
+            Mockito.when(tppMapService.addToMap(any()))
+                .thenReturn(Mono.just(Boolean.TRUE));
+
+            StepVerifier.create(tppService.updateRecipientIdOnWhitelist(mockTpp.getTppId(), newWhitelist))
+                .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
+                .verifyComplete();
+
+            // Verify that the saved whitelist does not contain duplicates
+            Mockito.verify(tppRepository).save(argThat(tpp -> {
+                List<String> savedWhitelist = tpp.getWhitelistRecipient();
+                return savedWhitelist.size() == 2 &&
+                    savedWhitelist.containsAll(List.of("recipient1", "recipient2"));
+            }));
     }
 
     @Test
