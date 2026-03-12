@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/pagopa/emd-tpp/compare/v1.4.0...v1.4.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* MMC-397 add trim to the insert of recipientId on whitelist and removed d… ([#94](https://github.com/pagopa/emd-tpp/issues/94)) ([4066abb](https://github.com/pagopa/emd-tpp/commit/4066abb49ec60391d1ad6c300574ec003a7f3501))
+
 ## [1.4.0](https://github.com/pagopa/emd-tpp/compare/v1.3.2...v1.4.0) (2026-03-04)
 
 
