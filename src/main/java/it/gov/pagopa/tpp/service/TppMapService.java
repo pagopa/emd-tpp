@@ -9,7 +9,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -44,29 +47,63 @@ public class TppMapService {
 
     /**
      * Populates the cache with active TPP entities from the database at application startup.
-     * <p>
-     * This method is automatically executed after bean construction. It retrieves all
-     * active TPPs from the database, processes them in batches of 100, and adds them
-     * to the cache with decrypted token sections.
-     */    
+     *
+     * <p>Uses {@code .block()} instead of {@code .subscribe()} to guarantee the pod does NOT
+     * become Ready (readinessProbe passes) before the cache is fully populated.
+     * Without this, the first requests after a Rolling Update hit an empty cache, forcing
+     * every concurrent caller to fall through to MongoDB + Azure Key Vault decrypt,
+     * causing a load spike on both systems.
+     * {@code @PostConstruct} is called on a Spring-managed thread (non-Reactor), so {@code .block()} is safe.</p>
+     */
     @PostConstruct
     private void populateMap() {
         tppRepository.findAll()
                 .filter(Tpp::getState)
                 .buffer(100)
                 .flatMap(this::addToMap)
-                .then(Mono.fromRunnable(() -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete")))
-                .subscribe();
+                .then()
+                .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete"))
+                .block(Duration.ofSeconds(60));
     }
 
     /**
      * Scheduled method that resets the cache daily at 4 AM.
+     *
+     * <p>Performs an <strong>atomic swap</strong>: builds a fresh cache in background from the
+     * current DB state, then replaces the live cache in a single operation.
+     * This ensures no request window exists where the cache is empty — the old entries
+     * remain queryable until the new snapshot is fully ready.</p>
+     *
+     * <p>Uses {@code .block()} because {@code @Scheduled} methods run on Spring's
+     * {@code TaskScheduler} thread (blocking-safe). Spring's graceful shutdown
+     * waits for the scheduled method to return before destroying the context.</p>
      */
     @Scheduled(cron = "0 0 4 * * ?")
     public void resetCache() {
-        tppCache.invalidateAll();
-        populateMap();
-        log.info("[TPP-MAP][CACHE-RESET] Cache reset at 4 AM");
+        log.info("[TPP-MAP][CACHE-RESET] Starting atomic cache reset at 4 AM");
+        Map<String, Tpp> snapshot = new ConcurrentHashMap<>();
+        try {
+            tppRepository.findAll()
+                    .filter(Tpp::getState)
+                    .buffer(100)
+                    .flatMap(batch -> Flux.fromIterable(batch)
+                            .flatMap(tpp -> tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
+                                    .doOnSuccess(ignored -> snapshot.put(tpp.getTppId(), tpp))
+                                    .onErrorResume(e -> {
+                                        log.error("[TPP-MAP][CACHE-RESET] Decrypt failed for TPP ID: {}", tpp.getTppId(), e);
+                                        return Mono.empty();
+                                    }))
+                            .then())
+                    .then()
+                    .block(Duration.ofSeconds(60));
+
+            // Atomic swap: old cache remains readable until this point
+            tppCache.invalidateAll();
+            tppCache.putAll(snapshot);
+            log.info("[TPP-MAP][CACHE-RESET] Cache atomically swapped. New size: {}", tppCache.estimatedSize());
+        } catch (Exception e) {
+            log.error("[TPP-MAP][CACHE-RESET] Reset failed — old cache retained: {}", e.getMessage(), e);
+        }
     }
 
     /**
