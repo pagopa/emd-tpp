@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +31,9 @@ class AzureKeyServiceTest {
     private KeyVaultKey mockKeyVaultKey;
     @Mock
     private CryptographyAsyncClient mockCryptographyClient;
+
+    @MockBean
+    private TppMapService tppMapService;
 
     @Autowired
     private AzureKeyService azureKeyService;
