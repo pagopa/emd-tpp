@@ -26,7 +26,7 @@ spring:
       host: ${REDIS_CONNECTION_HOSTNAME:localhost}
       port: ${REDIS_PORT:6380}
       ssl:
-        enabled: ${REDIS_SSL_ENABLED:false}
+        enabled: ${REDIS_SSL_ENABLED:true}
       password: ${REDIS_CONNECTION_PASSWORD:}
 
 management:
