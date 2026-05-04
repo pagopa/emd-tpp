@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -176,37 +175,52 @@ public class TppMapService {
     }
 
     private Mono<Void> doPopulate() {
-        return tppRepository.findAll()
-                .filter(Tpp::getState)
-                .buffer(100)
-                .flatMap(this::addBatchToMap)
-                .then()
-                .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete"));
+        return buildSnapshotFromDb()
+                .flatMap(snapshot -> {
+                    if (snapshot.isEmpty()) {
+                        log.info("[TPP-MAP][MAP-INITIALIZER] No active TPPs found in DB — cache stays empty.");
+                        return Mono.empty();
+                    }
+                    return tppMap.putAll(snapshot)
+                            .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete. Size: {}", snapshot.size()));
+                });
     }
 
     private Mono<Void> performReset() {
+        return buildSnapshotFromDb()
+                .flatMap(snapshot -> tppMap.delete()
+                        .then(snapshot.isEmpty()
+                                ? Mono.<Void>empty()
+                                : tppMap.putAll(snapshot))
+                        .doOnSuccess(v -> log.info("[TPP-MAP][CACHE-RESET] Cache reset complete. New size: {}", snapshot.size())));
+    }
+
+    /**
+     * Builds an in-memory snapshot of all active TPPs from MongoDB, decrypting each
+     * TokenSection via Azure Key Vault.
+     *
+     * <p>Filters out TPPs with {@code state == null} or {@code state == false} and skips
+     * any TPP whose decryption fails (logging the error). The returned snapshot can then
+     * be written atomically to Redis via {@code putAll()}.</p>
+     *
+     * <p>⚠ Note: {@link TokenSectionCryptService#keyDecrypt} mutates the {@code TokenSection}
+     * in-place; the {@code Tpp} instances stored in the snapshot therefore contain the
+     * <em>decrypted</em> token section, ready to be served from cache.</p>
+     */
+    private Mono<Map<String, Tpp>> buildSnapshotFromDb() {
         Map<String, Tpp> snapshot = new ConcurrentHashMap<>();
         return tppRepository.findAll()
-                .filter(Tpp::getState)
+                .filter(tpp -> Boolean.TRUE.equals(tpp.getState()))
                 .buffer(100)
                 .flatMap(batch -> Flux.fromIterable(batch)
                         .flatMap(tpp -> tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
                                 .doOnSuccess(ignored -> snapshot.put(tpp.getTppId(), tpp))
                                 .onErrorResume(e -> {
-                                    log.error("[TPP-MAP][CACHE-RESET] Decrypt failed for TPP ID: {}", tpp.getTppId(), e);
+                                    log.error("[TPP-MAP][SNAPSHOT] Decrypt failed for TPP ID: {}", tpp.getTppId(), e);
                                     return Mono.empty();
                                 }))
                         .then())
-                .then()
-                .then(tppMap.delete())
-                .then(Mono.defer(() -> tppMap.putAll(snapshot)))
-                .doOnSuccess(v -> log.info("[TPP-MAP][CACHE-RESET] Cache reset complete. New size: {}", snapshot.size()));
-    }
-
-    private Mono<Void> addBatchToMap(List<Tpp> tpps) {
-        return Flux.fromIterable(tpps)
-                .flatMap(this::addToMap)
-                .then();
+                .then(Mono.fromSupplier(() -> snapshot));
     }
 
 }
