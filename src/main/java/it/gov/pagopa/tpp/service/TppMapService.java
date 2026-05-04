@@ -49,17 +49,18 @@ public class TppMapService {
     /**
      * Populates the Redis cache with active TPP entities from the database at application startup.
      *
-     * <p>Acquires a distributed lock so that only one pod performs the initialization.
-     * If the cache already exists in Redis (populated by another pod that started first),
-     * the lock holder skips population entirely.</p>
+     * <p>Uses {@link Mono#usingWhen} to guarantee that the distributed lock is always released
+     * (success, error, or cancellation) and that {@code block()} returns only <em>after</em>
+     * the unlock command has completed on Redis — no fire-and-forget race.</p>
      *
      * <p>Uses {@code .block()} because {@code @PostConstruct} runs on a non-Reactor thread;
      * this guarantees the pod is NOT marked Ready until the cache is fully populated.</p>
      */
     @PostConstruct
     void populateMap() {
-        acquireLock()
-                .flatMap(locked -> {
+        Mono.usingWhen(
+                acquireLock(),
+                locked -> {
                     if (Boolean.FALSE.equals(locked)) {
                         log.info("[TPP-MAP][MAP-INITIALIZER] Another pod is initializing — skipping.");
                         return Mono.empty();
@@ -71,36 +72,35 @@ public class TppMapService {
                                     return Mono.empty();
                                 }
                                 return doPopulate();
-                            })
-                            .doFinally(signal -> releaseLock());
-                })
-                .block(Duration.ofSeconds(120));
+                            });
+                },
+                // asyncCleanup: called on complete, error AND cancel — properly chained, not fire-and-forget
+                locked -> Boolean.TRUE.equals(locked) ? doReleaseLock() : Mono.empty()
+        ).block(Duration.ofSeconds(120));
     }
 
     /**
      * Scheduled task that resets the Redis cache daily at 5 AM.
      *
-     * <p>Acquires a distributed lock so that only one pod performs the reset.
-     * Other pods that fail to acquire the lock log a skip message and return immediately.</p>
-     *
-     * <p>Uses {@code .block()} because {@code @Scheduled} runs on Spring's {@code TaskScheduler}
-     * thread (blocking-safe). Spring's graceful shutdown waits for this method to return before
-     * destroying the context, preventing a half-reset state in shared Redis.</p>
+     * <p>Uses {@link Mono#usingWhen} to guarantee that the distributed lock is always released
+     * even if {@code performReset()} throws, and that {@code block()} returns only after the
+     * unlock is confirmed by Redis.</p>
      */
     @Scheduled(cron = "0 0 5 * * ?")
     public void resetCache() {
         log.info("[TPP-MAP][CACHE-RESET] Starting Redis cache reset at 5 AM");
         try {
-            acquireLock()
-                    .flatMap(locked -> {
+            Mono.usingWhen(
+                    acquireLock(),
+                    locked -> {
                         if (Boolean.FALSE.equals(locked)) {
                             log.info("[TPP-MAP][CACHE-RESET] Another pod is resetting — skipping.");
                             return Mono.empty();
                         }
-                        return performReset()
-                                .doFinally(signal -> releaseLock());
-                    })
-                    .block(Duration.ofSeconds(120));
+                        return performReset();
+                    },
+                    locked -> Boolean.TRUE.equals(locked) ? doReleaseLock() : Mono.empty()
+            ).block(Duration.ofSeconds(120));
         } catch (Exception e) {
             log.error("[TPP-MAP][CACHE-RESET] Reset failed: {}", e.getMessage(), e);
         }
@@ -167,11 +167,24 @@ public class TppMapService {
         return redissonClient.getLock(LOCK_KEY).tryLock(0, -1, TimeUnit.SECONDS);
     }
 
-    private void releaseLock() {
-        redissonClient.getLock(LOCK_KEY).unlock()
-                .doOnSuccess(v -> log.info("[TPP-MAP] Lock released."))
+    /**
+     * Releases the distributed lock via {@code forceUnlock()}.
+     *
+     * <p>{@code forceUnlock()} removes the lock key from Redis without checking thread
+     * ownership — necessary because in reactive pipelines the thread that calls unlock
+     * may differ from the one that acquired the lock (Netty event-loop scheduling).
+     * It is safe here because {@code doReleaseLock()} is only ever invoked by the pod
+     * that successfully acquired the lock (i.e., received {@code locked == true}).</p>
+     *
+     * <p>Returns {@code Mono<Void>} so it can be properly chained inside
+     * {@link Mono#usingWhen} — the caller blocks until the Redis DEL has actually
+     * completed, with no fire-and-forget race.</p>
+     */
+    private Mono<Void> doReleaseLock() {
+        return redissonClient.getLock(LOCK_KEY).forceUnlock()
+                .doOnSuccess(released -> log.info("[TPP-MAP] Lock released: {}", released))
                 .doOnError(e -> log.error("[TPP-MAP] Failed to release lock: {}", e.getMessage()))
-                .subscribe();
+                .then();
     }
 
     private Mono<Void> doPopulate() {

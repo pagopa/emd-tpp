@@ -60,7 +60,7 @@ class TppMapServiceTest {
         // Lock setup (same pattern as BloomFilterInitializerTest in emd-citizen)
         when(redissonClient.getLock(LOCK_KEY)).thenReturn(lock);
         when(lock.tryLock(0, -1, TimeUnit.SECONDS)).thenReturn(Mono.just(true));
-        when(lock.unlock()).thenReturn(Mono.empty());
+        when(lock.forceUnlock()).thenReturn(Mono.just(true));
 
         // Map setup — isExists() defaults to false (fresh cache) for populateMap tests
         when(tppMap.isExists()).thenReturn(Mono.just(false));
