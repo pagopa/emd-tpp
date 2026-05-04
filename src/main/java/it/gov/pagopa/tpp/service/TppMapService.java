@@ -57,7 +57,7 @@ public class TppMapService {
      * this guarantees the pod is NOT marked Ready until the cache is fully populated.</p>
      */
     @PostConstruct
-    private void populateMap() {
+    void populateMap() {
         acquireLock()
                 .flatMap(locked -> {
                     if (Boolean.FALSE.equals(locked)) {
