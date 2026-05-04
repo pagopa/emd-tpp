@@ -8,7 +8,10 @@ import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.mockito.Mock;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.RedissonReactiveClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -34,6 +37,12 @@ class AzureKeyServiceTest {
 
     @MockBean
     private TppMapService tppMapService;
+
+    @MockBean
+    private RedissonClient redissonClient;
+
+    @MockBean(answer = Answers.RETURNS_MOCKS)
+    private RedissonReactiveClient redissonReactiveClient;
 
     @Autowired
     private AzureKeyService azureKeyService;

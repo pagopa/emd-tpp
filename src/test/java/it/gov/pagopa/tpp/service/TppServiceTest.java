@@ -544,6 +544,8 @@ class TppServiceTest {
 
         Mockito.when(tppRepository.delete(mockTpp)).thenReturn(Mono.empty());
 
+        Mockito.when(tppMapService.removeFromMap(tppDto.getTppId())).thenReturn(Mono.empty());
+
         StepVerifier.create(tppService.deleteTpp(tppDto.getTppId()))
             .expectNextCount(1)
             .verifyComplete();
