@@ -398,7 +398,7 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                     ExceptionMessage.TPP_NOT_FOUND)))
                 .flatMap(tpp -> tppRepository.delete(tpp)
-                    .then(Mono.fromRunnable(() -> tppMapService.removeFromMap(tppId)))
+                    .then(tppMapService.removeFromMap(tppId))
                     .thenReturn(mapperToDTO.map(tpp))
                 )
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}",tppId))

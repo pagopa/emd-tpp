@@ -155,20 +155,6 @@
       "sha256": "Va6vxJe1qI7tPGyIJlwte493_AXV2ljaSFekNXKsHa4="
     },
     {
-      "id": "io.netty:netty-resolver-dns:jar:4.1.112.Final",
-      "artifactId": "netty-resolver-dns",
-      "groupId": "io.netty",
-      "version": "4.1.112.Final",
-      "sha256": "rZGN8CC6bhCu7MC0cTN1TQwmFqpE1BS8uHbWG9cE5W0="
-    },
-    {
-      "id": "io.netty:netty-codec-dns:jar:4.1.112.Final",
-      "artifactId": "netty-codec-dns",
-      "groupId": "io.netty",
-      "version": "4.1.112.Final",
-      "sha256": "iTnlmJDborcvcggRwVA0F4RJ8s4P89r3lC8PtIjX7ms="
-    },
-    {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.112.Final",
       "artifactId": "netty-resolver-dns-native-macos",
       "groupId": "io.netty",
@@ -953,20 +939,6 @@
       "sha256": "JuP4pehZ_WLPPBPcbXXk4Yh58ACl0K1_WPhnlnXSPa4="
     },
     {
-      "id": "io.netty:netty-resolver:jar:4.1.112.Final",
-      "artifactId": "netty-resolver",
-      "groupId": "io.netty",
-      "version": "4.1.112.Final",
-      "sha256": "a0rJ87Z_Vi8HcNV8OJJ5_5xwjrQB4aNjX1Ipfw-Jftw="
-    },
-    {
-      "id": "io.netty:netty-transport:jar:4.1.112.Final",
-      "artifactId": "netty-transport",
-      "groupId": "io.netty",
-      "version": "4.1.112.Final",
-      "sha256": "044xYk0lynkO5BPVKcFSFwIX6-283PYRZPpikfOlbJI="
-    },
-    {
       "id": "io.netty:netty-handler-proxy:jar:4.1.112.Final",
       "artifactId": "netty-handler-proxy",
       "groupId": "io.netty",
@@ -1100,25 +1072,137 @@
       "sha256": "sDln8yxl3l7TObl3KRcOAomyL_pXKef0X2i_a0MftWc="
     },
     {
-      "id": "com.github.ben-manes.caffeine:caffeine:jar:3.1.8",
-      "artifactId": "caffeine",
-      "groupId": "com.github.ben-manes.caffeine",
-      "version": "3.1.8",
-      "sha256": "fdFfnfG-I4_6o2fOb1VnN6iAMd5ClNrRju9XxHTd8dM="
+      "id": "org.redisson:redisson-spring-boot-starter:jar:3.43.0",
+      "artifactId": "redisson-spring-boot-starter",
+      "groupId": "org.redisson",
+      "version": "3.43.0",
+      "sha256": "7cn_OV_Be7I1yIzhqKSPd7_OGd3qQTg6FqGgjUh8qnc="
     },
     {
-      "id": "org.checkerframework:checker-qual:jar:3.37.0",
-      "artifactId": "checker-qual",
-      "groupId": "org.checkerframework",
-      "version": "3.37.0",
-      "sha256": "5M4TdswnNeHd4iC2KtCRP1EpdwTarRVaM_OGvF2w2fc="
+      "id": "org.springframework.boot:spring-boot-starter-data-redis:jar:3.3.3",
+      "artifactId": "spring-boot-starter-data-redis",
+      "groupId": "org.springframework.boot",
+      "version": "3.3.3",
+      "sha256": "BGx2jUkMcU5vjpjaFn67YUqPdPTGKxH1xPW_auQ613w="
     },
     {
-      "id": "com.google.errorprone:error_prone_annotations:jar:2.21.1",
-      "artifactId": "error_prone_annotations",
-      "groupId": "com.google.errorprone",
-      "version": "2.21.1",
-      "sha256": "0fPGaqkaxSVJ4Arjsgi6S5r31y1o8jBkNVO-s45hGKw="
+      "id": "org.springframework.data:spring-data-redis:jar:3.3.3",
+      "artifactId": "spring-data-redis",
+      "groupId": "org.springframework.data",
+      "version": "3.3.3",
+      "sha256": "w30OTbJ3U2vHKXez8fy1I6yXV6fcLo-p-YIGCRRQhAM="
+    },
+    {
+      "id": "org.springframework.data:spring-data-keyvalue:jar:3.3.3",
+      "artifactId": "spring-data-keyvalue",
+      "groupId": "org.springframework.data",
+      "version": "3.3.3",
+      "sha256": "paHx-yOktfDnXLsS0smq9PNhb4vLsaKQqGUxOYR2-WA="
+    },
+    {
+      "id": "org.springframework:spring-oxm:jar:6.1.12",
+      "artifactId": "spring-oxm",
+      "groupId": "org.springframework",
+      "version": "6.1.12",
+      "sha256": "UbC9tVwoepfc59bQrfiWXWbUnD1C64PjZZsu8SpLUAU="
+    },
+    {
+      "id": "org.springframework:spring-context-support:jar:6.1.12",
+      "artifactId": "spring-context-support",
+      "groupId": "org.springframework",
+      "version": "6.1.12",
+      "sha256": "lgMDa8gHQRVzSvoJtfjfNQLufeaLt1VSLstCNvoAg7U="
+    },
+    {
+      "id": "org.redisson:redisson:jar:3.43.0",
+      "artifactId": "redisson",
+      "groupId": "org.redisson",
+      "version": "3.43.0",
+      "sha256": "yGr6v2NGFTyn78PNbFxEuLoO2kXwinv6Q27BlcvX8ME="
+    },
+    {
+      "id": "io.netty:netty-transport:jar:4.1.112.Final",
+      "artifactId": "netty-transport",
+      "groupId": "io.netty",
+      "version": "4.1.112.Final",
+      "sha256": "044xYk0lynkO5BPVKcFSFwIX6-283PYRZPpikfOlbJI="
+    },
+    {
+      "id": "io.netty:netty-resolver:jar:4.1.112.Final",
+      "artifactId": "netty-resolver",
+      "groupId": "io.netty",
+      "version": "4.1.112.Final",
+      "sha256": "a0rJ87Z_Vi8HcNV8OJJ5_5xwjrQB4aNjX1Ipfw-Jftw="
+    },
+    {
+      "id": "io.netty:netty-resolver-dns:jar:4.1.112.Final",
+      "artifactId": "netty-resolver-dns",
+      "groupId": "io.netty",
+      "version": "4.1.112.Final",
+      "sha256": "rZGN8CC6bhCu7MC0cTN1TQwmFqpE1BS8uHbWG9cE5W0="
+    },
+    {
+      "id": "io.netty:netty-codec-dns:jar:4.1.112.Final",
+      "artifactId": "netty-codec-dns",
+      "groupId": "io.netty",
+      "version": "4.1.112.Final",
+      "sha256": "iTnlmJDborcvcggRwVA0F4RJ8s4P89r3lC8PtIjX7ms="
+    },
+    {
+      "id": "javax.cache:cache-api:jar:1.1.1",
+      "artifactId": "cache-api",
+      "groupId": "javax.cache",
+      "version": "1.1.1",
+      "sha256": "nzTgB-36gqeyouG5aUd9z1CZzn9Pkm-1TOfifEoM1Us="
+    },
+    {
+      "id": "io.reactivex.rxjava3:rxjava:jar:3.1.9",
+      "artifactId": "rxjava",
+      "groupId": "io.reactivex.rxjava3",
+      "version": "3.1.9",
+      "sha256": "iMuhbH8P54qMybjEZGnIWWzxZgN84iwq38REDNYxLiA="
+    },
+    {
+      "id": "com.esotericsoftware:kryo:jar:5.6.2",
+      "artifactId": "kryo",
+      "groupId": "com.esotericsoftware",
+      "version": "5.6.2",
+      "sha256": "TosdL0l3GHr4pRqVcylyLcHNxWp8lPu1p5HoKJdinP8="
+    },
+    {
+      "id": "com.esotericsoftware:reflectasm:jar:1.11.9",
+      "artifactId": "reflectasm",
+      "groupId": "com.esotericsoftware",
+      "version": "1.11.9",
+      "sha256": "cStE2nmlt_R6KMv8s9js_IcvrjScSKpNPjil1plWr84="
+    },
+    {
+      "id": "com.esotericsoftware:minlog:jar:1.3.1",
+      "artifactId": "minlog",
+      "groupId": "com.esotericsoftware",
+      "version": "1.3.1",
+      "sha256": "XU1jLPvr_gp2RFAcwwNXC2kUBhgb7mXpkWuSHHZ9fHI="
+    },
+    {
+      "id": "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.17.2",
+      "artifactId": "jackson-dataformat-yaml",
+      "groupId": "com.fasterxml.jackson.dataformat",
+      "version": "2.17.2",
+      "sha256": "lBvNixOBuzsNcm-rQWJPqOzg7nts8oYK2V6BV85nM3Y="
+    },
+    {
+      "id": "org.jodd:jodd-util:jar:6.3.0",
+      "artifactId": "jodd-util",
+      "groupId": "org.jodd",
+      "version": "6.3.0",
+      "sha256": "5cZ2cViXEkEB90kA3R-Y67ytnaOrLf-6xudxJhIJRCc="
+    },
+    {
+      "id": "org.redisson:redisson-spring-data-34:jar:3.43.0",
+      "artifactId": "redisson-spring-data-34",
+      "groupId": "org.redisson",
+      "version": "3.43.0",
+      "sha256": "95IR7z7RNXHF9EbvPoHvU4pvK7h8cVzrTUXtxNL8q08="
     },
     {
       "id": "org.testcontainers:junit-jupiter:jar:1.21.3",
