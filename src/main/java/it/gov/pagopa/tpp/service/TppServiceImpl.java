@@ -95,7 +95,7 @@ public class TppServiceImpl implements TppService {
                     log.info("[TPP-SERVICE][GET-ENABLED] TPPs not in cache: {}",missingTppIds);
                     return tppRepository.findEnabledForRecipient(missingTppIds, recipientId)
                             .flatMap(tpp -> tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
-                                    .flatMap(decryptionResult -> tppMapService.addDecryptedToMap(tpp).map(cachingResult -> mapperToDTO.map(tpp)))
+                                    .flatMap(decryptionResult -> tppMapService.addToMap(tpp).map(cachingResult -> mapperToDTO.map(tpp)))
                             )
                             .collectList()
                             .flatMap(tppDTOList -> {
