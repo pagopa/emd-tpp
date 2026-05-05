@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLockReactive;
 import org.redisson.api.RMapReactive;
 import org.redisson.api.RedissonReactiveClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -40,6 +41,7 @@ public class TppMapService {
     private final RMapReactive<String, Tpp> tppMap;
     private final Duration pollInterval;
 
+    @Autowired
     public TppMapService(TppRepository tppRepository,
                          TokenSectionCryptService tokenSectionCryptService,
                          RedissonReactiveClient redissonClient,
