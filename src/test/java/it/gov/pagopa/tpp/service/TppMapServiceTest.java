@@ -20,11 +20,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -69,13 +73,15 @@ class TppMapServiceTest {
         when(tppMap.remove(anyString())).thenReturn(Mono.empty());
         when(tppMap.delete()).thenReturn(Mono.just(true));
         when(tppMap.putAll(any())).thenReturn(Mono.empty());
+        when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>()));
+        when(tppMap.fastRemove(any())).thenReturn(Mono.just(0L));
 
         // Repository and crypto
         when(tppRepository.findAll()).thenReturn(Flux.just(tpp));
         when(tokenSectionCryptService.keyDecrypt(any(TokenSection.class), anyString()))
                 .thenReturn(Mono.just(true));
 
-        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap);
+        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofMillis(100));
         tppMapService.resetCache();
     }
 
@@ -108,6 +114,61 @@ class TppMapServiceTest {
 
         // tppMap.put() must NOT have been called during this invocation
         verify(tppMap, never()).put(eq(tpp.getTppId()), eq(tpp));
+    }
+
+    // -------------------------------------------------------------------------
+    // addDecryptedToMap
+    // -------------------------------------------------------------------------
+
+    /**
+     * addDecryptedToMap must store the tpp directly (no keyDecrypt call) and return true.
+     */
+    @Test
+    void addDecryptedToMap_ok_returnsTrueAndStoresInCache() {
+        clearInvocations(tppMap, tokenSectionCryptService);
+
+        StepVerifier.create(tppMapService.addDecryptedToMap(tpp))
+                .expectNext(true)
+                .verifyComplete();
+
+        verify(tppMap).put(tpp.getTppId(), tpp);
+        // keyDecrypt must NOT be called — tpp is already decrypted
+        verify(tokenSectionCryptService, never()).keyDecrypt(any(), any());
+    }
+
+    /**
+     * When the Redis put fails, addDecryptedToMap must swallow the error and return false.
+     */
+    @Test
+    void addDecryptedToMap_cacheFails_returnsFalse() {
+        when(tppMap.put(anyString(), any(Tpp.class)))
+                .thenReturn(Mono.error(new RuntimeException("Redis unavailable")));
+
+        StepVerifier.create(tppMapService.addDecryptedToMap(tpp))
+                .expectNext(false)
+                .verifyComplete();
+    }
+
+    // -------------------------------------------------------------------------
+    // resetCache — stale key eviction
+    // -------------------------------------------------------------------------
+
+    /**
+     * When Redis contains a key that is no longer active in MongoDB,
+     * performReset must call fastRemove to evict it.
+     */
+    @Test
+    void resetCache_staleKeyInRedis_isEvicted() {
+        // Redis currently has "staleKey", but DB only returns the active tpp (no "staleKey")
+        when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>(Set.of("staleKey"))));
+        clearInvocations(tppMap);
+
+        tppMapService.resetCache();
+
+        // The stale key must have been evicted via fastRemove
+        verify(tppMap).fastRemove(any());
+        // The active tpp must still be upserted
+        verify(tppMap).putAll(argThat(map -> map.containsKey(tpp.getTppId())));
     }
 
     // -------------------------------------------------------------------------
@@ -152,33 +213,32 @@ class TppMapServiceTest {
     // -------------------------------------------------------------------------
 
     /**
-     * When MongoDB returns no active TPPs (all filtered out), the cache must be
-     * deleted but putAll must NOT be called (nothing to write).
+     * When MongoDB returns no active TPPs (all filtered out), putAll must NOT be called
+     * (nothing to write). The cache is not deleted — stale entries are removed individually.
      */
     @Test
-    void resetCache_noActiveTpps_deletesMapWithoutPutAll() {
+    void resetCache_noActiveTpps_doesNotPutAll() {
         // Only inactive TPP in DB
         when(tppRepository.findAll()).thenReturn(Flux.just(getMockTppDisabled()));
         clearInvocations(tppMap);
 
         tppMapService.resetCache();
 
-        verify(tppMap).delete();
+        verify(tppMap, never()).delete();
         verify(tppMap, never()).putAll(any());
     }
 
     /**
-     * When MongoDB is completely empty, the cache must be deleted but putAll
-     * must NOT be called.
+     * When MongoDB is completely empty, putAll must NOT be called.
      */
     @Test
-    void resetCache_emptyDb_deletesMapWithoutPutAll() {
+    void resetCache_emptyDb_doesNotPutAll() {
         when(tppRepository.findAll()).thenReturn(Flux.empty());
         clearInvocations(tppMap);
 
         tppMapService.resetCache();
 
-        verify(tppMap).delete();
+        verify(tppMap, never()).delete();
         verify(tppMap, never()).putAll(any());
     }
 
@@ -210,16 +270,18 @@ class TppMapServiceTest {
 
     /**
      * When the distributed lock is already held by another pod during startup,
-     * populateMap must skip entirely (no isExists check, no DB read).
+     * populateMap must wait for the cache to become ready (polling isExists) without
+     * reading from MongoDB or writing to the cache itself.
      */
     @Test
-    void populateMap_lockNotAcquired_skips() {
+    void populateMap_lockNotAcquired_waitsForCacheReady() {
         when(lock.tryLock(0, -1, TimeUnit.SECONDS)).thenReturn(Mono.just(false));
+        // Cache becomes ready on first poll
+        when(tppMap.isExists()).thenReturn(Mono.just(true));
         clearInvocations(tppMap, tppRepository);
 
         tppMapService.populateMap();
 
-        verify(tppMap, never()).isExists();
         verify(tppRepository, never()).findAll();
         verify(tppMap, never()).putAll(any());
     }

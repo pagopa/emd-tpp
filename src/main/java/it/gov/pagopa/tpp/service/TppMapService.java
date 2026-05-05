@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLockReactive;
 import org.redisson.api.RMapReactive;
 import org.redisson.api.RedissonReactiveClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -13,9 +14,12 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Service component for managing TPP entities in a distributed Redis cache via Redisson.
@@ -35,15 +39,27 @@ public class TppMapService {
     private final TokenSectionCryptService tokenSectionCryptService;
     private final RedissonReactiveClient redissonClient;
     private final RMapReactive<String, Tpp> tppMap;
+    private final Duration pollInterval;
 
+    @Autowired
     public TppMapService(TppRepository tppRepository,
                          TokenSectionCryptService tokenSectionCryptService,
                          RedissonReactiveClient redissonClient,
                          RMapReactive<String, Tpp> tppMap) {
+        this(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofSeconds(5));
+    }
+
+    /** Package-private constructor — used by unit tests to inject a short poll interval. */
+    TppMapService(TppRepository tppRepository,
+                  TokenSectionCryptService tokenSectionCryptService,
+                  RedissonReactiveClient redissonClient,
+                  RMapReactive<String, Tpp> tppMap,
+                  Duration pollInterval) {
         this.tppRepository = tppRepository;
         this.tokenSectionCryptService = tokenSectionCryptService;
         this.redissonClient = redissonClient;
         this.tppMap = tppMap;
+        this.pollInterval = pollInterval;
     }
 
     /**
@@ -62,8 +78,8 @@ public class TppMapService {
                 acquireLock(),
                 locked -> {
                     if (Boolean.FALSE.equals(locked)) {
-                        log.info("[TPP-MAP][MAP-INITIALIZER] Another pod is initializing — skipping.");
-                        return Mono.empty();
+                        log.info("[TPP-MAP][MAP-INITIALIZER] Another pod is initializing — waiting for cache to be ready...");
+                        return waitForCachePopulated();
                     }
                     return tppMap.isExists()
                             .flatMap(exists -> {
@@ -109,7 +125,7 @@ public class TppMapService {
     /**
      * Adds or updates a single TPP entity in the Redis cache with decrypted token section.
      *
-     * @param tpp the TPP entity to cache
+     * @param tpp the TPP entity to cache (tokenSection must be ENCRYPTED — this method decrypts it)
      * @return a Mono&lt;Boolean&gt; emitting {@code true} on success, {@code false} on decryption failure
      */
     public Mono<Boolean> addToMap(Tpp tpp) {
@@ -122,6 +138,25 @@ public class TppMapService {
                 )
                 .onErrorResume(e -> {
                     log.error("[TPP-MAP][ADD] Decryption failed for TPP ID: {}", tppId, e);
+                    return Mono.just(false);
+                });
+    }
+
+    /**
+     * Stores an already-decrypted TPP entity directly into the Redis cache, skipping the
+     * decryption step. Use this when the caller has already decrypted the {@code TokenSection}
+     * (e.g., after an explicit {@code keyDecrypt} call) to avoid double-decryption.
+     *
+     * @param tpp the TPP entity to cache (tokenSection must already be DECRYPTED)
+     * @return a Mono&lt;Boolean&gt; emitting {@code true} on success, {@code false} on cache error
+     */
+    public Mono<Boolean> addDecryptedToMap(Tpp tpp) {
+        String tppId = tpp.getTppId();
+        return tppMap.put(tppId, tpp)
+                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decrypted TPP ID in cache: {}", tppId))
+                .thenReturn(true)
+                .onErrorResume(e -> {
+                    log.error("[TPP-MAP][ADD] Failed to cache already-decrypted TPP ID: {}", tppId, e);
                     return Mono.just(false);
                 });
     }
@@ -151,6 +186,24 @@ public class TppMapService {
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Polls Redis every 5 seconds until the TPP cache key exists, meaning another pod has
+     * finished populating it. Called by {@link #populateMap()} when the distributed lock
+     * could not be acquired (another pod is initializing).
+     *
+     * <p>The outer {@code block(Duration.ofSeconds(120))} in {@link #populateMap()} acts
+     * as the overall timeout, so this pod will NOT be marked Ready until the cache is
+     * available — preventing it from serving stale/empty data during rolling updates.</p>
+     */
+    private Mono<Void> waitForCachePopulated() {
+        return Flux.interval(pollInterval)
+                .flatMap(tick -> tppMap.isExists())
+                .filter(Boolean.TRUE::equals)
+                .next()
+                .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Cache is now ready — proceeding."))
+                .then();
+    }
 
     /**
      * Attempts to acquire the distributed lock with watchdog-based TTL management.
@@ -200,12 +253,30 @@ public class TppMapService {
     }
 
     private Mono<Void> performReset() {
-        return buildSnapshotFromDb()
-                .flatMap(snapshot -> tppMap.delete()
-                        .then(snapshot.isEmpty()
-                                ? Mono.<Void>empty()
-                                : tppMap.putAll(snapshot))
-                        .doOnSuccess(v -> log.info("[TPP-MAP][CACHE-RESET] Cache reset complete. New size: {}", snapshot.size())));
+        // Step 1: read the current keys BEFORE making any changes (source of truth for eviction)
+        return tppMap.readAllKeySet()
+                .zipWith(buildSnapshotFromDb())
+                .flatMap(tuple -> {
+                    Set<String> currentKeys = tuple.getT1();
+                    Map<String, Tpp> newSnapshot = tuple.getT2();
+
+                    // Step 2: upsert active TPPs — overwrites existing entries, NO empty-cache window
+                    Mono<Void> upsert = newSnapshot.isEmpty()
+                            ? Mono.empty()
+                            : tppMap.putAll(newSnapshot);
+
+                    // Step 3: evict entries that are no longer active (in Redis but missing from new snapshot)
+                    List<String> staleKeys = currentKeys.stream()
+                            .filter(k -> !newSnapshot.containsKey(k))
+                            .collect(Collectors.toList());
+                    Mono<Void> evict = staleKeys.isEmpty()
+                            ? Mono.empty()
+                            : tppMap.fastRemove(staleKeys.toArray(new String[0])).then();
+
+                    return upsert.then(evict)
+                            .doOnSuccess(v -> log.info("[TPP-MAP][CACHE-RESET] Cache reset complete. New size: {}, evicted: {}",
+                                    newSnapshot.size(), staleKeys.size()));
+                });
     }
 
     /**
