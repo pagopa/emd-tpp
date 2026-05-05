@@ -22,6 +22,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
@@ -113,6 +114,61 @@ class TppMapServiceTest {
 
         // tppMap.put() must NOT have been called during this invocation
         verify(tppMap, never()).put(eq(tpp.getTppId()), eq(tpp));
+    }
+
+    // -------------------------------------------------------------------------
+    // addDecryptedToMap
+    // -------------------------------------------------------------------------
+
+    /**
+     * addDecryptedToMap must store the tpp directly (no keyDecrypt call) and return true.
+     */
+    @Test
+    void addDecryptedToMap_ok_returnsTrueAndStoresInCache() {
+        clearInvocations(tppMap, tokenSectionCryptService);
+
+        StepVerifier.create(tppMapService.addDecryptedToMap(tpp))
+                .expectNext(true)
+                .verifyComplete();
+
+        verify(tppMap).put(tpp.getTppId(), tpp);
+        // keyDecrypt must NOT be called — tpp is already decrypted
+        verify(tokenSectionCryptService, never()).keyDecrypt(any(), any());
+    }
+
+    /**
+     * When the Redis put fails, addDecryptedToMap must swallow the error and return false.
+     */
+    @Test
+    void addDecryptedToMap_cacheFails_returnsFalse() {
+        when(tppMap.put(anyString(), any(Tpp.class)))
+                .thenReturn(Mono.error(new RuntimeException("Redis unavailable")));
+
+        StepVerifier.create(tppMapService.addDecryptedToMap(tpp))
+                .expectNext(false)
+                .verifyComplete();
+    }
+
+    // -------------------------------------------------------------------------
+    // resetCache — stale key eviction
+    // -------------------------------------------------------------------------
+
+    /**
+     * When Redis contains a key that is no longer active in MongoDB,
+     * performReset must call fastRemove to evict it.
+     */
+    @Test
+    void resetCache_staleKeyInRedis_isEvicted() {
+        // Redis currently has "staleKey", but DB only returns the active tpp (no "staleKey")
+        when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>(Set.of("staleKey"))));
+        clearInvocations(tppMap);
+
+        tppMapService.resetCache();
+
+        // The stale key must have been evicted via fastRemove
+        verify(tppMap).fastRemove(any());
+        // The active tpp must still be upserted
+        verify(tppMap).putAll(argThat(map -> map.containsKey(tpp.getTppId())));
     }
 
     // -------------------------------------------------------------------------
