@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/pagopa/emd-tpp/compare/v1.4.1...v1.5.0) (2026-05-05)
+
+
+### Features
+
+* [MMC-538] configure redis/distributed cache for multi pod handling ([#97](https://github.com/pagopa/emd-tpp/issues/97)) ([7b3a703](https://github.com/pagopa/emd-tpp/commit/7b3a703d3eec3b327c920e8a5f5dfcde7d302d6b))
+
 ## [1.4.1](https://github.com/pagopa/emd-tpp/compare/v1.4.0...v1.4.1) (2026-03-12)
 
 
