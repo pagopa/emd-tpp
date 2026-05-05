@@ -38,15 +38,26 @@ public class TppMapService {
     private final TokenSectionCryptService tokenSectionCryptService;
     private final RedissonReactiveClient redissonClient;
     private final RMapReactive<String, Tpp> tppMap;
+    private final Duration pollInterval;
 
     public TppMapService(TppRepository tppRepository,
                          TokenSectionCryptService tokenSectionCryptService,
                          RedissonReactiveClient redissonClient,
                          RMapReactive<String, Tpp> tppMap) {
+        this(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofSeconds(5));
+    }
+
+    /** Package-private constructor — used by unit tests to inject a short poll interval. */
+    TppMapService(TppRepository tppRepository,
+                  TokenSectionCryptService tokenSectionCryptService,
+                  RedissonReactiveClient redissonClient,
+                  RMapReactive<String, Tpp> tppMap,
+                  Duration pollInterval) {
         this.tppRepository = tppRepository;
         this.tokenSectionCryptService = tokenSectionCryptService;
         this.redissonClient = redissonClient;
         this.tppMap = tppMap;
+        this.pollInterval = pollInterval;
     }
 
     /**
@@ -184,7 +195,7 @@ public class TppMapService {
      * available — preventing it from serving stale/empty data during rolling updates.</p>
      */
     private Mono<Void> waitForCachePopulated() {
-        return Flux.interval(Duration.ofSeconds(5))
+        return Flux.interval(pollInterval)
                 .flatMap(tick -> tppMap.isExists())
                 .filter(Boolean.TRUE::equals)
                 .next()

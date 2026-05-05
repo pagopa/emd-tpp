@@ -130,6 +130,7 @@ class TppServiceTest {
             .thenReturn(Flux.fromIterable(getMockTppList()));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addDecryptedToMap(any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.getFromMap(any())).thenReturn(Mono.empty());
 
         StepVerifier.create(tppService.filterEnabledList(getMockTppIdStringList(), MOCK_RECIPIENT))
@@ -187,6 +188,7 @@ class TppServiceTest {
 
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addToMap(any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addDecryptedToMap(any())).thenReturn(Mono.just(true));
 
         StepVerifier.create(tppService.filterEnabledList(requestedTppIds, MOCK_RECIPIENT))
             .expectNextMatches(response ->

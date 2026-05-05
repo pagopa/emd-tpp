@@ -20,11 +20,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -69,13 +72,15 @@ class TppMapServiceTest {
         when(tppMap.remove(anyString())).thenReturn(Mono.empty());
         when(tppMap.delete()).thenReturn(Mono.just(true));
         when(tppMap.putAll(any())).thenReturn(Mono.empty());
+        when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>()));
+        when(tppMap.fastRemove(any())).thenReturn(Mono.just(0L));
 
         // Repository and crypto
         when(tppRepository.findAll()).thenReturn(Flux.just(tpp));
         when(tokenSectionCryptService.keyDecrypt(any(TokenSection.class), anyString()))
                 .thenReturn(Mono.just(true));
 
-        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap);
+        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofMillis(100));
         tppMapService.resetCache();
     }
 
@@ -152,33 +157,32 @@ class TppMapServiceTest {
     // -------------------------------------------------------------------------
 
     /**
-     * When MongoDB returns no active TPPs (all filtered out), the cache must be
-     * deleted but putAll must NOT be called (nothing to write).
+     * When MongoDB returns no active TPPs (all filtered out), putAll must NOT be called
+     * (nothing to write). The cache is not deleted — stale entries are removed individually.
      */
     @Test
-    void resetCache_noActiveTpps_deletesMapWithoutPutAll() {
+    void resetCache_noActiveTpps_doesNotPutAll() {
         // Only inactive TPP in DB
         when(tppRepository.findAll()).thenReturn(Flux.just(getMockTppDisabled()));
         clearInvocations(tppMap);
 
         tppMapService.resetCache();
 
-        verify(tppMap).delete();
+        verify(tppMap, never()).delete();
         verify(tppMap, never()).putAll(any());
     }
 
     /**
-     * When MongoDB is completely empty, the cache must be deleted but putAll
-     * must NOT be called.
+     * When MongoDB is completely empty, putAll must NOT be called.
      */
     @Test
-    void resetCache_emptyDb_deletesMapWithoutPutAll() {
+    void resetCache_emptyDb_doesNotPutAll() {
         when(tppRepository.findAll()).thenReturn(Flux.empty());
         clearInvocations(tppMap);
 
         tppMapService.resetCache();
 
-        verify(tppMap).delete();
+        verify(tppMap, never()).delete();
         verify(tppMap, never()).putAll(any());
     }
 
@@ -210,16 +214,18 @@ class TppMapServiceTest {
 
     /**
      * When the distributed lock is already held by another pod during startup,
-     * populateMap must skip entirely (no isExists check, no DB read).
+     * populateMap must wait for the cache to become ready (polling isExists) without
+     * reading from MongoDB or writing to the cache itself.
      */
     @Test
-    void populateMap_lockNotAcquired_skips() {
+    void populateMap_lockNotAcquired_waitsForCacheReady() {
         when(lock.tryLock(0, -1, TimeUnit.SECONDS)).thenReturn(Mono.just(false));
+        // Cache becomes ready on first poll
+        when(tppMap.isExists()).thenReturn(Mono.just(true));
         clearInvocations(tppMap, tppRepository);
 
         tppMapService.populateMap();
 
-        verify(tppMap, never()).isExists();
         verify(tppRepository, never()).findAll();
         verify(tppMap, never()).putAll(any());
     }
