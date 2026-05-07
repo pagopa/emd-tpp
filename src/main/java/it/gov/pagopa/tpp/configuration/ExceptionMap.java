@@ -61,7 +61,7 @@ public class ExceptionMap {
 
         exceptions.put(TppConstants.ExceptionName.TPP_ALREADY_ONBOARDED, message ->
                 new ClientExceptionWithBody(
-                        HttpStatus.FORBIDDEN,
+                        HttpStatus.CONFLICT,
                         TppConstants.ExceptionCode.TPP_ALREADY_ONBOARDED,
                         message
                 )
