@@ -69,7 +69,7 @@ class TppControllerTest {
         Mockito.when(tppService.deleteTpp("tppId")).thenReturn(Mono.just(serviceResponse));
 
         webClient.delete()
-            .uri("/emd/tpp/test/delete/{tppId}", "tppId" )
+            .uri("/emd/tpp/{tppId}", "tppId" )
             .exchange()
             .expectStatus().isOk()
             .expectBody(TppDTOWithoutTokenSection.class)

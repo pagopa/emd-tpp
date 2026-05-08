@@ -127,7 +127,7 @@ public interface TppController {
      * @return a {@link Mono} containing a {@link ResponseEntity} with
      *          the deleted {@link TppDTO} if successful
      */
-    @DeleteMapping("/test/delete/{tppId}")
+    @DeleteMapping("/{tppId}")
     Mono<ResponseEntity<TppDTO>> deleteTpp(@PathVariable String tppId);
 
     /**
