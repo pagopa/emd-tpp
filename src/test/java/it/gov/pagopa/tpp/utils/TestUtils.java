@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.utils;
 
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppIdList;
 import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
@@ -69,5 +70,13 @@ public class TestUtils {
 
     public static TppUpdateIsPaymentEnabled getMockIsPaymentEnabled() {
         return TppUpdateIsPaymentEnabledFaker.mockInstance(true);
+    }
+
+    public static TppDTOPatch getMockTppDtoPatch() {
+        return TppDTOPatchFaker.mockInstance();
+    }
+
+    public static TppDTOPatch getMockTppDtoPatchPartial() {
+        return TppDTOPatchFaker.mockPartialInstance();
     }
 }

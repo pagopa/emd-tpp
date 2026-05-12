@@ -72,6 +72,18 @@ public interface TppController {
     Mono<ResponseEntity<TppDTOWithoutTokenSection>> updateTppDetails(@Valid @RequestBody TppDTOWithoutTokenSection tppDTOWithoutTokenSection);
 
     /**
+     * Partially updates tpp excluding token section information.
+     * Only non-null fields present in the request body will be updated.
+     *
+     * @param tppId       of the TPP to partially update
+     * @param tppDTOPatch partial tpp information excluding token section
+     * @return a {@link Mono} containing a {@link ResponseEntity} with
+     *          the updated {@link TppDTOWithoutTokenSection} if successful
+     */
+    @PatchMapping("/{tppId}")
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> patchTppDetails(@Valid @PathVariable String tppId, @RequestBody TppDTOPatch tppDTOPatch);
+
+    /**
      * Update TokenSection of a specific TPP
      *
      * @param tppId       of the TPP to update
