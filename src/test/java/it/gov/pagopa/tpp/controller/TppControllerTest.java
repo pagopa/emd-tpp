@@ -42,7 +42,23 @@ class TppControllerTest {
 
     @Test
     void updateTppDetails_Ok() {
-        // ...existing code...
+        TppDTOWithoutTokenSection tppDto = getMockTppDtoWithoutTokenSection();
+
+        Mockito.when(tppService.updateTppDetails(tppDto))
+            .thenReturn(Mono.just(tppDto));
+
+        webClient.put()
+            .uri("/emd/tpp/update")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(tppDto)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(TppDTOWithoutTokenSection.class)
+            .consumeWith(response -> {
+                TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
+                Assertions.assertNotNull(resultResponse);
+                Assertions.assertEquals(tppDto, resultResponse);
+            });
     }
 
     @Test
