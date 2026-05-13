@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.mapper.TokenSectionObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
@@ -185,6 +186,37 @@ public class TppServiceImpl implements TppService {
                             .map(tppWithoutTokenSectionMapperToDTO::map)
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Updated existing TPP with tppId: {}" ,savedTpp.getTppId()))
                             .doOnError(error -> log.error("[TPP-SERVICE][SAVE] Error saving TPP with tppId {}: {}" , existingTpp.getTppId(), error.getMessage()));
+                })
+                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
+                        ExceptionMessage.TPP_NOT_ONBOARDED)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<TppDTOWithoutTokenSection> patchTppDetails(String tppId, TppDTOPatch tppDTOPatch) {
+        log.info("[TPP-SERVICE][PATCH] Received request to partially update TPP with tppId: {}", tppId);
+
+        return tppRepository.findByTppId(tppId)
+                .flatMap(existingTpp -> {
+                    log.info("[TPP-SERVICE][PATCH] TPP with tppId {} found. Applying partial update...", existingTpp.getTppId());
+                    existingTpp.setLastUpdateDate(LocalDateTime.now());
+                    if (tppDTOPatch.getMessageUrl() != null)         existingTpp.setMessageUrl(tppDTOPatch.getMessageUrl());
+                    if (tppDTOPatch.getAuthenticationUrl() != null)  existingTpp.setAuthenticationUrl(tppDTOPatch.getAuthenticationUrl());
+                    if (tppDTOPatch.getContact() != null)            existingTpp.setContact(tppDTOPatch.getContact());
+                    if (tppDTOPatch.getBusinessName() != null)       existingTpp.setBusinessName(tppDTOPatch.getBusinessName());
+                    if (tppDTOPatch.getLegalAddress() != null)       existingTpp.setLegalAddress(tppDTOPatch.getLegalAddress());
+                    if (tppDTOPatch.getPspDenomination() != null)    existingTpp.setPspDenomination(tppDTOPatch.getPspDenomination());
+                    if (tppDTOPatch.getAgentLinks() != null)         existingTpp.setAgentLinks(tppDTOPatch.getAgentLinks());
+                    if (tppDTOPatch.getMessageTemplate() != null)    existingTpp.setMessageTemplate(tppDTOPatch.getMessageTemplate());
+                    if (tppDTOPatch.getIsPaymentEnabled() != null)   existingTpp.setIsPaymentEnabled(tppDTOPatch.getIsPaymentEnabled());
+                    if (tppDTOPatch.getWhitelistRecipient() != null) existingTpp.setWhitelistRecipient(tppDTOPatch.getWhitelistRecipient());
+                    return tppRepository.save(existingTpp)
+                            .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
+                            .map(tppWithoutTokenSectionMapperToDTO::map)
+                            .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][PATCH] Partially updated TPP with tppId: {}", savedTpp.getTppId()))
+                            .doOnError(error -> log.error("[TPP-SERVICE][PATCH] Error updating TPP with tppId {}: {}", existingTpp.getTppId(), error.getMessage()));
                 })
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                         ExceptionMessage.TPP_NOT_ONBOARDED)));

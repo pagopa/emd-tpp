@@ -73,7 +73,16 @@ public class TppControllerImpl implements TppController {
         return tppService.updateTppDetails(tppDTOWithoutTokenSection)
                 .map(ResponseEntity::ok);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<TppDTOWithoutTokenSection>> patchTppDetails(String tppId, TppDTOPatch tppDTOPatch) {
+        return tppService.patchTppDetails(inputSanitization(tppId), tppDTOPatch)
+                .map(ResponseEntity::ok);
+    }
+
     /**
      * {@inheritDoc}
      */

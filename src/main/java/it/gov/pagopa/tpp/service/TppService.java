@@ -4,6 +4,7 @@ import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import java.util.Map;
 import reactor.core.publisher.Mono;
@@ -39,6 +40,16 @@ public interface TppService {
      * @return a Mo{@link Mono}no containing the updated {@link TppDTOWithoutTokenSection}
      */
     Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection);
+
+    /**
+     * Partially updates TPP details excluding the token section.
+     * Only non-null fields in {@code tppDTOPatch} will be applied to the existing entity.
+     *
+     * @param tppId       the TPP identifier
+     * @param tppDTOPatch the partial TPP data
+     * @return a {@link Mono} containing the updated {@link TppDTOWithoutTokenSection}
+     */
+    Mono<TppDTOWithoutTokenSection> patchTppDetails(String tppId, TppDTOPatch tppDTOPatch);
 
     /**
      * Updates the token section configuration for a specific TPP.

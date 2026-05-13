@@ -6,6 +6,7 @@ import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.mapper.TokenSectionObjectToDTOMapper;
 import it.gov.pagopa.tpp.dto.mapper.TppObjectToDTOMapper;
@@ -288,6 +289,59 @@ class TppServiceTest {
     void updateTppDetails_NoTppId() {
         StepVerifier.create(tppService.updateTppDetails(getMockTppDtoWithoutTokenSectionNoId()))
             .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+            .verify();
+    }
+
+    @Test
+    void patchTppDetails_Ok() {
+        TppDTOPatch patch = getMockTppDtoPatch();
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.findByTppId("tppId"))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.patchTppDetails("tppId", patch))
+            .expectNextMatches(response -> response.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+    }
+
+    @Test
+    void patchTppDetails_OnlyNonNullFieldsUpdated() {
+        TppDTOPatch partialPatch = getMockTppDtoPatchPartial(); // solo businessName valorizzato
+        Tpp mockTpp = getMockTpp();
+        String originalMessageUrl = mockTpp.getMessageUrl();
+
+        Mockito.when(tppRepository.findByTppId("tppId"))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.patchTppDetails("tppId", partialPatch))
+            .expectNextMatches(response -> response.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+
+        // verifica che solo businessName sia stato aggiornato, gli altri campi rimangono invariati
+        Mockito.verify(tppRepository).save(argThat(tpp ->
+            "onlyBusinessNameUpdated".equals(tpp.getBusinessName()) &&
+            originalMessageUrl.equals(tpp.getMessageUrl())
+        ));
+    }
+
+    @Test
+    void patchTppDetails_TppNotFound() {
+        Mockito.when(tppRepository.findByTppId(any()))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.patchTppDetails("unknownTppId", getMockTppDtoPatch()))
+            .expectErrorMatches(throwable ->
+                throwable instanceof ClientExceptionWithBody &&
+                    ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
             .verify();
     }
 

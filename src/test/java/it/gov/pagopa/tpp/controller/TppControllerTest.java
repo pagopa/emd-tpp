@@ -5,6 +5,7 @@ import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.RecipientIdOnWhitelistDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppIdList;
 import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
@@ -41,7 +42,6 @@ class TppControllerTest {
 
     @Test
     void updateTppDetails_Ok() {
-        // Creiamo un'istanza fresca per questo test
         TppDTOWithoutTokenSection tppDto = getMockTppDtoWithoutTokenSection();
 
         Mockito.when(tppService.updateTppDetails(tppDto))
@@ -58,6 +58,50 @@ class TppControllerTest {
                 TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
                 Assertions.assertNotNull(resultResponse);
                 Assertions.assertEquals(tppDto, resultResponse);
+            });
+    }
+
+    @Test
+    void patchTppDetails_Ok() {
+        TppDTOPatch patch = getMockTppDtoPatch();
+        TppDTOWithoutTokenSection expectedResponse = getMockTppDtoWithoutTokenSection();
+
+        Mockito.when(tppService.patchTppDetails("tppId", patch))
+            .thenReturn(Mono.just(expectedResponse));
+
+        webClient.patch()
+            .uri("/emd/tpp/{tppId}", "tppId")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(patch)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(TppDTOWithoutTokenSection.class)
+            .consumeWith(response -> {
+                TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
+                Assertions.assertNotNull(resultResponse);
+                Assertions.assertEquals(expectedResponse, resultResponse);
+            });
+    }
+
+    @Test
+    void patchTppDetails_PartialFields_Ok() {
+        TppDTOPatch partialPatch = getMockTppDtoPatchPartial();
+        TppDTOWithoutTokenSection expectedResponse = getMockTppDtoWithoutTokenSection();
+
+        Mockito.when(tppService.patchTppDetails("tppId", partialPatch))
+            .thenReturn(Mono.just(expectedResponse));
+
+        webClient.patch()
+            .uri("/emd/tpp/{tppId}", "tppId")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(partialPatch)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(TppDTOWithoutTokenSection.class)
+            .consumeWith(response -> {
+                TppDTOWithoutTokenSection resultResponse = response.getResponseBody();
+                Assertions.assertNotNull(resultResponse);
+                Assertions.assertEquals(expectedResponse, resultResponse);
             });
     }
 
