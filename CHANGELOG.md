@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/pagopa/emd-tpp/compare/v1.5.1...v1.6.0) (2026-05-13)
+
+
+### Features
+
+* [MMC-573] add PATCH tpp endpoint ([#105](https://github.com/pagopa/emd-tpp/issues/105)) ([4171536](https://github.com/pagopa/emd-tpp/commit/4171536aadebd670bdbef2128a6209a6ab4bdf07))
+
+
+### Bug Fixes
+
+* [MMC-547] Update DELETE endpoint and CONFLICT error code ([#104](https://github.com/pagopa/emd-tpp/issues/104)) ([d177471](https://github.com/pagopa/emd-tpp/commit/d177471aef8104f37a712744e0e7ace1fee3a10f))
+
 ## [1.5.1](https://github.com/pagopa/emd-tpp/compare/v1.5.0...v1.5.1) (2026-05-05)
 
 
