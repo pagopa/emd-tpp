@@ -84,6 +84,7 @@ class TppServiceTest {
             Tpp tpp = invocation.getArgument(0);
             TppDTO dto = new TppDTO();
             dto.setTppId(tpp.getTppId());
+            dto.setClientId(tpp.getClientId());
             dto.setState(tpp.getState());
             dto.setEntityId(tpp.getEntityId());
             dto.setBusinessName(tpp.getBusinessName());
@@ -106,6 +107,7 @@ class TppServiceTest {
             Tpp tpp = invocation.getArgument(0);
             TppDTOWithoutTokenSection dto = new TppDTOWithoutTokenSection();
             dto.setTppId(tpp.getTppId());
+            dto.setClientId(tpp.getClientId());
             dto.setState(tpp.getState());
             dto.setEntityId(tpp.getEntityId());
             dto.setBusinessName(tpp.getBusinessName());
@@ -343,6 +345,103 @@ class TppServiceTest {
                 throwable instanceof ClientExceptionWithBody &&
                     ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
             .verify();
+    }
+
+    @Test
+    void patchTppDetails_ClientIdUpdated_WhenProvided() {
+        TppDTOPatch clientIdPatch = getMockTppDtoPatchClientIdOnly();
+        Tpp mockTpp = getMockTpp();
+        String originalBusinessName = mockTpp.getBusinessName();
+
+        Mockito.when(tppRepository.findByTppId("tppId"))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.patchTppDetails("tppId", clientIdPatch))
+            .expectNextMatches(response -> response.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+
+        // verifica che clientId sia stato aggiornato e gli altri campi rimangano invariati
+        Mockito.verify(tppRepository).save(argThat(tpp ->
+            "newLegacyClientId".equals(tpp.getClientId()) &&
+            originalBusinessName.equals(tpp.getBusinessName())
+        ));
+    }
+
+    @Test
+    void patchTppDetails_ClientIdNotOverwritten_WhenNotProvided() {
+        TppDTOPatch partialPatch = getMockTppDtoPatchPartial(); // clientId è null
+        Tpp mockTpp = getMockTpp(); // ha clientId="legacyClientId"
+        String originalClientId = mockTpp.getClientId();
+
+        Mockito.when(tppRepository.findByTppId("tppId"))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.patchTppDetails("tppId", partialPatch))
+            .expectNextMatches(response -> response.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+
+        // verifica che clientId NON sia stato sovrascritto
+        Mockito.verify(tppRepository).save(argThat(tpp ->
+            originalClientId.equals(tpp.getClientId())
+        ));
+    }
+
+    @Test
+    void updateTppDetails_ClientIdPersisted() {
+        TppDTOWithoutTokenSection dto = getMockTppDtoWithoutTokenSection();
+        dto.setClientId("putClientId");
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.findByTppId(dto.getTppId()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.updateTppDetails(dto))
+            .expectNextMatches(response -> response.getTppId().equals(mockTpp.getTppId()))
+            .verifyComplete();
+
+        Mockito.verify(tppRepository).save(argThat(tpp ->
+            "putClientId".equals(tpp.getClientId())
+        ));
+    }
+
+    @Test
+    void createNewTpp_ClientIdPersisted() {
+        TppDTO tppDTO = getMockTppDto();
+        tppDTO.setClientId("postClientId");
+        // il tppId generato deve corrispondere a quello del Tpp restituito dal save
+        String generatedTppId = "tppId";
+        Tpp savedTpp = getMockTpp(); // ha tppId="tppId"
+
+        Mockito.when(tppRepository.findByEntityId(tppDTO.getEntityId()))
+            .thenReturn(Mono.empty());
+        Mockito.when(azureKeyService.createRsaKey(any()))
+            .thenReturn(Mono.just(keyVault));
+        Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any()))
+            .thenReturn(Mono.just(true));
+        Mockito.when(tppRepository.save(any()))
+            .thenReturn(Mono.just(savedTpp));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.createNewTpp(tppDTO, generatedTppId))
+            .expectNextMatches(response -> response.getTppId() != null)
+            .verifyComplete();
+
+        Mockito.verify(tppRepository).save(argThat(tpp ->
+            "postClientId".equals(tpp.getClientId())
+        ));
     }
 
     @Test

@@ -64,6 +64,7 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
                 .authenticationUrl(tpp.getAuthenticationUrl())
                 .authenticationType(tpp.getAuthenticationType())
                 .tppId(tpp.getTppId())
+                .clientId(tpp.getClientId())
                 .idPsp(tpp.getIdPsp())
                 .legalAddress(tpp.getLegalAddress())
                 .businessName(tpp.getBusinessName())

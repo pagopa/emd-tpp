@@ -181,6 +181,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
                     existingTpp.setIsPaymentEnabled(tppDTOWithoutTokenSection.getIsPaymentEnabled());
                     existingTpp.setWhitelistRecipient(tppDTOWithoutTokenSection.getWhitelistRecipient());
+                    existingTpp.setClientId(tppDTOWithoutTokenSection.getClientId());
                     return tppRepository.save(existingTpp)
                             .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .map(tppWithoutTokenSectionMapperToDTO::map)
@@ -212,6 +213,7 @@ public class TppServiceImpl implements TppService {
                     if (tppDTOPatch.getMessageTemplate() != null)    existingTpp.setMessageTemplate(tppDTOPatch.getMessageTemplate());
                     if (tppDTOPatch.getIsPaymentEnabled() != null)   existingTpp.setIsPaymentEnabled(tppDTOPatch.getIsPaymentEnabled());
                     if (tppDTOPatch.getWhitelistRecipient() != null) existingTpp.setWhitelistRecipient(tppDTOPatch.getWhitelistRecipient());
+                    if (tppDTOPatch.getClientId() != null)           existingTpp.setClientId(tppDTOPatch.getClientId());
                     return tppRepository.save(existingTpp)
                             .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .map(tppWithoutTokenSectionMapperToDTO::map)

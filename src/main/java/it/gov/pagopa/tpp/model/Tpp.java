@@ -22,6 +22,7 @@ public class Tpp {
 
     private String id;
     private String tppId;
+    private String clientId;
     private String entityId;
     private String idPsp;
     private String businessName;

@@ -23,6 +23,8 @@ import java.util.HashMap;
 public class TppDTOWithoutTokenSection {
     private String tppId;
 
+    private String clientId;
+
     @NotBlank(message = "Entity ID must not be blank")
     @Pattern(regexp = "^(\\d{11}|[A-Za-z0-9]{16})$", message = "Entity ID must be 11 digits or up to 16 alphanumeric characters")
     private String entityId;
