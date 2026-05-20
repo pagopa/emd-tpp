@@ -24,6 +24,8 @@ public class TppDTOPatch {
     @Pattern(regexp = "^(\\d{11}|[A-Za-z0-9]{16})$", message = "Entity ID must be 11 digits or up to 16 alphanumeric characters")
     private String entityId;
 
+    private String clientId;
+
     private String idPsp;
 
     private String businessName;

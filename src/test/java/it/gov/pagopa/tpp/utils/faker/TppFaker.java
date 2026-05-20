@@ -28,6 +28,7 @@ public class TppFaker {
         return Tpp.builder()
                 .id("id")
                 .tppId(tppId)
+                .clientId("legacyClientId")
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
                 .idPsp("idPsp")

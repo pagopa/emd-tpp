@@ -23,6 +23,7 @@ public class TppDTOFaker {
 
         return TppDTO.builder()
                 .tppId("tppId")
+                .clientId("legacyClientId")
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
                 .idPsp("idPsp")

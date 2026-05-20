@@ -29,6 +29,7 @@ public class TppDTOToObjectMapper {
         return Tpp.builder()
                 .state(true)
                 .tppId(tppDTO.getTppId())
+                .clientId(tppDTO.getClientId())
                 .idPsp(tppDTO.getIdPsp())
                 .messageUrl(tppDTO.getMessageUrl())
                 .legalAddress(tppDTO.getLegalAddress())

@@ -79,4 +79,8 @@ public class TestUtils {
     public static TppDTOPatch getMockTppDtoPatchPartial() {
         return TppDTOPatchFaker.mockPartialInstance();
     }
+
+    public static TppDTOPatch getMockTppDtoPatchClientIdOnly() {
+        return TppDTOPatchFaker.mockClientIdOnlyInstance();
+    }
 }
