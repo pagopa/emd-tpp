@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.OffsetDateTime;
 import java.util.Base64;
 
 /**
@@ -29,7 +28,7 @@ public class AzureKeyService {
     /**
      * Initializes the KeyAsyncClient using the provided Key Vault URL and
      * DefaultAzureCredential for authentication.
-     * 
+     *
      * @param keyVaultUrl the URL of the Azure Key Vault instance
      */
     public AzureKeyService(@Value("${crypto.azure.key-vault.url}") String keyVaultUrl){
@@ -41,7 +40,7 @@ public class AzureKeyService {
 
     /**
      * Retrieves a key from Azure Key Vault by its identifier.
-     * 
+     *
      * @param tppId the identifier of the key to retrieve
      * @return a {@link Mono} containing the KeyVaultKey if found
      */
@@ -51,21 +50,20 @@ public class AzureKeyService {
 
     /**
      * Creates a new RSA key in Azure Key Vault with the specified identifier.
-     * 
+     *
      * @param tppId the identifier for the new RSA key
      * @return a {@link Mono} containing the created KeyVaultKey
      */
     public Mono<KeyVaultKey> createRsaKey(String tppId){
         return keyClient
                 .createRsaKey(new CreateRsaKeyOptions(tppId)
-                                  .setExpiresOn(OffsetDateTime.now().plusYears(1))
                                   .setKeySize(2048)
         );
     }
 
     /**
      * Encrypts the provided plain text using the specified encryption algorithm.
-     * 
+     *
      * @param plainValue the byte array to encrypt
      * @param encryptionAlgorithm the encryption algorithm to use
      * @param cryptoClient the cryptography client for performing the operation
@@ -78,7 +76,7 @@ public class AzureKeyService {
 
     /**
      * Decrypts the provided Base64-encoded encrypted value using the specified encryption algorithm.
-     *  
+     *
      * @param encryptedValue the Base64-encoded encrypted string to decrypt
      * @param encryptionAlgorithm the encryption algorithm to use for decryption
      * @param cryptoClient the cryptography client for performing the operation
@@ -91,7 +89,7 @@ public class AzureKeyService {
 
     /**
      * Creates a CryptographyAsyncClient for the specified KeyVaultKey.
-     * 
+     *
      * @param key the KeyVaultKey to create a cryptography client for
      * @return a CryptographyAsyncClient configured for the specified key
      */
@@ -101,7 +99,7 @@ public class AzureKeyService {
 
     /**
      * Creates a CryptographyAsyncClient for the specified key identifier.
-     * 
+     *
      * @param keyId the identifier of the key to create a cryptography client for
      * @return a CryptographyAsyncClient configured for the specified key identifier
      */
@@ -114,7 +112,7 @@ public class AzureKeyService {
 
     /**
      * Sets the KeyAsyncClient for this service.
-     * 
+     *
      * @param keyClient the KeyAsyncClient to set
      */
     public void setKeyClient(KeyAsyncClient keyClient) {
