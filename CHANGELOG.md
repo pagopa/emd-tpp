@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/pagopa/emd-tpp/compare/v1.6.1...v1.6.2) (2026-05-26)
+
+
+### Bug Fixes
+
+* [MMC-666] remove key expiration on kv key creation ([#111](https://github.com/pagopa/emd-tpp/issues/111)) ([f650f26](https://github.com/pagopa/emd-tpp/commit/f650f26da29fd72ca50c24f750e9590591c4fe91))
+
 ## [1.6.1](https://github.com/pagopa/emd-tpp/compare/v1.6.0...v1.6.1) (2026-05-20)
 
 
