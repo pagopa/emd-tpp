@@ -1072,11 +1072,11 @@
       "sha256": "sDln8yxl3l7TObl3KRcOAomyL_pXKef0X2i_a0MftWc="
     },
     {
-      "id": "org.redisson:redisson-spring-boot-starter:jar:3.43.0",
+      "id": "org.redisson:redisson-spring-boot-starter:jar:4.6.0",
       "artifactId": "redisson-spring-boot-starter",
       "groupId": "org.redisson",
-      "version": "3.43.0",
-      "sha256": "7cn_OV_Be7I1yIzhqKSPd7_OGd3qQTg6FqGgjUh8qnc="
+      "version": "4.6.0",
+      "sha256": "EgGtvLt-aB89qI3UqeTzJgDC4FVg3W54XZ71ZCdgEXo="
     },
     {
       "id": "org.springframework.boot:spring-boot-starter-data-redis:jar:3.3.3",
@@ -1114,11 +1114,11 @@
       "sha256": "lgMDa8gHQRVzSvoJtfjfNQLufeaLt1VSLstCNvoAg7U="
     },
     {
-      "id": "org.redisson:redisson:jar:3.43.0",
+      "id": "org.redisson:redisson:jar:4.6.0",
       "artifactId": "redisson",
       "groupId": "org.redisson",
-      "version": "3.43.0",
-      "sha256": "yGr6v2NGFTyn78PNbFxEuLoO2kXwinv6Q27BlcvX8ME="
+      "version": "4.6.0",
+      "sha256": "jVofi3V4LiykMWwdR1YG58KSNVUP2fOqtRLPCuirliw="
     },
     {
       "id": "io.netty:netty-transport:jar:4.1.112.Final",
@@ -1184,13 +1184,6 @@
       "sha256": "XU1jLPvr_gp2RFAcwwNXC2kUBhgb7mXpkWuSHHZ9fHI="
     },
     {
-      "id": "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.17.2",
-      "artifactId": "jackson-dataformat-yaml",
-      "groupId": "com.fasterxml.jackson.dataformat",
-      "version": "2.17.2",
-      "sha256": "lBvNixOBuzsNcm-rQWJPqOzg7nts8oYK2V6BV85nM3Y="
-    },
-    {
       "id": "org.jodd:jodd-util:jar:6.3.0",
       "artifactId": "jodd-util",
       "groupId": "org.jodd",
@@ -1198,11 +1191,11 @@
       "sha256": "5cZ2cViXEkEB90kA3R-Y67ytnaOrLf-6xudxJhIJRCc="
     },
     {
-      "id": "org.redisson:redisson-spring-data-34:jar:3.43.0",
-      "artifactId": "redisson-spring-data-34",
+      "id": "org.redisson:redisson-spring-data-41:jar:4.6.0",
+      "artifactId": "redisson-spring-data-41",
       "groupId": "org.redisson",
-      "version": "3.43.0",
-      "sha256": "95IR7z7RNXHF9EbvPoHvU4pvK7h8cVzrTUXtxNL8q08="
+      "version": "4.6.0",
+      "sha256": "SkxMHDeEc5lxckUHlUEO-OKi3EAF29BpQb4ZECiqOBY="
     },
     {
       "id": "org.testcontainers:junit-jupiter:jar:1.21.3",
