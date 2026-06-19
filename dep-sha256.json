@@ -932,11 +932,11 @@
       "sha256": "GOmTLAqj9CzugPzO4ZB4Sfqdtb5AuM_6IdGn_B10V-U="
     },
     {
-      "id": "io.netty:netty-handler:jar:4.1.118.Final",
+      "id": "io.netty:netty-handler:jar:4.1.135.Final",
       "artifactId": "netty-handler",
       "groupId": "io.netty",
-      "version": "4.1.118.Final",
-      "sha256": "JuP4pehZ_WLPPBPcbXXk4Yh58ACl0K1_WPhnlnXSPa4="
+      "version": "4.1.135.Final",
+      "sha256": "JF504EtvTo75iFMVJBLjvxSZzm_PFTKbeYyM42w1N-I="
     },
     {
       "id": "io.netty:netty-handler-proxy:jar:4.1.112.Final",
