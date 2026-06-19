@@ -897,11 +897,11 @@
       "sha256": "zgCJ806ubgjRSC6aMF-KMxs-tTkhh3KcpHyD7e_P66o="
     },
     {
-      "id": "com.azure:azure-security-keyvault-keys:jar:4.8.7",
+      "id": "com.azure:azure-security-keyvault-keys:jar:4.10.6",
       "artifactId": "azure-security-keyvault-keys",
       "groupId": "com.azure",
-      "version": "4.8.7",
-      "sha256": "-dyry_9GVZvb0ujif31Din8hWXpbgsj84GiHi2GFyrQ="
+      "version": "4.10.6",
+      "sha256": "zpO6GdJiQ5s4T-9ngVQr6qJ4m-iPMoXtH4Ps_-45xfo="
     },
     {
       "id": "com.azure:azure-core:jar:1.51.0",
