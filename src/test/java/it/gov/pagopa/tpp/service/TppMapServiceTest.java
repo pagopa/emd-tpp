@@ -14,7 +14,7 @@ import org.mockito.quality.Strictness;
 import org.redisson.api.RLockReactive;
 import org.redisson.api.RMapReactive;
 import org.redisson.api.RedissonReactiveClient;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,13 +42,13 @@ class TppMapServiceTest {
     @Mock
     private RLockReactive lock;
 
-    @MockBean
+    @MockitoBean
     private RedissonReactiveClient redissonClient;
 
-    @MockBean
+    @MockitoBean
     private TppRepository tppRepository;
 
-    @MockBean
+    @MockitoBean
     private TokenSectionCryptService tokenSectionCryptService;
 
     private TppMapService tppMapService;
