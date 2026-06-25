@@ -29,10 +29,10 @@ class TokenSectionCryptServiceTest {
     @MockitoBean
     private AzureKeyService azureKeyService;
 
-    @Mock
+    @MockitoBean
     private KeyVaultKey mockKeyVaultKey;
 
-    @Mock
+    @MockitoBean
     private CryptographyAsyncClient mockCryptographyClient;
 
     @Autowired
