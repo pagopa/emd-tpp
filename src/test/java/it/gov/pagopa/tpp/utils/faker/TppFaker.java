@@ -6,7 +6,6 @@ import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
-import java.lang.Runtime.Version;
 import java.util.HashMap;
 import java.util.List;
 
@@ -21,6 +20,7 @@ public class TppFaker {
 
         Contact contact = new Contact("name","number", "email");
         VersionDetails versionDetails = new VersionDetails("linkVersion");
+        
         AgentLink agentLink = new AgentLink("ios", new HashMap<>() {{
             put("v1", versionDetails);
         }});

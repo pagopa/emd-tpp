@@ -1,6 +1,5 @@
 package it.gov.pagopa.tpp.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.RecipientIdOnWhitelistDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
@@ -35,10 +34,6 @@ class TppControllerTest {
 
     @Autowired
     private WebTestClient webClient;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
 
     @Test
     void updateTppDetails_Ok() {

@@ -68,7 +68,6 @@ class ValidationExceptionHandlerTest {
     }
     @Test
     void testHandleMissingRequestValueException() {
-        String invalidJson = "{}";
 
         webTestClient.put()
                 .uri("/test")
@@ -89,7 +88,6 @@ class ValidationExceptionHandlerTest {
 
     @Test
     void testHandleNoResourceFoundException() {
-        String invalidJson = "{}";
 
         webTestClient.put()
                 .uri("/wrongPath")
