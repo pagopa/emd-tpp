@@ -31,7 +31,7 @@ public class TppFaker {
         agentLinks.put("agent", agentLink);
 
         return Tpp.builder()
-                .id("id")
+                .id(tppId)
                 .tppId(tppId)
                 .clientId("legacyClientId")
                 .messageUrl("https://wwwmessageUrl.it")
