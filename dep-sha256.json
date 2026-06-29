@@ -1474,8 +1474,8 @@
       "id": "org.testcontainers:mongodb:jar:1.21.4",
       "artifactId": "mongodb",
       "groupId": "org.testcontainers",
-      "version": "1.21.3",
-      "sha256": "lXk-RQKuDz7fvf3BuhCdstUFGQTOtCy3MOwSRWOwMhY="
+      "version": "1.21.4",
+      "sha256": "JSZwaFzR99i9xAbIbjAqpl9Pp8DG3nCoe0ZMwROCSJ4="
     },
     {
       "id": "org.springframework.boot:spring-boot-starter-webflux-test:jar:4.1.0",
