@@ -12,8 +12,6 @@ import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Answers;
-import org.mockito.Mock;
 import org.redisson.api.RLockReactive;
 import org.redisson.api.RMapReactive;
 import org.redisson.api.RedissonReactiveClient;
