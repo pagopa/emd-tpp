@@ -6,7 +6,6 @@ import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
-import java.lang.Runtime.Version;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,13 +19,19 @@ public class TppFaker {
     public static Tpp mockInstance(String tppId, Boolean state){
 
         Contact contact = new Contact("name","number", "email");
+
         VersionDetails versionDetails = new VersionDetails("linkVersion");
-        AgentLink agentLink = new AgentLink("ios", new HashMap<>() {{
-            put("v1", versionDetails);
-        }});
+
+        HashMap<String, VersionDetails> versions = new HashMap<>();
+        versions.put("v1", versionDetails);
+        
+        AgentLink agentLink = new AgentLink("ios", versions);
+
+        HashMap<String, AgentLink> agentLinks = new HashMap<>();
+        agentLinks.put("agent", agentLink);
 
         return Tpp.builder()
-                .id("id")
+                .id(tppId)
                 .tppId(tppId)
                 .clientId("legacyClientId")
                 .messageUrl("https://wwwmessageUrl.it")
@@ -42,9 +47,7 @@ public class TppFaker {
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
                 .pspDenomination("#button")
-                .agentLinks(new HashMap<>() {{
-                    put("agent", agentLink);
-                }})
+                .agentLinks(agentLinks)
                 .messageTemplate("{\"testKey\": ${associatedPayment???then(associatedPayment?c, 'null')}")
                 .whitelistRecipient(List.of())
                 .isPaymentEnabled(state)

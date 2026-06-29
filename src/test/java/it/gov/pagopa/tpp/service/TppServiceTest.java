@@ -19,11 +19,10 @@ import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -48,19 +47,19 @@ class TppServiceTest {
     @Autowired
     private TppServiceImpl tppService;
 
-    @MockBean
+    @MockitoBean
     private TppRepository tppRepository;
 
-    @MockBean
+    @MockitoBean
     private AzureKeyService azureKeyService;
 
-    @MockBean
+    @MockitoBean
     private TokenSectionCryptService tokenSectionCryptService;
 
-    @MockBean
+    @MockitoBean
     private TppObjectToDTOMapper mapperToDTO;
 
-    @MockBean
+    @MockitoBean
     private TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO;
 
     @Autowired
@@ -69,13 +68,13 @@ class TppServiceTest {
     @Autowired
     private TokenSectionObjectToDTOMapper tokenSectionObjectToDTOMapper;
 
-    @MockBean
+    @MockitoBean
     private TppMapService tppMapService;
 
     @Autowired
     private TokenSectionDTOToObjectMapper tokenSectionDTOToObjectMapper;
 
-    @Mock
+    @MockitoBean
     private KeyVaultKey keyVault;
 
     @BeforeEach

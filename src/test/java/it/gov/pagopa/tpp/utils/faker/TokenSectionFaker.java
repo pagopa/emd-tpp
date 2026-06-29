@@ -9,14 +9,17 @@ public class TokenSectionFaker {
     private TokenSectionFaker(){}
 
     public static TokenSection mockInstance() {
+
+        HashMap<String, String> pathProps = new HashMap<>();
+        pathProps.put("pathKey1", "test");
+
+        HashMap<String, String> bodyProps = new HashMap<>();
+        bodyProps.put("bodyKey1", "test");
+
         return TokenSection.builder()
                 .contentType("application/json")
-                .pathAdditionalProperties(new HashMap<>() {{
-                    put("pathKey1", "test");
-                }})
-                .bodyAdditionalProperties(new HashMap<>() {{
-                    put("bodyKey1", "test");
-                }})
+                .pathAdditionalProperties(pathProps)
+                .bodyAdditionalProperties(bodyProps)
                 .build();
     }
 }

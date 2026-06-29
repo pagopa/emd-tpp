@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -59,7 +59,7 @@ public class TppMapServiceIT extends BaseIT {
      * Mocked to avoid real Azure Key Vault calls during integration tests.
      * Returns {@code Mono.just(true)} for all {@code keyDecrypt} invocations.
      */
-    @MockBean
+    @MockitoBean
     private TokenSectionCryptService tokenSectionCryptService;
 
     @BeforeEach
