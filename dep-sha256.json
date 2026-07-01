@@ -1261,11 +1261,11 @@
       "sha256": "eCBqp_bRl8qpJikUCMAYiba5EMoPdAF9P8vazPlWKVk="
     },
     {
-      "id": "org.redisson:redisson-spring-boot-starter:jar:4.6.0",
+      "id": "org.redisson:redisson-spring-boot-starter:jar:4.6.1",
       "artifactId": "redisson-spring-boot-starter",
       "groupId": "org.redisson",
-      "version": "4.6.0",
-      "sha256": "EgGtvLt-aB89qI3UqeTzJgDC4FVg3W54XZ71ZCdgEXo="
+      "version": "4.6.1",
+      "sha256": "mqBdz9Gn-bd5nviBzVBMhun_W5dc3B5F3YvmH6zd9AE="
     },
     {
       "id": "org.springframework.boot:spring-boot-starter-data-redis:jar:4.1.0",
@@ -1282,11 +1282,11 @@
       "sha256": "o87gUIB7jgtDdnirQDGZMN_P_H6x2pu1e_jhCQCWfiQ="
     },
     {
-      "id": "org.redisson:redisson:jar:4.6.0",
+      "id": "org.redisson:redisson:jar:4.6.1",
       "artifactId": "redisson",
       "groupId": "org.redisson",
-      "version": "4.6.0",
-      "sha256": "jVofi3V4LiykMWwdR1YG58KSNVUP2fOqtRLPCuirliw="
+      "version": "4.6.1",
+      "sha256": "1SJBQLTrOOiv8SN5-R2RSrB-3Oo337D2kHAHgRp-Fmo="
     },
     {
       "id": "io.netty:netty-transport:jar:4.2.15.Final",
@@ -1359,11 +1359,11 @@
       "sha256": "5cZ2cViXEkEB90kA3R-Y67ytnaOrLf-6xudxJhIJRCc="
     },
     {
-      "id": "org.redisson:redisson-spring-data-41:jar:4.6.0",
+      "id": "org.redisson:redisson-spring-data-41:jar:4.6.1",
       "artifactId": "redisson-spring-data-41",
       "groupId": "org.redisson",
-      "version": "4.6.0",
-      "sha256": "SkxMHDeEc5lxckUHlUEO-OKi3EAF29BpQb4ZECiqOBY="
+      "version": "4.6.1",
+      "sha256": "N_X-zSXBQfmdB88EqY5vugJ8kBb3MMw2J1gHdCJVxBk="
     },
     {
       "id": "org.springframework.data:spring-data-redis:jar:4.1.0",
