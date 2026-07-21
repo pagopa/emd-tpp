@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.3](https://github.com/pagopa/emd-tpp/compare/v1.6.2...v1.6.3) (2026-06-29)
+
+
+### Bug Fixes
+
+* **deps:** bump com.azure.spring:spring-cloud-azure-dependencies from 5.16.0 to 7.3.0 ([#122](https://github.com/pagopa/emd-tpp/issues/122)) ([4768183](https://github.com/pagopa/emd-tpp/commit/47681834d52a7656a90887287908c83e4f7fd4bd))
+* **deps:** bump org.springframework.cloud:spring-cloud-dependencies from 2023.0.2 to 2025.1.2 ([#126](https://github.com/pagopa/emd-tpp/issues/126)) ([0c67cbb](https://github.com/pagopa/emd-tpp/commit/0c67cbbb489515f4b548cc3213f1ca18d549f7da))
+* **deps:** bump the non-major-updates group with 7 updates ([#121](https://github.com/pagopa/emd-tpp/issues/121)) ([eb96e8c](https://github.com/pagopa/emd-tpp/commit/eb96e8cae5dce70982fe395224720b6c0f8cb3d5))
+
 ## [1.6.2](https://github.com/pagopa/emd-tpp/compare/v1.6.1...v1.6.2) (2026-05-26)
 
 
