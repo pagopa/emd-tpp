@@ -16,7 +16,7 @@ import java.util.List;
  * Collection name: {@code tpp}
  */
 @Repository
-public interface TppRepository extends ReactiveMongoRepository<Tpp,String> {
+public interface TppRepository extends ReactiveMongoRepository<Tpp,String>, TppRepositoryExtended {
 
     /**
      * Finds multiple TPP records by their IDs, filtering only active ones.

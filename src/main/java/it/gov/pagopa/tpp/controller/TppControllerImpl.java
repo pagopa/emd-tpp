@@ -6,6 +6,7 @@ import it.gov.pagopa.tpp.service.TppServiceImpl;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -21,6 +22,7 @@ import static it.gov.pagopa.common.utils.Utils.inputSanitization;
  * {@link Utils#inputSanitization(String)} to prevent log injection attacks and ensure secure logging.
  */
 @RestController
+@Validated
 public class TppControllerImpl implements TppController {
 
     private final TppServiceImpl tppService;
@@ -116,6 +118,19 @@ public class TppControllerImpl implements TppController {
     @Override
     public Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppByEntityId(String entityId) {
         return tppService.getTppByEntityId(inputSanitization(entityId))
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<TppSearchResponseDTO>> searchTpps(String entityId, String businessName, int page, int size) {
+        return tppService.searchTpps(
+                        entityId != null ? inputSanitization(entityId) : null,
+                        businessName != null ? inputSanitization(businessName) : null,
+                        page,
+                        size)
                 .map(ResponseEntity::ok);
     }
 

@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -123,6 +124,28 @@ public interface TppController {
      */
     @GetMapping("/entityId/{entityId}")
     Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppByEntityId(@Valid @PathVariable String entityId);
+
+    /**
+     * Search TPPs by exact {@code entityId} or partial (case-insensitive) {@code businessName},
+     * returning a paginated result.
+     * <p>
+     * At least one filter should be provided. When {@code entityId} is present it takes precedence
+     * over {@code businessName}. The {@code size} is capped by a configured maximum to protect
+     * database resources.
+     *
+     * @param entityId     optional exact entity identifier filter
+     * @param businessName optional partial, case-insensitive business name filter
+     * @param page         zero-based page index (default 0)
+     * @param size         page size (default 10, capped by the configured maximum)
+     * @return a {@link Mono} containing a {@link ResponseEntity} with the paginated
+     *          {@link TppSearchResponseDTO}
+     */
+    @GetMapping("/search")
+    Mono<ResponseEntity<TppSearchResponseDTO>> searchTpps(
+            @RequestParam(required = false) String entityId,
+            @RequestParam(required = false) String businessName,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "page must be greater than or equal to 0") int page,
+            @RequestParam(defaultValue = "10") @Min(value = 1, message = "size must be greater than or equal to 1") int size);
 
     /**
      * Tests the network connection to a specific TPP

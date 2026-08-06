@@ -6,6 +6,7 @@ import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
+import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
 import java.util.Map;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +16,23 @@ import java.util.List;
  * Service interface for managing TPP operations.
  */
 public interface TppService {
+
+    /**
+     * Searches TPPs filtering by exact {@code entityId} or partial, case-insensitive
+     * {@code businessName}, returning a paginated result.
+     * <p>
+     * When {@code entityId} is provided it takes precedence and an exact match is applied;
+     * otherwise a {@code CONTAINS} match on {@code businessName} is used. Pagination is
+     * pushed down to the database and the requested {@code size} is capped by a configured
+     * maximum to protect database resources.
+     *
+     * @param entityId     the exact entity identifier to match (nullable)
+     * @param businessName the partial, case-insensitive business name to match (nullable)
+     * @param page         the zero-based page index
+     * @param size         the requested page size
+     * @return a {@link Mono} containing the paginated {@link TppSearchResponseDTO}
+     */
+    Mono<TppSearchResponseDTO> searchTpps(String entityId, String businessName, int page, int size);
 
     /**
      * Retrieves a list of eenabled tpp or tpp with whitelistRecipient field containing the recipientId.
