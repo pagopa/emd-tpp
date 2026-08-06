@@ -6,7 +6,6 @@ import it.gov.pagopa.tpp.service.TppServiceImpl;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -22,7 +21,6 @@ import static it.gov.pagopa.common.utils.Utils.inputSanitization;
  * {@link Utils#inputSanitization(String)} to prevent log injection attacks and ensure secure logging.
  */
 @RestController
-@Validated
 public class TppControllerImpl implements TppController {
 
     private final TppServiceImpl tppService;

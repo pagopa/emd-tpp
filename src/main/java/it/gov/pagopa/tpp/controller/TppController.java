@@ -2,7 +2,6 @@ package it.gov.pagopa.tpp.controller;
 
 import it.gov.pagopa.tpp.dto.*;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -144,8 +143,8 @@ public interface TppController {
     Mono<ResponseEntity<TppSearchResponseDTO>> searchTpps(
             @RequestParam(required = false) String entityId,
             @RequestParam(required = false) String businessName,
-            @RequestParam(defaultValue = "0") @Min(value = 0, message = "page must be greater than or equal to 0") int page,
-            @RequestParam(defaultValue = "10") @Min(value = 1, message = "size must be greater than or equal to 1") int size);
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size);
 
     /**
      * Tests the network connection to a specific TPP
