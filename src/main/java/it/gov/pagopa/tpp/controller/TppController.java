@@ -131,11 +131,17 @@ public interface TppController {
      * At least one filter should be provided. When {@code entityId} is present it takes precedence
      * over {@code businessName}. The {@code size} is capped by a configured maximum to protect
      * database resources.
+     * <p>
+     * The content of each result only contains the fields requested via {@code fields} (matching
+     * the properties of {@link TppDTOWithoutTokenSection}), reducing the response payload size.
+     * When {@code fields} is omitted, the default grid fields are returned: {@code businessName},
+     * {@code entityId}, {@code isPaymentEnabled}, {@code tppId}, {@code state}, {@code lastUpdateDate}.
      *
      * @param entityId     optional exact entity identifier filter
      * @param businessName optional partial, case-insensitive business name filter
      * @param page         zero-based page index (default 0)
      * @param size         page size (default 10, capped by the configured maximum)
+     * @param fields       optional override of the fields to return for each TPP
      * @return a {@link Mono} containing a {@link ResponseEntity} with the paginated
      *          {@link TppSearchResponseDTO}
      */
@@ -144,7 +150,8 @@ public interface TppController {
             @RequestParam(required = false) String entityId,
             @RequestParam(required = false) String businessName,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) List<String> fields);
 
     /**
      * Tests the network connection to a specific TPP

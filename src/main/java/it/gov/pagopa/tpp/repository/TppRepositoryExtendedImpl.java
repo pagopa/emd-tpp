@@ -1,6 +1,7 @@
 package it.gov.pagopa.tpp.repository;
 
 import it.gov.pagopa.tpp.model.Tpp;
+import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -8,6 +9,7 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,6 +25,7 @@ public class TppRepositoryExtendedImpl implements TppRepositoryExtended {
 
     private static final String FIELD_ENTITY_ID = "entityId";
     private static final String FIELD_BUSINESS_NAME = "businessName";
+    private static final String FIELD_TPP_ID = "tppId";
 
     private final ReactiveMongoTemplate reactiveMongoTemplate;
 
@@ -34,9 +37,13 @@ public class TppRepositoryExtendedImpl implements TppRepositoryExtended {
      * {@inheritDoc}
      */
     @Override
-    public Flux<Tpp> searchTpps(String entityId, String businessName, int page, int size) {
+    public Flux<Tpp> searchTpps(String entityId, String businessName, int page, int size, Set<String> fields) {
         Query query = buildCriteriaQuery(entityId, businessName)
                 .with(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, FIELD_BUSINESS_NAME)));
+        if (!CollectionUtils.isEmpty(fields)) {
+            fields.forEach(field -> query.fields().include(field));
+            query.fields().include(FIELD_TPP_ID);
+        }
         return reactiveMongoTemplate.find(query, Tpp.class);
     }
 

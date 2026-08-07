@@ -416,7 +416,7 @@ class TppControllerTest {
         .totalPages(1)
         .build();
 
-    Mockito.when(tppService.searchTpps("entityId01234567", null, 0, 10))
+    Mockito.when(tppService.searchTpps("entityId01234567", null, 0, 10, null))
         .thenReturn(Mono.just(serviceResponse));
 
     webClient.get()
@@ -448,7 +448,7 @@ class TppControllerTest {
         .totalPages(1)
         .build();
 
-    Mockito.when(tppService.searchTpps(null, "business", 0, 10))
+    Mockito.when(tppService.searchTpps(null, "business", 0, 10, null))
         .thenReturn(Mono.just(serviceResponse));
 
     webClient.get()
@@ -475,7 +475,7 @@ class TppControllerTest {
         .totalPages(0)
         .build();
 
-    Mockito.when(tppService.searchTpps(null, "business", 0, 10))
+    Mockito.when(tppService.searchTpps(null, "business", 0, 10, null))
         .thenReturn(Mono.just(serviceResponse));
 
     webClient.get()
@@ -503,7 +503,7 @@ class TppControllerTest {
         .totalPages(0)
         .build();
 
-    Mockito.when(tppService.searchTpps(null, "business", -1, 10))
+    Mockito.when(tppService.searchTpps(null, "business", -1, 10, null))
         .thenReturn(Mono.just(serviceResponse));
 
     webClient.get()
@@ -532,7 +532,7 @@ class TppControllerTest {
         .totalPages(0)
         .build();
 
-    Mockito.when(tppService.searchTpps(null, "business", 0, 0))
+    Mockito.when(tppService.searchTpps(null, "business", 0, 0, null))
         .thenReturn(Mono.just(serviceResponse));
 
     webClient.get()

@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.service;
 
 import it.gov.pagopa.common.utils.Utils;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
+import it.gov.pagopa.tpp.constants.TppConstants;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
@@ -96,35 +97,68 @@ public class TppServiceImpl implements TppService {
      * computed from a lightweight {@code count} query executed in parallel with the page fetch.
      */
     @Override
-    public Mono<TppSearchResponseDTO> searchTpps(String entityId, String businessName, int page, int size) {
-        int safePage = Math.max(page, 0);
-        int safeSize = normalizePageSize(size);
+    public Mono<TppSearchResponseDTO> searchTpps(String entityId, String businessName, int page, int size, List<String> fields) {
+        return Mono.defer(() -> {
+            int safePage = Math.max(page, 0);
+            int safeSize = normalizePageSize(size);
+            Set<String> safeFields = resolveSearchFields(fields);
 
-        log.info("[TPP-SERVICE][SEARCH] Received search request - entityId present: {}, businessName present: {}, page: {}, size: {}",
-                entityId != null && !entityId.isBlank(), businessName != null && !businessName.isBlank(), safePage, safeSize);
+            log.info("[TPP-SERVICE][SEARCH] Received search request - entityId present: {}, businessName present: {}, page: {}, size: {}, fields: {}",
+                    entityId != null && !entityId.isBlank(), businessName != null && !businessName.isBlank(), safePage, safeSize, safeFields);
 
-        Mono<List<TppDTOWithoutTokenSection>> contentMono = tppRepository.searchTpps(entityId, businessName, safePage, safeSize)
-                .map(tppWithoutTokenSectionMapperToDTO::map)
-                .collectList();
+            Mono<List<TppDTOWithoutTokenSection>> contentMono = tppRepository.searchTpps(entityId, businessName, safePage, safeSize, safeFields)
+                    .map(tpp -> tppWithoutTokenSectionMapperToDTO.map(tpp, safeFields))
+                    .collectList();
 
-        Mono<Long> countMono = tppRepository.countTpps(entityId, businessName);
+            Mono<Long> countMono = tppRepository.countTpps(entityId, businessName);
 
-        return Mono.zip(contentMono, countMono)
-                .map(tuple -> {
-                    List<TppDTOWithoutTokenSection> content = tuple.getT1();
-                    long totalElements = tuple.getT2();
-                    int totalPages = (int) Math.ceil((double) totalElements / safeSize);
-                    return TppSearchResponseDTO.builder()
-                            .content(content)
-                            .page(safePage)
-                            .size(safeSize)
-                            .totalElements(totalElements)
-                            .totalPages(totalPages)
-                            .build();
-                })
-                .doOnSuccess(result -> log.info("[TPP-SERVICE][SEARCH] Search completed - returned {} elements, totalElements: {}, totalPages: {}",
-                        result.getContent().size(), result.getTotalElements(), result.getTotalPages()))
-                .doOnError(error -> log.error("[TPP-SERVICE][SEARCH] Error while searching TPPs: {}", error.getMessage()));
+            return Mono.zip(contentMono, countMono)
+                    .map(tuple -> {
+                        List<TppDTOWithoutTokenSection> content = tuple.getT1();
+                        long totalElements = tuple.getT2();
+                        int totalPages = (int) Math.ceil((double) totalElements / safeSize);
+                        return TppSearchResponseDTO.builder()
+                                .content(content)
+                                .page(safePage)
+                                .size(safeSize)
+                                .totalElements(totalElements)
+                                .totalPages(totalPages)
+                                .build();
+                    });
+        })
+        .doOnSuccess(result -> log.info("[TPP-SERVICE][SEARCH] Search completed - returned {} elements, totalElements: {}, totalPages: {}",
+                result.getContent().size(), result.getTotalElements(), result.getTotalPages()))
+        .doOnError(error -> log.error("[TPP-SERVICE][SEARCH] Error while searching TPPs: {}", error.getMessage()));
+    }
+
+    /**
+     * Resolves the effective set of fields to project/return for the {@code searchTpps}
+     * operation. Falls back to the default grid fields when none are provided, otherwise
+     * validates the requested fields against the allowed set, throwing an
+     * {@code INVALID_SEARCH_FIELD} exception if any unknown field is requested.
+     * <p>
+     * Called from within a {@code Mono.defer}, so any exception thrown here is correctly
+     * captured and propagated as a reactive error signal instead of being thrown synchronously.
+     *
+     * @param fields the raw fields requested by the caller (nullable/empty)
+     * @return the validated, effective set of fields to use
+     */
+    private Set<String> resolveSearchFields(List<String> fields) {
+        if (fields == null || fields.isEmpty()) {
+            return TppConstants.SearchFields.DEFAULT_GRID_FIELDS;
+        }
+
+        Set<String> requestedFields = new HashSet<>(fields);
+        Set<String> invalidFields = requestedFields.stream()
+                .filter(field -> !TppConstants.SearchFields.ALLOWED.contains(field))
+                .collect(Collectors.toSet());
+
+        if (!invalidFields.isEmpty()) {
+            throw exceptionMap.throwException(ExceptionName.INVALID_SEARCH_FIELD,
+                    ExceptionMessage.INVALID_SEARCH_FIELD + ": " + invalidFields);
+        }
+
+        return requestedFields;
     }
 
     /**

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 import it.gov.pagopa.tpp.model.Tpp;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -26,7 +27,7 @@ class TppRepositoryExtendedImplTest {
         Mockito.when(reactiveMongoTemplate.find(any(Query.class), eq(Tpp.class)))
             .thenReturn(Flux.just(mockTpp));
 
-        StepVerifier.create(repository.searchTpps("entityId01234567", null, 0, 10))
+        StepVerifier.create(repository.searchTpps("entityId01234567", null, 0, 10, null))
             .expectNext(mockTpp)
             .verifyComplete();
 
@@ -47,7 +48,7 @@ class TppRepositoryExtendedImplTest {
         Mockito.when(reactiveMongoTemplate.find(any(Query.class), eq(Tpp.class)))
             .thenReturn(Flux.just(mockTpp));
 
-        StepVerifier.create(repository.searchTpps(null, "business", 1, 20))
+        StepVerifier.create(repository.searchTpps(null, "business", 1, 20, null))
             .expectNext(mockTpp)
             .verifyComplete();
 
@@ -62,6 +63,26 @@ class TppRepositoryExtendedImplTest {
         Assertions.assertTrue(queryJson.contains("\"options\": \"i\"") || queryJson.contains("options"));
         Assertions.assertEquals(20, executedQuery.getLimit());
         Assertions.assertEquals(20, executedQuery.getSkip());
+    }
+
+    @Test
+    void searchTpps_withFields_appliesProjectionIncludingTppId() {
+        Tpp mockTpp = getMockTpp();
+        Mockito.when(reactiveMongoTemplate.find(any(Query.class), eq(Tpp.class)))
+            .thenReturn(Flux.just(mockTpp));
+
+        StepVerifier.create(repository.searchTpps(null, "business", 0, 10, Set.of("businessName", "state")))
+            .expectNext(mockTpp)
+            .verifyComplete();
+
+        ArgumentCaptor<Query> captor = ArgumentCaptor.forClass(Query.class);
+        Mockito.verify(reactiveMongoTemplate).find(captor.capture(), eq(Tpp.class));
+
+        Query executedQuery = captor.getValue();
+        String fieldsJson = executedQuery.getFieldsObject().toJson();
+        Assertions.assertTrue(fieldsJson.contains("businessName"));
+        Assertions.assertTrue(fieldsJson.contains("state"));
+        Assertions.assertTrue(fieldsJson.contains("tppId"));
     }
 
     @Test

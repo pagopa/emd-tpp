@@ -1,5 +1,6 @@
 package it.gov.pagopa.tpp.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
 import it.gov.pagopa.tpp.model.Contact;
@@ -16,10 +17,15 @@ import java.util.HashMap;
 
 /**
  * Data Transfer Object representing a TPP entity without token information.
+ * <p>
+ * Fields are serialized only when populated ({@code @JsonInclude(NON_NULL)}) so that, when used
+ * as the search result projection, only the requested/default fields are actually present in the
+ * JSON payload, keeping the response as small as possible.
  */
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TppDTOWithoutTokenSection {
     private String tppId;
 

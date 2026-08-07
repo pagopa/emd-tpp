@@ -1,6 +1,7 @@
 package it.gov.pagopa.tpp.repository;
 
 import it.gov.pagopa.tpp.model.Tpp;
+import java.util.Set;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,15 +22,19 @@ public interface TppRepositoryExtended {
      *     match ({@code CONTAINS}) is applied.</li>
      * </ul>
      * Pagination is applied through {@code skip}/{@code limit} so that only the requested
-     * page is fetched from the database.
+     * page is fetched from the database. When {@code fields} is provided, only those fields
+     * (plus {@code tppId}) are fetched from the database (projection pushdown), reducing the
+     * amount of data transferred from MongoDB.
      *
      * @param entityId     the exact entity identifier to match (nullable)
      * @param businessName the partial, case-insensitive business name to match (nullable)
      * @param page         the zero-based page index
      * @param size         the page size (already capped by the service layer)
+     * @param fields       the set of {@code Tpp}/{@code TppDTOWithoutTokenSection} field names to
+     *                     project (nullable/empty means all fields are fetched)
      * @return a {@link Flux} emitting the {@link Tpp} entities of the requested page
      */
-    Flux<Tpp> searchTpps(String entityId, String businessName, int page, int size);
+    Flux<Tpp> searchTpps(String entityId, String businessName, int page, int size, Set<String> fields);
 
     /**
      * Counts the total number of TPPs matching the given search criteria.

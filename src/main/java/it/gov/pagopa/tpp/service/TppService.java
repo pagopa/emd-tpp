@@ -25,14 +25,22 @@ public interface TppService {
      * otherwise a {@code CONTAINS} match on {@code businessName} is used. Pagination is
      * pushed down to the database and the requested {@code size} is capped by a configured
      * maximum to protect database resources.
+     * <p>
+     * The returned content only contains the fields requested via {@code fields} (matching
+     * {@link it.gov.pagopa.tpp.constants.TppConstants.SearchFields}), reducing the response
+     * payload size. When {@code fields} is {@code null}/empty, the default grid fields are
+     * returned: {@code businessName}, {@code entityId}, {@code isPaymentEnabled}, {@code tppId},
+     * {@code state}, {@code lastUpdateDate}.
      *
      * @param entityId     the exact entity identifier to match (nullable)
      * @param businessName the partial, case-insensitive business name to match (nullable)
      * @param page         the zero-based page index
      * @param size         the requested page size
+     * @param fields       optional override of the fields to return for each TPP (nullable/empty
+     *                     falls back to the default grid fields)
      * @return a {@link Mono} containing the paginated {@link TppSearchResponseDTO}
      */
-    Mono<TppSearchResponseDTO> searchTpps(String entityId, String businessName, int page, int size);
+    Mono<TppSearchResponseDTO> searchTpps(String entityId, String businessName, int page, int size, List<String> fields);
 
     /**
      * Retrieves a list of eenabled tpp or tpp with whitelistRecipient field containing the recipientId.
