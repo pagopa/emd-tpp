@@ -1,10 +1,12 @@
 package it.gov.pagopa.tpp.dto.mapper;
 
+import it.gov.pagopa.tpp.constants.TppConstants.SearchFields;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.model.Tpp;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -78,5 +80,43 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
                 .messageTemplate(templateToUse)
                 .whitelistRecipient(tpp.getWhitelistRecipient())
                 .build();
+    }
+
+    /**
+     * Maps a {@link Tpp} domain object to a {@link TppDTOWithoutTokenSection}, populating only
+     * the requested {@code fields} (plus {@code tppId}, which is always included as row
+     * identifier). Used by the search projection to keep the response payload small, mirroring
+     * the fields already projected out of MongoDB.
+     *
+     * @param tpp    the domain entity to selectively map
+     * @param fields the set of field names (matching {@link SearchFields}) to populate
+     * @return a new {@link TppDTOWithoutTokenSection} instance containing only the requested fields
+     */
+    public TppDTOWithoutTokenSection map(Tpp tpp, Set<String> fields) {
+        TppDTOWithoutTokenSection.TppDTOWithoutTokenSectionBuilder<?, ?> builder = TppDTOWithoutTokenSection.builder()
+                .tppId(tpp.getTppId());
+
+        if (fields.contains(SearchFields.CLIENT_ID)) builder.clientId(tpp.getClientId());
+        if (fields.contains(SearchFields.ENTITY_ID)) builder.entityId(tpp.getEntityId());
+        if (fields.contains(SearchFields.ID_PSP)) builder.idPsp(tpp.getIdPsp());
+        if (fields.contains(SearchFields.BUSINESS_NAME)) builder.businessName(tpp.getBusinessName());
+        if (fields.contains(SearchFields.LEGAL_ADDRESS)) builder.legalAddress(tpp.getLegalAddress());
+        if (fields.contains(SearchFields.MESSAGE_URL)) builder.messageUrl(tpp.getMessageUrl());
+        if (fields.contains(SearchFields.AUTHENTICATION_URL)) builder.authenticationUrl(tpp.getAuthenticationUrl());
+        if (fields.contains(SearchFields.AUTHENTICATION_TYPE)) builder.authenticationType(tpp.getAuthenticationType());
+        if (fields.contains(SearchFields.CONTACT)) builder.contact(tpp.getContact());
+        if (fields.contains(SearchFields.STATE)) builder.state(tpp.getState());
+        if (fields.contains(SearchFields.CREATION_DATE)) builder.creationDate(tpp.getCreationDate());
+        if (fields.contains(SearchFields.LAST_UPDATE_DATE)) builder.lastUpdateDate(tpp.getLastUpdateDate());
+        if (fields.contains(SearchFields.PSP_DENOMINATION)) builder.pspDenomination(tpp.getPspDenomination());
+        if (fields.contains(SearchFields.AGENT_LINKS)) builder.agentLinks(tpp.getAgentLinks());
+        if (fields.contains(SearchFields.IS_PAYMENT_ENABLED)) builder.isPaymentEnabled(tpp.getIsPaymentEnabled());
+        if (fields.contains(SearchFields.WHITELIST_RECIPIENT)) builder.whitelistRecipient(tpp.getWhitelistRecipient());
+        if (fields.contains(SearchFields.MESSAGE_TEMPLATE)) {
+            boolean hasCustomTemplate = StringUtils.hasText(tpp.getMessageTemplate());
+            builder.messageTemplate(hasCustomTemplate ? tpp.getMessageTemplate() : defaultTemplateContent);
+        }
+
+        return builder.build();
     }
 }

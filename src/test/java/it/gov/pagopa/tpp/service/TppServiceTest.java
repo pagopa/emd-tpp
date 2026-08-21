@@ -123,6 +123,31 @@ class TppServiceTest {
             dto.setWhitelistRecipient(tpp.getWhitelistRecipient());
             return dto;
         });
+
+        Mockito.when(tppWithoutTokenSectionMapperToDTO.map(any(Tpp.class), any())).thenAnswer(invocation -> {
+            Tpp tpp = invocation.getArgument(0);
+            java.util.Set<String> fields = invocation.getArgument(1);
+            TppDTOWithoutTokenSection.TppDTOWithoutTokenSectionBuilder<?, ?> builder =
+                    TppDTOWithoutTokenSection.builder().tppId(tpp.getTppId());
+            if (fields.contains("clientId")) builder.clientId(tpp.getClientId());
+            if (fields.contains("entityId")) builder.entityId(tpp.getEntityId());
+            if (fields.contains("idPsp")) builder.idPsp(tpp.getIdPsp());
+            if (fields.contains("businessName")) builder.businessName(tpp.getBusinessName());
+            if (fields.contains("legalAddress")) builder.legalAddress(tpp.getLegalAddress());
+            if (fields.contains("messageUrl")) builder.messageUrl(tpp.getMessageUrl());
+            if (fields.contains("authenticationUrl")) builder.authenticationUrl(tpp.getAuthenticationUrl());
+            if (fields.contains("authenticationType")) builder.authenticationType(tpp.getAuthenticationType());
+            if (fields.contains("contact")) builder.contact(tpp.getContact());
+            if (fields.contains("state")) builder.state(tpp.getState());
+            if (fields.contains("creationDate")) builder.creationDate(tpp.getCreationDate());
+            if (fields.contains("lastUpdateDate")) builder.lastUpdateDate(tpp.getLastUpdateDate());
+            if (fields.contains("pspDenomination")) builder.pspDenomination(tpp.getPspDenomination());
+            if (fields.contains("agentLinks")) builder.agentLinks(tpp.getAgentLinks());
+            if (fields.contains("isPaymentEnabled")) builder.isPaymentEnabled(tpp.getIsPaymentEnabled());
+            if (fields.contains("messageTemplate")) builder.messageTemplate(tpp.getMessageTemplate());
+            if (fields.contains("whitelistRecipient")) builder.whitelistRecipient(tpp.getWhitelistRecipient());
+            return builder.build();
+        });
     }
 
 
@@ -942,5 +967,155 @@ class TppServiceTest {
         StepVerifier.create(tppService.updateRecipientIdOnWhitelist(mockTpp.getTppId(), null))
             .expectNextMatches(result -> result.getTppId().equals(mockTpp.getTppId()))
             .verifyComplete();
+    }
+
+    @Test
+    void searchTpps_byEntityId_Ok() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.searchTpps(Mockito.eq("entityId01234567"), Mockito.isNull(), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.just(mockTpp));
+        Mockito.when(tppRepository.countTpps("entityId01234567", null))
+            .thenReturn(Mono.just(1L));
+
+        StepVerifier.create(tppService.searchTpps("entityId01234567", null, 0, 10, null))
+            .expectNextMatches(result ->
+                result.getContent().size() == 1 &&
+                result.getContent().get(0).getEntityId().equals("entityId01234567") &&
+                result.getPage() == 0 &&
+                result.getSize() == 10 &&
+                result.getTotalElements() == 1L &&
+                result.getTotalPages() == 1)
+            .verifyComplete();
+    }
+
+    @Test
+    void searchTpps_byBusinessName_Ok() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.just(mockTpp));
+        Mockito.when(tppRepository.countTpps(null, "business"))
+            .thenReturn(Mono.just(1L));
+
+        StepVerifier.create(tppService.searchTpps(null, "business", 0, 10, null))
+            .expectNextMatches(result ->
+                result.getContent().size() == 1 &&
+                result.getContent().get(0).getBusinessName().equals("businessName") &&
+                result.getTotalElements() == 1L &&
+                result.getTotalPages() == 1)
+            .verifyComplete();
+    }
+
+    @Test
+    void searchTpps_multiplePages_computesTotalPages() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.just(mockTpp));
+        Mockito.when(tppRepository.countTpps(null, "business"))
+            .thenReturn(Mono.just(25L));
+
+        StepVerifier.create(tppService.searchTpps(null, "business", 0, 10, null))
+            .expectNextMatches(result ->
+                result.getTotalElements() == 25L &&
+                result.getTotalPages() == 3)
+            .verifyComplete();
+    }
+
+    @Test
+    void searchTpps_sizeAboveMax_isCappedToConfiguredMax() {
+        Tpp mockTpp = getMockTpp();
+
+        // requested size 500 must be capped to the configured max (100)
+        Mockito.when(tppRepository.searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(100), Mockito.any()))
+            .thenReturn(Flux.just(mockTpp));
+        Mockito.when(tppRepository.countTpps(null, "business"))
+            .thenReturn(Mono.just(1L));
+
+        StepVerifier.create(tppService.searchTpps(null, "business", 0, 500, null))
+            .expectNextMatches(result -> result.getSize() == 100)
+            .verifyComplete();
+
+        Mockito.verify(tppRepository).searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(100), Mockito.any());
+    }
+
+    @Test
+    void searchTpps_nonPositiveSize_fallsBackToDefault() {
+        Tpp mockTpp = getMockTpp();
+
+        // requested size 0 must fall back to the default (10)
+        Mockito.when(tppRepository.searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.just(mockTpp));
+        Mockito.when(tppRepository.countTpps(null, "business"))
+            .thenReturn(Mono.just(1L));
+
+        StepVerifier.create(tppService.searchTpps(null, "business", 0, 0, null))
+            .expectNextMatches(result -> result.getSize() == 10)
+            .verifyComplete();
+
+        Mockito.verify(tppRepository).searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any());
+    }
+
+    @Test
+    void searchTpps_negativePage_isNormalizedToZero() {
+        Mockito.when(tppRepository.searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.empty());
+        Mockito.when(tppRepository.countTpps(null, "business"))
+            .thenReturn(Mono.just(0L));
+
+        StepVerifier.create(tppService.searchTpps(null, "business", -5, 10, null))
+            .expectNextMatches(result ->
+                result.getPage() == 0 &&
+                result.getContent().isEmpty() &&
+                result.getTotalElements() == 0L &&
+                result.getTotalPages() == 0)
+            .verifyComplete();
+
+        Mockito.verify(tppRepository).searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any());
+    }
+
+    @Test
+    void searchTpps_noResults_returnsEmptyPage() {
+        Mockito.when(tppRepository.searchTpps(Mockito.eq("unknown"), Mockito.isNull(), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.empty());
+        Mockito.when(tppRepository.countTpps("unknown", null))
+            .thenReturn(Mono.just(0L));
+
+        StepVerifier.create(tppService.searchTpps("unknown", null, 0, 10, null))
+            .expectNextMatches(result ->
+                result.getContent().isEmpty() &&
+                result.getTotalElements() == 0L &&
+                result.getTotalPages() == 0)
+            .verifyComplete();
+    }
+
+    @Test
+    void searchTpps_customFields_returnsOnlyRequestedFieldsPlusTppId() {
+        Tpp mockTpp = getMockTpp();
+
+        Mockito.when(tppRepository.searchTpps(Mockito.isNull(), Mockito.eq("business"), Mockito.eq(0), Mockito.eq(10), Mockito.any()))
+            .thenReturn(Flux.just(mockTpp));
+        Mockito.when(tppRepository.countTpps(null, "business"))
+            .thenReturn(Mono.just(1L));
+
+        StepVerifier.create(tppService.searchTpps(null, "business", 0, 10, List.of("clientId")))
+            .expectNextMatches(result -> {
+                TppDTOWithoutTokenSection dto = result.getContent().get(0);
+                return dto.getTppId() != null
+                        && dto.getClientId() != null
+                        && dto.getBusinessName() == null
+                        && dto.getEntityId() == null
+                        && dto.getState() == null;
+            })
+            .verifyComplete();
+    }
+
+    @Test
+    void searchTpps_invalidField_throwsBadRequest() {
+        StepVerifier.create(tppService.searchTpps(null, "business", 0, 10, List.of("notAField")))
+            .expectErrorMatches(error -> error instanceof ClientExceptionWithBody
+                    && ((ClientExceptionWithBody) error).getHttpStatus() == org.springframework.http.HttpStatus.BAD_REQUEST)
+            .verify();
     }
 }

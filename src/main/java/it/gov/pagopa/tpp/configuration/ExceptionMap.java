@@ -83,6 +83,14 @@ public class ExceptionMap {
             )
         );
 
+        exceptions.put(ExceptionName.INVALID_SEARCH_FIELD, message ->
+            new ClientExceptionWithBody(
+                HttpStatus.BAD_REQUEST,
+                ExceptionCode.INVALID_SEARCH_FIELD,
+                message
+            )
+        );
+
     }
     /**
      * Creates and returns a runtime exception based on the specified exception key and message.

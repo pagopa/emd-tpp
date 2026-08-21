@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppIdList;
+import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
 import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 import java.util.Map;
@@ -402,6 +403,151 @@ class TppControllerTest {
         .exchange()
         .expectStatus().isNoContent()
         .expectBody().isEmpty();
+  }
+
+  @Test
+  void searchTpps_byEntityId_Ok() {
+    TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+    TppSearchResponseDTO serviceResponse = TppSearchResponseDTO.builder()
+        .content(List.of(tppDtoNoToken))
+        .page(0)
+        .size(10)
+        .totalElements(1L)
+        .totalPages(1)
+        .build();
+
+    Mockito.when(tppService.searchTpps("entityId01234567", null, 0, 10, null))
+        .thenReturn(Mono.just(serviceResponse));
+
+    webClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/emd/tpp/search")
+            .queryParam("entityId", "entityId01234567")
+            .queryParam("page", 0)
+            .queryParam("size", 10)
+            .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(TppSearchResponseDTO.class)
+        .consumeWith(response -> {
+          TppSearchResponseDTO resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertEquals(1, resultResponse.getContent().size());
+          Assertions.assertEquals(1L, resultResponse.getTotalElements());
+          Assertions.assertEquals(1, resultResponse.getTotalPages());
+        });
+  }
+
+  @Test
+  void searchTpps_byBusinessName_Ok() {
+    TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+    TppSearchResponseDTO serviceResponse = TppSearchResponseDTO.builder()
+        .content(List.of(tppDtoNoToken))
+        .page(0)
+        .size(10)
+        .totalElements(1L)
+        .totalPages(1)
+        .build();
+
+    Mockito.when(tppService.searchTpps(null, "business", 0, 10, null))
+        .thenReturn(Mono.just(serviceResponse));
+
+    webClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/emd/tpp/search")
+            .queryParam("businessName", "business")
+            .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(TppSearchResponseDTO.class)
+        .consumeWith(response -> {
+          TppSearchResponseDTO resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertEquals(1, resultResponse.getContent().size());
+        });
+  }
+
+  @Test
+  void searchTpps_defaultPagination_Ok() {
+    TppSearchResponseDTO serviceResponse = TppSearchResponseDTO.builder()
+        .content(List.of())
+        .page(0)
+        .size(10)
+        .totalElements(0L)
+        .totalPages(0)
+        .build();
+
+    Mockito.when(tppService.searchTpps(null, "business", 0, 10, null))
+        .thenReturn(Mono.just(serviceResponse));
+
+    webClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/emd/tpp/search")
+            .queryParam("businessName", "business")
+            .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(TppSearchResponseDTO.class)
+        .consumeWith(response -> {
+          TppSearchResponseDTO resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertTrue(resultResponse.getContent().isEmpty());
+        });
+  }
+
+  @Test
+  void searchTpps_negativePage_delegatesToServiceAndNormalizes() {
+    // negative page is passed through to the service, which normalizes it gracefully
+    TppSearchResponseDTO serviceResponse = TppSearchResponseDTO.builder()
+        .content(List.of())
+        .page(0)
+        .size(10)
+        .totalElements(0L)
+        .totalPages(0)
+        .build();
+
+    Mockito.when(tppService.searchTpps(null, "business", -1, 10, null))
+        .thenReturn(Mono.just(serviceResponse));
+
+    webClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/emd/tpp/search")
+            .queryParam("businessName", "business")
+            .queryParam("page", -1)
+            .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(TppSearchResponseDTO.class)
+        .consumeWith(response -> {
+          TppSearchResponseDTO resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertEquals(0, resultResponse.getPage());
+        });
+  }
+
+  @Test
+  void searchTpps_zeroSize_delegatesToServiceAndNormalizes() {
+    // size 0 is passed through to the service, which falls back to the default page size
+    TppSearchResponseDTO serviceResponse = TppSearchResponseDTO.builder()
+        .content(List.of())
+        .page(0)
+        .size(10)
+        .totalElements(0L)
+        .totalPages(0)
+        .build();
+
+    Mockito.when(tppService.searchTpps(null, "business", 0, 0, null))
+        .thenReturn(Mono.just(serviceResponse));
+
+    webClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/emd/tpp/search")
+            .queryParam("businessName", "business")
+            .queryParam("size", 0)
+            .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(TppSearchResponseDTO.class)
+        .consumeWith(response -> {
+          TppSearchResponseDTO resultResponse = response.getResponseBody();
+          Assertions.assertNotNull(resultResponse);
+          Assertions.assertEquals(10, resultResponse.getSize());
+        });
   }
 
 }

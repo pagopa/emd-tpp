@@ -123,6 +123,20 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
+    public Mono<ResponseEntity<TppSearchResponseDTO>> searchTpps(String entityId, String businessName, int page, int size, List<String> fields) {
+        return tppService.searchTpps(
+                        entityId != null ? inputSanitization(entityId) : null,
+                        businessName != null ? inputSanitization(businessName) : null,
+                        page,
+                        size,
+                        fields != null ? inputSanitization(fields) : null)
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Mono<ResponseEntity<NetworkResponseDTO>> testConnection(String tppName) {
         return tppService.testConnection(inputSanitization(tppName))
                 .map(ResponseEntity::ok);
