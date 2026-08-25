@@ -23,7 +23,7 @@ public class TppConnectorAuthImpl implements TppConnectorAuth {
 
     @Override
     public Mono<Map<String, Object>> testConnection(String finalUrl, String contentType, MultiValueMap<String, String> formData) {
-        log.info("[TPP-CONNECTOR] Calling external Auth API: {}", finalUrl);
+        log.info("[TPP-CONNECTOR] Calling external Auth API");
 
         return webClient.post()
                 .uri(finalUrl)

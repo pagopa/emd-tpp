@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.service;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
+import it.gov.pagopa.tpp.connector.tpp.TppConnectorAuth;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
@@ -76,6 +77,9 @@ class TppServiceTest {
 
     @MockitoBean
     private KeyVaultKey keyVault;
+
+    @MockitoBean
+    private TppConnectorAuth tppConnectorAuth;
 
     @BeforeEach
     void setUp() {
