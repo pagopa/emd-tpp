@@ -1,6 +1,5 @@
 package it.gov.pagopa.tpp.service;
 
-import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
@@ -195,4 +194,20 @@ public interface TppService {
      * @throws TPP_NOT_ONBOARDED if the TPP does not exist
      */
     Mono<TppDTO> updateRecipientIdOnWhitelist(String tppId, List<String> recipientIds);
+
+    /**
+     * Retrieves a TPP by its identifier, including the decrypted TokenSection.
+     * 
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing the {@link TppDTO} with decrypted sensitive data
+     */
+    Mono<TppDTO> findTpp(String tppId);
+
+    /**
+     * Tests the authentication connection and returns the raw JSON response from the TPP.
+     * 
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing the full JSON response as a Map
+     */
+    Mono<Map<String, Object>> testAuthConnection(String tppId);
 }

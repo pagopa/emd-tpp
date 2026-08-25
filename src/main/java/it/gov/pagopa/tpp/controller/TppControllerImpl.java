@@ -195,4 +195,13 @@ public class TppControllerImpl implements TppController {
         return tppService.updateRecipientIdOnWhitelist(inputSanitization(tppId), recipientIds)
                 .then(Mono.just(ResponseEntity.noContent().build()));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<Map<String, Object>>> testAuthConnection(String tppId) {
+        return tppService.testAuthConnection(inputSanitization(tppId))
+                .map(ResponseEntity::ok);
+    }
 }

@@ -220,4 +220,7 @@ public interface TppController {
      */
     @PutMapping("/{tppId}/whitelist")
     Mono<ResponseEntity<Void>> updateRecipientIdOnWhitelist(@PathVariable String tppId, @RequestBody List<String> recipientIds);
+
+    @GetMapping("/network/connection/test")
+    Mono<ResponseEntity<Map<String, Object>>> testAuthConnection(@RequestParam String tppId);
 }
