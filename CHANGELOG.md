@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/pagopa/emd-tpp/compare/v1.6.3...v1.7.0) (2026-08-25)
+
+
+### Features
+
+* [MMC-961] add tpp search endpoint ([#133](https://github.com/pagopa/emd-tpp/issues/133)) ([c8adba0](https://github.com/pagopa/emd-tpp/commit/c8adba04e7a270e8c43782ba43babcc81eea35e8))
+
 ## [1.6.3](https://github.com/pagopa/emd-tpp/compare/v1.6.2...v1.6.3) (2026-06-29)
 
 
