@@ -22,6 +22,13 @@ public class TppConnectorAuthImpl implements TppConnectorAuth {
         this.webClient = webClientBuilder.build();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Uses {@link WebClient} to perform an asynchronous POST request. The response
+     * is mapped to a generic {@link Map} to allow flexibility in handling
+     * different TPP response formats.
+     */
     @Override
     public Mono<Map<String, Object>> testConnection(String finalUrl, String contentType, MultiValueMap<String, String> formData) {
         log.info("[TPP-CONNECTOR] Calling external Auth API");

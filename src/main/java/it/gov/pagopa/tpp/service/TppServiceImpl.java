@@ -694,13 +694,22 @@ public class TppServiceImpl implements TppService {
         .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-UPDATE] Error replacing whitelist for tppId {}: {}", tppId, error.getMessage()));
   }
 
-  /**
+    /**
      * {@inheritDoc}
-     * 
-     * Recupera un TPP tramite il suo ID. 
-     * Tenta prima la lettura dalla cache (dove i dati sono già decifrati).
-     * Se non presente, interroga il database, decifra la TokenSection tramite Azure Key Vault
-     * e aggiorna la cache prima di restituire il DTO mappato.
+     * <p>
+     * Retrieves a TPP entity by its unique identifier.
+     * <p>
+     * This method implements a multi-level retrieval strategy:
+     * <ul>
+     *   <li>It first attempts to read from the cache, where TPP data is stored in a decrypted state for performance.</li>
+     *   <li>If the TPP is not found in the cache, it queries the database.</li>
+     *   <li>Upon a database hit, the sensitive {@code TokenSection} is decrypted using Azure Key Vault credentials.</li>
+     *   <li>The resulting decrypted entity is then added to the cache to optimize future requests before returning the mapped DTO.</li>
+     * </ul>
+     *
+     * @param tppId the unique identifier of the TPP to be retrieved
+     * @return a {@link Mono} containing the {@link TppDTO} with decrypted sensitive data
+     * @throws it.gov.pagopa.common.web.exception.ClientException if the TPP is not found in either the cache or the database
      */
     @Override
     public Mono<TppDTO> findTpp(String tppId) {
@@ -731,6 +740,11 @@ public class TppServiceImpl implements TppService {
 
     /**
      * {@inheritDoc}
+     * <p>
+     * This implementation fetches the TPP from the cache or database, ensures
+     * sensitive data in the TokenSection is decrypted, and prepares the
+     * multipart/form-data or URL-encoded request by replacing placeholders
+     * defined in the TPP configuration.
      */
     @Override
     public Mono<Map<String, Object>> testAuthConnection(String tppId) {

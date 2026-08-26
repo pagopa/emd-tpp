@@ -205,9 +205,18 @@ public interface TppService {
 
     /**
      * Tests the authentication connection and returns the raw JSON response from the TPP.
+     * <p>
+     * The method performs the following steps:
+     * <ul>
+     *     <li>Retrieves the TPP details and decrypts the {@link TokenSectionDTO}</li>
+     *     <li>Resolves dynamic placeholders in the authentication URL and request body</li>
+     *     <li>Invokes the external TPP authentication endpoint via the connector</li>
+     * </ul>
      * 
      * @param tppId the TPP identifier
-     * @return a {@link Mono} containing the full JSON response as a Map
+     * @return a {@link Mono} containing the full JSON response as a {@link Map}
+     * @throws it.gov.pagopa.common.web.exception.ClientException if the TPP is not found 
+     *         or authentication data is incomplete
      */
     Mono<Map<String, Object>> testAuthConnection(String tppId);
 }
