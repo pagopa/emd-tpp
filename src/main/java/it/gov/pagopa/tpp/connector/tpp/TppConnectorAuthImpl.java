@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.connector.tpp;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.springframework.core.ParameterizedTypeReference;
@@ -31,6 +32,7 @@ public class TppConnectorAuthImpl implements TppConnectorAuth {
                 .bodyValue(formData)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .timeout(Duration.ofSeconds(10))
                 .doOnError(e -> log.error("[TPP-CONNECTOR] Error: {}", e.getMessage()));
     }
 

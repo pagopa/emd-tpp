@@ -29,10 +29,10 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.List;
+import java.util.Map;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.*;
 
 @SpringBootTest(classes = {
     TppServiceImpl.class,
@@ -1120,6 +1120,72 @@ class TppServiceTest {
         StepVerifier.create(tppService.searchTpps(null, "business", 0, 10, List.of("notAField")))
             .expectErrorMatches(error -> error instanceof ClientExceptionWithBody
                     && ((ClientExceptionWithBody) error).getHttpStatus() == org.springframework.http.HttpStatus.BAD_REQUEST)
+            .verify();
+    }
+
+        @Test
+    void testAuthConnection_Ok_WithPlaceholders() {
+        String tppId = "tpp-test-id";
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setTppId(tppId);
+        // Setup URL con placeholder
+        mockTpp.setAuthenticationUrl("https://api.tpp.it/v1/auth/{tenantId}/token");
+        
+        // Setup proprietà aggiuntive
+        mockTpp.getTokenSection().setPathAdditionalProperties(Map.of("{tenantId}", "12345"));
+        mockTpp.getTokenSection().setBodyAdditionalProperties(Map.of("client_id", "myClient"));
+        mockTpp.getTokenSection().setContentType("application/x-www-form-urlencoded");
+
+        Map<String, Object> connectorResponse = Map.of("status", "success", "token", "abc");
+
+        // Mock findTpp flow (getFromMap -> empty, findByTppId -> success)
+        Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.empty());
+        Mockito.when(tppRepository.findByTppId(tppId)).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addDecryptedToMap(any())).thenReturn(Mono.just(true));
+
+        // Verifichiamo che il connettore riceva l'URL correttamente trasformato
+        Mockito.when(tppConnectorAuth.testConnection(
+                eq("https://api.tpp.it/v1/auth/12345/token"), 
+                eq("application/x-www-form-urlencoded"), 
+                any()))
+            .thenReturn(Mono.just(connectorResponse));
+
+        StepVerifier.create(tppService.testAuthConnection(tppId))
+            .expectNextMatches(res -> res.get("token").equals("abc"))
+            .verifyComplete();
+
+        // Verifica che il body contenga i dati aggiuntivi
+        Mockito.verify(tppConnectorAuth).testConnection(anyString(), anyString(), argThat(formData -> 
+            formData.getFirst("client_id").equals("myClient")
+        ));
+    }
+
+    @Test
+    void testAuthConnection_MissingData_Error() {
+        String tppId = "tpp-incomplete";
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setAuthenticationUrl(null); // URL Mancante
+
+        Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.testAuthConnection(tppId))
+            .expectErrorMatches(throwable -> throwable instanceof RuntimeException && 
+                throwable.getMessage().contains("Dati autenticazione mancanti"))
+            .verify();
+    }
+
+    @Test
+    void testAuthConnection_ConnectorError() {
+        String tppId = "tpp-id";
+        Tpp mockTpp = getMockTpp();
+        
+        Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tppConnectorAuth.testConnection(anyString(), anyString(), any()))
+            .thenReturn(Mono.error(new RuntimeException("Connection Refused")));
+
+        StepVerifier.create(tppService.testAuthConnection(tppId))
+            .expectErrorMatches(throwable -> throwable.getMessage().equals("Connection Refused"))
             .verify();
     }
 }

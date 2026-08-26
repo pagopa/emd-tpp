@@ -1,5 +1,9 @@
 package it.gov.pagopa.tpp.controller;
 
+import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
+import it.gov.pagopa.common.web.exception.ErrorManager;
+import it.gov.pagopa.common.web.exception.ServiceExceptionHandler;
+import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.RecipientIdOnWhitelistDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
@@ -16,8 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
@@ -28,6 +34,11 @@ import static it.gov.pagopa.tpp.utils.TestUtils.*;
 import static org.mockito.ArgumentMatchers.*;
 
 @WebFluxTest(TppControllerImpl.class)
+@ContextConfiguration(classes = {
+    TppControllerImpl.class, 
+    ServiceExceptionHandler.class, 
+    ErrorManager.class
+})
 class TppControllerTest {
 
     @MockitoBean
@@ -35,6 +46,9 @@ class TppControllerTest {
 
     @Autowired
     private WebTestClient webClient;
+
+    @MockitoBean
+    private ExceptionMap exceptionMap;
 
     @Test
     void updateTppDetails_Ok() {
@@ -549,5 +563,52 @@ class TppControllerTest {
           Assertions.assertEquals(10, resultResponse.getSize());
         });
   }
+
+      @Test
+    void testAuthConnection_Ok() {
+        String tppId = "tppId";
+        Map<String, Object> mockResponse = Map.of(
+            "access_token", "eyJhbGci...",
+            "token_type", "Bearer",
+            "expires_in", 3600
+        );
+
+        Mockito.when(tppService.testAuthConnection(tppId))
+            .thenReturn(Mono.just(mockResponse));
+
+        webClient.get()
+            .uri(uriBuilder -> uriBuilder.path("/emd/tpp/network/connection/test")
+                .queryParam("tppId", tppId)
+                .build())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .consumeWith(response -> {
+                Map<String, Object> resultResponse = response.getResponseBody();
+                Assertions.assertNotNull(resultResponse);
+                Assertions.assertEquals("Bearer", resultResponse.get("token_type"));
+                Assertions.assertEquals(3600, resultResponse.get("expires_in"));
+            });
+    }
+
+    @Test
+    void testAuthConnection_NotFound() {
+        String tppId = "unknownTpp";
+        
+        var expectedException = new ClientExceptionWithBody(
+                HttpStatus.NOT_FOUND, "TPP_NOT_FOUND", "Tpp not found");
+
+        Mockito.when(tppService.testAuthConnection(tppId))
+                .thenReturn(Mono.error(expectedException));
+
+        webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/emd/tpp/network/connection/test")
+                    .queryParam("tppId", tppId)
+                    .build())
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("TPP_NOT_FOUND");
+    }
 
 }
