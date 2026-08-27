@@ -8,6 +8,7 @@ import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -738,34 +739,36 @@ public class TppServiceImpl implements TppService {
             .doOnError(error -> log.error("[TPP-SERVICE][FIND] Error finding TPP for tppId {}: {}", tppId, error.getMessage()));
     }
 
-    /**
+        /**
      * {@inheritDoc}
      * <p>
      * This implementation fetches the TPP from the cache or database, ensures
      * sensitive data in the TokenSection is decrypted, and prepares the
-     * multipart/form-data or URL-encoded request by replacing placeholders
-     * defined in the TPP configuration.
+     * request by replacing placeholders.
+     * It captures external connectivity errors into a structured DTO instead of 
+     * propagating exceptions.
      */
     @Override
-    public Mono<Map<String, Object>> testAuthConnection(String tppId) {
-        log.info("[TPP-SERVICE][TEST-AUTH] Requesting raw token response for TPP: {}", tppId);
-
-        return findTpp(tppId)
+    public Mono<TppConnectionResponseDTO> testAuthConnection(String tppId) {
+        log.info("[TPP-SERVICE][TEST-AUTH] Initiating connection test for TPP: {}", tppId);
+        
+        return findTpp(tppId) // Recupera TPP (Cache o DB + Decriptazione)
                 .flatMap(tppDto -> {
                     String url = tppDto.getAuthenticationUrl();
                     TokenSection tokenSection = tppDto.getTokenSection();
-
+                    
                     if (url == null || tokenSection == null) {
-                        return Mono.error(new RuntimeException("Dati autenticazione mancanti per TPP: " + tppId));
+                        return Mono.error(new RuntimeException("Authentication data missing for TPP: " + tppId));
                     }
 
-                    // Logica di rimpiazzo parametri (Path e Body)
+                    // Logica di rimpiazzo parametri nel Path (Placeholders)
                     if (tokenSection.getPathAdditionalProperties() != null) {
                         for (Map.Entry<String, String> entry : tokenSection.getPathAdditionalProperties().entrySet()) {
                             url = url.replace(entry.getKey(), entry.getValue());
                         }
                     }
 
+                    // Preparazione del Body (Form Data) e rimpiazzo parametri nell'URL se necessario
                     MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
                     if (tokenSection.getBodyAdditionalProperties() != null) {
                         for (Map.Entry<String, String> entry : tokenSection.getBodyAdditionalProperties().entrySet()) {
@@ -774,15 +777,16 @@ public class TppServiceImpl implements TppService {
                         }
                     }
 
+                    // Determinazione del Content-Type
                     String contentType = tokenSection.getContentType() != null ? 
                                         tokenSection.getContentType() : 
                                         MediaType.APPLICATION_FORM_URLENCODED_VALUE;
 
-                    // Chiamata al connector che restituisce la mappa completa
+                    // Chiamata al connector: restituisce il DTO strutturato (non lancia eccezioni per 4xx/5xx)
                     return tppConnectorAuth.testConnection(url, contentType, formData);
                 })
-                .doOnSuccess(res -> log.info("[TPP-SERVICE][TEST-AUTH] Auth test completed, returned {} fields", res.size()))
-                .doOnError(error -> log.error("[TPP-SERVICE][TEST-AUTH] Auth test failed: {}", error.getMessage()));
+                .doOnSuccess(res -> log.info("[TPP-SERVICE][TEST-AUTH] Auth test completed with status: {}", res.getStatus()))
+                .doOnError(error -> log.error("[TPP-SERVICE][TEST-AUTH] Auth test process failed: {}", error.getMessage()));
     }
 
 }

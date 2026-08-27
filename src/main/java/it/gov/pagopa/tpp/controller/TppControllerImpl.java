@@ -200,7 +200,7 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
-    public Mono<ResponseEntity<Map<String, Object>>> testAuthConnection(String tppId) {
+    public Mono<ResponseEntity<TppConnectionResponseDTO>> testAuthConnection(String tppId) {
         return tppService.testAuthConnection(inputSanitization(tppId))
                 .map(ResponseEntity::ok);
     }

@@ -226,12 +226,13 @@ public interface TppController {
      * <p>
      * This endpoint performs a real-time connectivity test by invoking the TPP's
      * authentication URL. It retrieves the TPP configuration, decrypts the
-     * sensitive credentials, and returns the raw response from the TPP's server.
+     * sensitive credentials, and returns a structured response containing the test outcome,
+     * response time, and eventual error details.
      *
      * @param tppId the unique identifier of the TPP to be tested
-     * @return a {@link Mono} containing a {@link ResponseEntity} with a {@link Map}
-     *         representing the raw JSON response (e.g., token, expires_in) from the TPP
+     * @return a {@link Mono} containing a {@link ResponseEntity} with {@link TppConnectionResponseDTO}
+     *         representing the test result (success, timeout, or external error)
      */
     @GetMapping("/{tppId}/network/connection/test")
-    Mono<ResponseEntity<Map<String, Object>>> testAuthConnection(@PathVariable String tppId);
+    Mono<ResponseEntity<TppConnectionResponseDTO>> testAuthConnection(@PathVariable String tppId);
 }

@@ -6,6 +6,7 @@ import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.connector.tpp.TppConnectorAuth;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -1136,7 +1137,12 @@ class TppServiceTest {
         mockTpp.getTokenSection().setBodyAdditionalProperties(Map.of("client_id", "myClient"));
         mockTpp.getTokenSection().setContentType("application/x-www-form-urlencoded");
 
-        Map<String, Object> connectorResponse = Map.of("status", "success", "token", "abc");
+        TppConnectionResponseDTO connectorResponse = TppConnectionResponseDTO.builder()
+                .status("SUCCESS")
+                .httpStatus(200)
+                .description("Connection established successfully")
+                .responseTime(120L)
+                .build();
 
         // Mock findTpp flow (getFromMap -> empty, findByTppId -> success)
         Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.empty());
@@ -1144,7 +1150,6 @@ class TppServiceTest {
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addDecryptedToMap(any())).thenReturn(Mono.just(true));
 
-        // Verifichiamo che il connettore riceva l'URL correttamente trasformato
         Mockito.when(tppConnectorAuth.testConnection(
                 eq("https://api.tpp.it/v1/auth/12345/token"), 
                 eq("application/x-www-form-urlencoded"), 
@@ -1152,40 +1157,56 @@ class TppServiceTest {
             .thenReturn(Mono.just(connectorResponse));
 
         StepVerifier.create(tppService.testAuthConnection(tppId))
-            .expectNextMatches(res -> res.get("token").equals("abc"))
+            .expectNextMatches(res -> 
+                "SUCCESS".equals(res.getStatus()) && 
+                res.getHttpStatus() == 200 &&
+                "Connection established successfully".equals(res.getDescription())
+            )
             .verifyComplete();
 
-        // Verifica che il body contenga i dati aggiuntivi
+        // Verifica che il body contenga i dati aggiuntivi rimpiazzati correttamente
         Mockito.verify(tppConnectorAuth).testConnection(anyString(), anyString(), argThat(formData -> 
-            formData.getFirst("client_id").equals("myClient")
+            "myClient".equals(formData.getFirst("client_id"))
         ));
     }
 
     @Test
-    void testAuthConnection_MissingData_Error() {
-        String tppId = "tpp-incomplete";
-        Tpp mockTpp = getMockTpp();
-        mockTpp.setAuthenticationUrl(null); // URL Mancante
+void testAuthConnection_MissingData_Error() {
+    String tppId = "tpp-incomplete";
+    Tpp mockTpp = getMockTpp();
+    mockTpp.setAuthenticationUrl(null);
+    
+    Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
 
-        Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
-
-        StepVerifier.create(tppService.testAuthConnection(tppId))
-            .expectErrorMatches(throwable -> throwable instanceof RuntimeException && 
-                throwable.getMessage().contains("Dati autenticazione mancanti"))
-            .verify();
-    }
+    StepVerifier.create(tppService.testAuthConnection(tppId))
+        .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
+            throwable.getMessage().contains("Authentication data missing"))
+        .verify();
+}
 
     @Test
-    void testAuthConnection_ConnectorError() {
+    void testAuthConnection_ConnectorReportsFailure() {
         String tppId = "tpp-id";
         Tpp mockTpp = getMockTpp();
         
+        TppConnectionResponseDTO failureResponse = TppConnectionResponseDTO.builder()
+                .status("FAILURE")
+                .errorType("HTTP_ERROR")
+                .httpStatus(401)
+                .description("External server returned an error: Unauthorized")
+                .build();
+
         Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
+        
         Mockito.when(tppConnectorAuth.testConnection(anyString(), anyString(), any()))
-            .thenReturn(Mono.error(new RuntimeException("Connection Refused")));
+                .thenReturn(Mono.just(failureResponse));
 
         StepVerifier.create(tppService.testAuthConnection(tppId))
-            .expectErrorMatches(throwable -> throwable.getMessage().equals("Connection Refused"))
-            .verify();
+            .expectNextMatches(res -> 
+                "FAILURE".equals(res.getStatus()) && 
+                "HTTP_ERROR".equals(res.getErrorType()) &&
+                res.getHttpStatus() == 401
+            )
+            .verifyComplete();
     }
 }

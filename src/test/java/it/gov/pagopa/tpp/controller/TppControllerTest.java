@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.RecipientIdOnWhitelistDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -564,45 +565,44 @@ class TppControllerTest {
         });
   }
 
-      @Test
+    @Test
     void testAuthConnection_Ok() {
         String tppId = "tppId";
-        Map<String, Object> mockResponse = Map.of(
-            "access_token", "eyJhbGci...",
-            "token_type", "Bearer",
-            "expires_in", 3600
-        );
+        TppConnectionResponseDTO expectedResponse = TppConnectionResponseDTO.builder()
+                .status("SUCCESS")
+                .httpStatus(200)
+                .responseTime(150L)
+                .description("Connection established successfully")
+                .build();
 
         Mockito.when(tppService.testAuthConnection(tppId))
-            .thenReturn(Mono.just(mockResponse));
+            .thenReturn(Mono.just(expectedResponse));
 
         webClient.get()
-            .uri(uriBuilder -> uriBuilder.path("/emd/tpp/" + tppId + "/network/connection/test")
-                .build())
+            .uri(uriBuilder -> uriBuilder.path("/emd/tpp/" + tppId + "/network/connection/test").build())
             .exchange()
             .expectStatus().isOk()
-            .expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .expectBody(TppConnectionResponseDTO.class)
             .consumeWith(response -> {
-                Map<String, Object> resultResponse = response.getResponseBody();
-                Assertions.assertNotNull(resultResponse);
-                Assertions.assertEquals("Bearer", resultResponse.get("token_type"));
-                Assertions.assertEquals(3600, resultResponse.get("expires_in"));
+                TppConnectionResponseDTO result = response.getResponseBody();
+                Assertions.assertNotNull(result);
+                Assertions.assertEquals("SUCCESS", result.getStatus());
+                Assertions.assertEquals(200, result.getHttpStatus());
+                Assertions.assertEquals(150L, result.getResponseTime());
             });
     }
 
     @Test
     void testAuthConnection_NotFound() {
         String tppId = "unknownTpp";
-        
         var expectedException = new ClientExceptionWithBody(
                 HttpStatus.NOT_FOUND, "TPP_NOT_FOUND", "Tpp not found");
-
+        
         Mockito.when(tppService.testAuthConnection(tppId))
                 .thenReturn(Mono.error(expectedException));
 
         webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/emd/tpp/" + tppId + "/network/connection/test")
-                    .build())
+                .uri(uriBuilder -> uriBuilder.path("/emd/tpp/" + tppId + "/network/connection/test").build())
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody()
