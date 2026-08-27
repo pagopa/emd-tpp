@@ -232,6 +232,6 @@ public interface TppController {
      * @return a {@link Mono} containing a {@link ResponseEntity} with a {@link Map}
      *         representing the raw JSON response (e.g., token, expires_in) from the TPP
      */
-    @GetMapping("/network/connection/test")
-    Mono<ResponseEntity<Map<String, Object>>> testAuthConnection(@RequestParam String tppId);
+    @GetMapping("/{tppId}/network/connection/test")
+    Mono<ResponseEntity<Map<String, Object>>> testAuthConnection(@PathVariable String tppId);
 }
