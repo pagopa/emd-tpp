@@ -577,8 +577,7 @@ class TppControllerTest {
             .thenReturn(Mono.just(mockResponse));
 
         webClient.get()
-            .uri(uriBuilder -> uriBuilder.path("/emd/tpp/network/connection/test")
-                .queryParam("tppId", tppId)
+            .uri(uriBuilder -> uriBuilder.path("/emd/tpp/" + tppId + "/network/connection/test")
                 .build())
             .exchange()
             .expectStatus().isOk()
@@ -602,8 +601,7 @@ class TppControllerTest {
                 .thenReturn(Mono.error(expectedException));
 
         webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/emd/tpp/network/connection/test")
-                    .queryParam("tppId", tppId)
+                .uri(uriBuilder -> uriBuilder.path("/emd/tpp/" + tppId + "/network/connection/test")
                     .build())
                 .exchange()
                 .expectStatus().isNotFound()
