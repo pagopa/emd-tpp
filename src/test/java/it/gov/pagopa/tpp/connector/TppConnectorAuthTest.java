@@ -30,11 +30,10 @@ class TppConnectorAuthTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // Avviamo un nuovo server per ogni test
+        // New mock server for each test to ensure isolation
         mockWebServer = new MockWebServer();
         mockWebServer.start();
         
-        // Configuriamo il WebClient per puntare all'istanza corrente
         String baseUrl = mockWebServer.url("/").toString();
         WebClient.Builder webClientBuilder = WebClient.builder().baseUrl(baseUrl);
         tppConnectorAuth = new TppConnectorAuthImpl(webClientBuilder);
