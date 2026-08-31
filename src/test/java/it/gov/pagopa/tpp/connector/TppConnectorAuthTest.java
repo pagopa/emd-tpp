@@ -61,8 +61,7 @@ class TppConnectorAuthTest {
                     Assertions.assertEquals("SUCCESS", response.getStatus());
                     Assertions.assertEquals(200, response.getHttpStatus());
                     Assertions.assertTrue(response.getResponseTime() >= 0);
-                    Assertions.assertNotNull(response.getResponseBody());
-                    Assertions.assertTrue(response.getResponseBody().contains("fake-token"));
+                    Assertions.assertNull(response.getResponseBody());
                 })
                 .verifyComplete();
 

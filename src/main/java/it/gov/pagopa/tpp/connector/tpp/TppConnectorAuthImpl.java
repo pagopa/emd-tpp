@@ -45,9 +45,21 @@ public class TppConnectorAuthImpl implements TppConnectorAuth {
         long startTime = System.currentTimeMillis();
         log.info("[TPP-CONNECTOR] Calling external Auth API");
 
+        final MediaType mediaType;
+        try {
+                mediaType = MediaType.valueOf(contentType);
+        } catch (IllegalArgumentException ex) {
+            return Mono.just(TppConnectionResponseDTO.builder()
+                    .status("FAILURE")
+                    .errorType("CONFIG_ERROR")
+                    .description("Invalid content type: " + contentType)
+                    .responseTime(System.currentTimeMillis() - startTime)
+                    .build());
+        }
+
         return webClient.post()
                 .uri(finalUrl)
-                .contentType(MediaType.valueOf(contentType))
+                .contentType(mediaType)
                 .bodyValue(formData)
                 .retrieve()
                 //Get the entire response as a Map to capture any additional metadata returned by the TPP server
