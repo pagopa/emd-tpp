@@ -1124,15 +1124,16 @@ class TppServiceTest {
             .verify();
     }
 
-        @Test
+    @Test
     void testAuthConnection_Ok_WithPlaceholders() {
         String tppId = "tpp-test-id";
         Tpp mockTpp = getMockTpp();
         mockTpp.setTppId(tppId);
-        // Setup URL con placeholder
+        
+        // Setup URL con placeholder standard
         mockTpp.setAuthenticationUrl("https://api.tpp.it/v1/auth/{tenantId}/token");
         
-        // Setup proprietà aggiuntive
+        // Setup proprietà: la chiave deve corrispondere al placeholder nell'URL
         mockTpp.getTokenSection().setPathAdditionalProperties(Map.of("{tenantId}", "12345"));
         mockTpp.getTokenSection().setBodyAdditionalProperties(Map.of("client_id", "myClient"));
         mockTpp.getTokenSection().setContentType("application/x-www-form-urlencoded");
@@ -1144,14 +1145,15 @@ class TppServiceTest {
                 .responseTime(120L)
                 .build();
 
-        // Mock findTpp flow (getFromMap -> empty, findByTppId -> success)
+        // Mocks per il flusso findTpp (chiamato internamente da testAuthConnection)
         Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.empty());
         Mockito.when(tppRepository.findByTppId(tppId)).thenReturn(Mono.just(mockTpp));
         Mockito.when(tokenSectionCryptService.keyDecrypt(any(), any())).thenReturn(Mono.just(true));
         Mockito.when(tppMapService.addDecryptedToMap(any())).thenReturn(Mono.just(true));
 
+        // l'URL deve essere quello RISULTANTE dalla sostituzione
         Mockito.when(tppConnectorAuth.testConnection(
-                eq("https://api.tpp.it/v1/auth/12345/token"), 
+                eq("https://api.tpp.it/v1/auth/12345/token"), // URL formattato correttamente
                 eq("application/x-www-form-urlencoded"), 
                 any()))
             .thenReturn(Mono.just(connectorResponse));
@@ -1164,25 +1166,25 @@ class TppServiceTest {
             )
             .verifyComplete();
 
-        // Verifica che il body contenga i dati aggiuntivi rimpiazzati correttamente
+        // Verifica extra che il body contenga i dati attesi
         Mockito.verify(tppConnectorAuth).testConnection(anyString(), anyString(), argThat(formData -> 
             "myClient".equals(formData.getFirst("client_id"))
         ));
     }
 
     @Test
-void testAuthConnection_MissingData_Error() {
-    String tppId = "tpp-incomplete";
-    Tpp mockTpp = getMockTpp();
-    mockTpp.setAuthenticationUrl(null);
-    
-    Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
+    void testAuthConnection_MissingData_Error() {
+        String tppId = "tpp-incomplete";
+        Tpp mockTpp = getMockTpp();
+        mockTpp.setAuthenticationUrl(null);
+        
+        Mockito.when(tppMapService.getFromMap(tppId)).thenReturn(Mono.just(mockTpp));
 
-    StepVerifier.create(tppService.testAuthConnection(tppId))
-        .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-            throwable.getMessage().contains("Authentication data missing"))
-        .verify();
-}
+        StepVerifier.create(tppService.testAuthConnection(tppId))
+            .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
+                throwable.getMessage().contains("Authentication data missing"))
+            .verify();
+    }
 
     @Test
     void testAuthConnection_ConnectorReportsFailure() {

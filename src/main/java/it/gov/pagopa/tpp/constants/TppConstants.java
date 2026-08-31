@@ -14,6 +14,8 @@ public class TppConstants {
 
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
+        public static final String TPP_AUTH_CONFIG_MISSING = "TPP_AUTH_CONFIG_MISSING";
+
 
         public static final String RECIPIENT_NOT_FOUND = "RECIPIENT_NOT_FOUND";
         public static final String RECIPIENT_ALREADY_PRESENT = "RECIPIENT_ALREADY_PRESENT";
@@ -31,6 +33,8 @@ public class TppConstants {
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
         public static final String TPP_NOT_FOUND = "Tpp not found during get process";
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
+        public static final String TPP_AUTH_CONFIG_MISSING = "TPP_AUTH_CONFIG_MISSING";
+
 
         public static final String RECIPIENT_NOT_FOUND = "RECIPIENT_NOT_FOUND";
         public static final String RECIPIENT_ALREADY_PRESENT = "RECIPIENT_ALREADY_PRESENT";
@@ -47,6 +51,7 @@ public class TppConstants {
 
         public static final String TPP_NOT_ONBOARDED = "TPP_NOT_ONBOARDED";
         public static final String TPP_ALREADY_ONBOARDED = "TPP_ALREADY_ONBOARDED";
+        public static final String TPP_AUTH_CONFIG_MISSING = "TPP_AUTH_CONFIG_MISSING";
 
         public static final String RECIPIENT_NOT_FOUND = "RECIPIENT_NOT_FOUND";
         public static final String RECIPIENT_ALREADY_PRESENT = "RECIPIENT_ALREADY_PRESENT";

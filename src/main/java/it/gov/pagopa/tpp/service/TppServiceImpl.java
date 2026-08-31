@@ -739,7 +739,7 @@ public class TppServiceImpl implements TppService {
             .doOnError(error -> log.error("[TPP-SERVICE][FIND] Error finding TPP for tppId {}: {}", tppId, error.getMessage()));
     }
 
-        /**
+    /**
      * {@inheritDoc}
      * <p>
      * This implementation fetches the TPP from the cache or database, ensures
@@ -758,12 +758,20 @@ public class TppServiceImpl implements TppService {
                     TokenSection tokenSection = tppDto.getTokenSection();
                     
                     if (url == null || tokenSection == null) {
-                        return Mono.error(new RuntimeException("Authentication data missing for TPP: " + tppId));
+                        return Mono.error(exceptionMap.throwException( ExceptionName.TPP_AUTH_CONFIG_MISSING,
+                        "Authentication data missing for TPP: " + tppId
+                    ));
                     }
 
                     // Logica di rimpiazzo parametri nel Path (Placeholders)
                     if (tokenSection.getPathAdditionalProperties() != null) {
                         for (Map.Entry<String, String> entry : tokenSection.getPathAdditionalProperties().entrySet()) {
+                            if (entry.getValue() == null) {
+                                return Mono.error(exceptionMap.throwException(
+                                        ExceptionName.TPP_AUTH_CONFIG_MISSING,
+                                        "Path additional property value is null for key: " + entry.getKey()
+                                ));
+                            }
                             url = url.replace(entry.getKey(), entry.getValue());
                         }
                     }
@@ -772,6 +780,12 @@ public class TppServiceImpl implements TppService {
                     MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
                     if (tokenSection.getBodyAdditionalProperties() != null) {
                         for (Map.Entry<String, String> entry : tokenSection.getBodyAdditionalProperties().entrySet()) {
+                            if (entry.getValue() == null) {
+                                return Mono.error(exceptionMap.throwException(
+                                        ExceptionName.TPP_AUTH_CONFIG_MISSING,
+                                        "Body additional property value is null for key: " + entry.getKey()
+                                ));
+                            }
                             formData.add(entry.getKey(), entry.getValue());
                             url = url.replace(entry.getKey(), entry.getValue());
                         }

@@ -91,6 +91,14 @@ public class ExceptionMap {
             )
         );
 
+        exceptions.put(ExceptionName.TPP_AUTH_CONFIG_MISSING, message ->
+        new ClientExceptionWithBody(
+            HttpStatus.BAD_REQUEST, // Status 400
+            ExceptionCode.TPP_AUTH_CONFIG_MISSING,
+            message
+        )
+    );
+
     }
     /**
      * Creates and returns a runtime exception based on the specified exception key and message.
