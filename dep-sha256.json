@@ -1408,20 +1408,6 @@
       "sha256": "6oGpyjN7uufug_NyuS1VFAx6uXa85z_xt58t0VHKlhA="
     },
     {
-      "id": "junit:junit:jar:4.13.2",
-      "artifactId": "junit",
-      "groupId": "junit",
-      "version": "4.13.2",
-      "sha256": "jklbY0Rp1k-4rPo0laBly6zIoP_1XOHjEAe-TBbcV9M="
-    },
-    {
-      "id": "org.hamcrest:hamcrest-core:jar:3.0",
-      "artifactId": "hamcrest-core",
-      "groupId": "org.hamcrest",
-      "version": "3.0",
-      "sha256": "t4o6gWkvQhzAH8F97ZpF6ftvOUnHEvjsTQHaa4wGvG4="
-    },
-    {
       "id": "org.apache.commons:commons-compress:jar:1.24.0",
       "artifactId": "commons-compress",
       "groupId": "org.apache.commons",
@@ -1434,13 +1420,6 @@
       "groupId": "org.rnorth.duct-tape",
       "version": "1.0.8",
       "sha256": "Mc7xLd7JedH4bXz3CMQaF9pSPQXGhf1mQunQsq3bckA="
-    },
-    {
-      "id": "org.jetbrains:annotations:jar:17.0.0",
-      "artifactId": "annotations",
-      "groupId": "org.jetbrains",
-      "version": "17.0.0",
-      "sha256": "GV-w2gRtVbsELpFUNITPHaaLArt6-_4DHyKeRayEs_I="
     },
     {
       "id": "com.github.docker-java:docker-java-api:jar:3.4.2",
@@ -1504,6 +1483,62 @@
       "groupId": "org.springframework.boot",
       "version": "4.1.0",
       "sha256": "CdY0RXJcwWKRw3MC2KOMYKUnTXqhmYh4zqPOOTx4RVo="
+    },
+    {
+      "id": "com.squareup.okhttp3:mockwebserver:jar:5.4.0",
+      "artifactId": "mockwebserver",
+      "groupId": "com.squareup.okhttp3",
+      "version": "5.4.0",
+      "sha256": "ZLzwp5xCITuzOAk5cn081gKLo9v8ud8UAZZQEH5gqH8="
+    },
+    {
+      "id": "org.jetbrains.kotlin:kotlin-stdlib:jar:2.3.21",
+      "artifactId": "kotlin-stdlib",
+      "groupId": "org.jetbrains.kotlin",
+      "version": "2.3.21",
+      "sha256": "b2TqxzbblDTdaSW0pRi50dFxd2UjIMN5Fs-bo859fXo="
+    },
+    {
+      "id": "org.jetbrains:annotations:jar:13.0",
+      "artifactId": "annotations",
+      "groupId": "org.jetbrains",
+      "version": "13.0",
+      "sha256": "rOKhDcji1f00kl7KwD5JiLLA-FFlDJS4zvSbob0RFHg="
+    },
+    {
+      "id": "com.squareup.okhttp3:mockwebserver3:jar:5.4.0",
+      "artifactId": "mockwebserver3",
+      "groupId": "com.squareup.okhttp3",
+      "version": "5.4.0",
+      "sha256": "4eHVGldWfW24NPk9mIMasQuwIguRpnWAiU2as2zJ8GU="
+    },
+    {
+      "id": "junit:junit:jar:4.13.2",
+      "artifactId": "junit",
+      "groupId": "junit",
+      "version": "4.13.2",
+      "sha256": "jklbY0Rp1k-4rPo0laBly6zIoP_1XOHjEAe-TBbcV9M="
+    },
+    {
+      "id": "org.hamcrest:hamcrest-core:jar:3.0",
+      "artifactId": "hamcrest-core",
+      "groupId": "org.hamcrest",
+      "version": "3.0",
+      "sha256": "t4o6gWkvQhzAH8F97ZpF6ftvOUnHEvjsTQHaa4wGvG4="
+    },
+    {
+      "id": "com.squareup.okio:okio-jvm:jar:3.17.0",
+      "artifactId": "okio-jvm",
+      "groupId": "com.squareup.okio",
+      "version": "3.17.0",
+      "sha256": "OxPcw-FXMEfC1Qf8T3_LC7DLzZ05XaIdIOCUBuLNanM="
+    },
+    {
+      "id": "com.squareup.okhttp3:okhttp-jvm:jar:5.4.0",
+      "artifactId": "okhttp-jvm",
+      "groupId": "com.squareup.okhttp3",
+      "version": "5.4.0",
+      "sha256": "sV5gXKCksSxi6n9lfa1BPCNslH6HWFR2c0nNviDfRzw="
     }
   ]
 }

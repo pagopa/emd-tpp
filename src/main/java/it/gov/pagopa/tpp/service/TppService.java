@@ -1,8 +1,8 @@
 package it.gov.pagopa.tpp.service;
 
-import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -195,4 +195,29 @@ public interface TppService {
      * @throws TPP_NOT_ONBOARDED if the TPP does not exist
      */
     Mono<TppDTO> updateRecipientIdOnWhitelist(String tppId, List<String> recipientIds);
+
+    /**
+     * Retrieves a TPP by its identifier, including the decrypted TokenSection.
+     * 
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing the {@link TppDTO} with decrypted sensitive data
+     */
+    Mono<TppDTO> findTpp(String tppId);
+
+    /**
+     * Tests the authentication connection and returns a structured response.
+     * <p>
+     * The method performs the following steps:
+     * <ul>
+     *     <li>Retrieves the TPP details and decrypts the {@link TokenSection}</li>
+     *     <li>Resolves dynamic placeholders in the authentication URL and request body</li>
+     *     <li>Invokes the external TPP authentication endpoint via the connector, capturing success or failure</li>
+     * </ul>
+     * 
+     * @param tppId the TPP identifier
+     * @return a {@link Mono} containing the {@link TppConnectionResponseDTO} with the test results
+     * @throws it.gov.pagopa.common.web.exception.ClientException if the TPP is not found
+     *         or configuration is missing
+     */
+    Mono<TppConnectionResponseDTO> testAuthConnection(String tppId);
 }

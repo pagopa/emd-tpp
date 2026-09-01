@@ -2,11 +2,13 @@ package it.gov.pagopa.tpp.service;
 
 import it.gov.pagopa.common.utils.Utils;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
+import it.gov.pagopa.tpp.connector.tpp.TppConnectorAuth;
 import it.gov.pagopa.tpp.constants.TppConstants;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionMessage;
 import it.gov.pagopa.tpp.constants.TppConstants.ExceptionName;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
+import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
@@ -26,7 +28,11 @@ import java.util.HashSet;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -58,6 +64,7 @@ public class TppServiceImpl implements TppService {
     private final TppMapService tppMapService;
     private final TokenSectionCryptService tokenSectionCryptService;
     private final AzureKeyService azureKeyService;
+    private final TppConnectorAuth tppConnectorAuth;
 
     /**
      * Maximum page size accepted for search operations. Requests exceeding this value are
@@ -73,7 +80,8 @@ public class TppServiceImpl implements TppService {
     private int defaultPageSize;
 
     public TppServiceImpl(TppRepository tppRepository, TppObjectToDTOMapper mapperToDTO, TppWithoutTokenSectionObjectToDTOMapper tppWithoutTokenSectionMapperToDTO, TokenSectionObjectToDTOMapper tokenSectionMapperToDTO,
-                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureKeyService azureKeyService, TppMapService tppMapService, TokenSectionCryptService tokenSectionCryptService) {
+                          TppDTOToObjectMapper mapperToObject, TokenSectionDTOToObjectMapper tokenSectionMapperToObject, ExceptionMap exceptionMap, AzureKeyService azureKeyService, 
+                          TppMapService tppMapService, TokenSectionCryptService tokenSectionCryptService, TppConnectorAuth tppConnectorAuth) {
         this.tppRepository = tppRepository;
         this.mapperToDTO = mapperToDTO;
         this.tppWithoutTokenSectionMapperToDTO = tppWithoutTokenSectionMapperToDTO;
@@ -84,6 +92,7 @@ public class TppServiceImpl implements TppService {
         this.tppMapService = tppMapService;
         this.tokenSectionCryptService = tokenSectionCryptService;
         this.azureKeyService = azureKeyService;
+        this.tppConnectorAuth = tppConnectorAuth;
     }
 
 
@@ -685,4 +694,113 @@ public class TppServiceImpl implements TppService {
         .doOnSuccess(tppDto -> log.info("[TPP-SERVICE][WHITELIST-UPDATE] Replaced whitelist for tppId: {}", tppId))
         .doOnError(error -> log.error("[TPP-SERVICE][WHITELIST-UPDATE] Error replacing whitelist for tppId {}: {}", tppId, error.getMessage()));
   }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Retrieves a TPP entity by its unique identifier.
+     * <p>
+     * This method implements a multi-level retrieval strategy:
+     * <ul>
+     *   <li>It first attempts to read from the cache, where TPP data is stored in a decrypted state for performance.</li>
+     *   <li>If the TPP is not found in the cache, it queries the database.</li>
+     *   <li>Upon a database hit, the sensitive {@code TokenSection} is decrypted using Azure Key Vault credentials.</li>
+     *   <li>The resulting decrypted entity is then added to the cache to optimize future requests before returning the mapped DTO.</li>
+     * </ul>
+     *
+     * @param tppId the unique identifier of the TPP to be retrieved
+     * @return a {@link Mono} containing the {@link TppDTO} with decrypted sensitive data
+     * @throws it.gov.pagopa.common.web.exception.ClientException if the TPP is not found in either the cache or the database
+     */
+    @Override
+    public Mono<TppDTO> findTpp(String tppId) {
+        log.info("[TPP-SERVICE][FIND] Received request to find TPP for tppId: {}", tppId);
+
+        return tppMapService.getFromMap(tppId)
+            .doOnNext(tpp -> log.info("[TPP-SERVICE][FIND] Found TPP in cache for tppId: {}", tppId))
+            .switchIfEmpty(Mono.defer(() -> 
+                tppRepository.findByTppId(tppId)
+                    .switchIfEmpty(Mono.error(exceptionMap.throwException(
+                            ExceptionName.TPP_NOT_ONBOARDED, 
+                            ExceptionMessage.TPP_NOT_FOUND)))
+                    .flatMap(dbTpp -> {
+                        log.info("[TPP-SERVICE][FIND] TPP found in DB, decrypting TokenSection for tppId: {}", tppId);
+                        // Decifra la sezione token utilizzando il servizio crittografico
+                        return tokenSectionCryptService.keyDecrypt(dbTpp.getTokenSection(), tppId)
+                            .flatMap(decryptedToken -> {
+                                // Aggiunge alla cache
+                                return tppMapService.addDecryptedToMap(dbTpp)
+                                    .thenReturn(dbTpp);
+                            });
+                    })
+            ))
+            .map(mapperToDTO::map)
+            .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][FIND] Successfully retrieved TPP with tppId: {}", tppId))
+            .doOnError(error -> log.error("[TPP-SERVICE][FIND] Error finding TPP for tppId {}: {}", tppId, error.getMessage()));
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation fetches the TPP from the cache or database, ensures
+     * sensitive data in the TokenSection is decrypted, and prepares the
+     * request by replacing placeholders.
+     * It captures external connectivity errors into a structured DTO instead of 
+     * propagating exceptions.
+     */
+    @Override
+    public Mono<TppConnectionResponseDTO> testAuthConnection(String tppId) {
+        log.info("[TPP-SERVICE][TEST-AUTH] Initiating connection test for TPP: {}", tppId);
+        
+        return findTpp(tppId) // Recupera TPP
+                .flatMap(tppDto -> {
+                    String url = tppDto.getAuthenticationUrl();
+                    TokenSection tokenSection = tppDto.getTokenSection();
+                    
+                    if (url == null || tokenSection == null) {
+                        return Mono.error(exceptionMap.throwException( ExceptionName.TPP_AUTH_CONFIG_MISSING,
+                        "Authentication data missing for TPP: " + tppId
+                    ));
+                    }
+
+                    // Logica di rimpiazzo parametri nel Path
+                    if (tokenSection.getPathAdditionalProperties() != null) {
+                        for (Map.Entry<String, String> entry : tokenSection.getPathAdditionalProperties().entrySet()) {
+                            if (entry.getValue() == null) {
+                                return Mono.error(exceptionMap.throwException(
+                                        ExceptionName.TPP_AUTH_CONFIG_MISSING,
+                                        "Path additional property value is null for key: " + entry.getKey()
+                                ));
+                            }
+                            url = url.replace(entry.getKey(), entry.getValue());
+                        }
+                    }
+
+                    // Preparazione del Body (Form Data)
+                    MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+                    if (tokenSection.getBodyAdditionalProperties() != null) {
+                        for (Map.Entry<String, String> entry : tokenSection.getBodyAdditionalProperties().entrySet()) {
+                            if (entry.getValue() == null) {
+                                return Mono.error(exceptionMap.throwException(
+                                        ExceptionName.TPP_AUTH_CONFIG_MISSING,
+                                        "Body additional property value is null for key: " + entry.getKey()
+                                ));
+                            }
+                            formData.add(entry.getKey(), entry.getValue());
+                            url = url.replace(entry.getKey(), entry.getValue());
+                        }
+                    }
+
+                    // Determinazione del Content-Type
+                    String contentType = tokenSection.getContentType() != null ?
+                                        tokenSection.getContentType() :
+                                        MediaType.APPLICATION_FORM_URLENCODED_VALUE;
+
+                    // Chiamata al connector: restituisce il DTO
+                    return tppConnectorAuth.testConnection(url, contentType, formData);
+                })
+                .doOnSuccess(res -> log.info("[TPP-SERVICE][TEST-AUTH] Auth test completed with status: {}", res.getStatus()))
+                .doOnError(error -> log.error("[TPP-SERVICE][TEST-AUTH] Auth test process failed: {}", error.getMessage()));
+    }
+
 }

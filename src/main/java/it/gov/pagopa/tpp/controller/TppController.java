@@ -220,4 +220,19 @@ public interface TppController {
      */
     @PutMapping("/{tppId}/whitelist")
     Mono<ResponseEntity<Void>> updateRecipientIdOnWhitelist(@PathVariable String tppId, @RequestBody List<String> recipientIds);
+
+    /**
+     * Tests the authentication connection for a specific TPP.
+     * <p>
+     * This endpoint performs a real-time connectivity test by invoking the TPP's
+     * authentication URL. It retrieves the TPP configuration, decrypts the
+     * sensitive credentials, and returns a structured response containing the test outcome,
+     * response time, and eventual error details.
+     *
+     * @param tppId the unique identifier of the TPP to be tested
+     * @return a {@link Mono} containing a {@link ResponseEntity} with {@link TppConnectionResponseDTO}
+     *         representing the test result (success, timeout, or external error)
+     */
+    @GetMapping("/{tppId}/network/connection/test")
+    Mono<ResponseEntity<TppConnectionResponseDTO>> testAuthConnection(@PathVariable String tppId);
 }
