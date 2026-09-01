@@ -728,7 +728,7 @@ public class TppServiceImpl implements TppService {
                         // Decifra la sezione token utilizzando il servizio crittografico
                         return tokenSectionCryptService.keyDecrypt(dbTpp.getTokenSection(), tppId)
                             .flatMap(decryptedToken -> {
-                                // Aggiunge alla cache la versione decifrata per performance future
+                                // Aggiunge alla cache
                                 return tppMapService.addDecryptedToMap(dbTpp)
                                     .thenReturn(dbTpp);
                             });
@@ -752,7 +752,7 @@ public class TppServiceImpl implements TppService {
     public Mono<TppConnectionResponseDTO> testAuthConnection(String tppId) {
         log.info("[TPP-SERVICE][TEST-AUTH] Initiating connection test for TPP: {}", tppId);
         
-        return findTpp(tppId) // Recupera TPP (Cache o DB + Decriptazione)
+        return findTpp(tppId) // Recupera TPP
                 .flatMap(tppDto -> {
                     String url = tppDto.getAuthenticationUrl();
                     TokenSection tokenSection = tppDto.getTokenSection();
@@ -763,7 +763,7 @@ public class TppServiceImpl implements TppService {
                     ));
                     }
 
-                    // Logica di rimpiazzo parametri nel Path (Placeholders)
+                    // Logica di rimpiazzo parametri nel Path
                     if (tokenSection.getPathAdditionalProperties() != null) {
                         for (Map.Entry<String, String> entry : tokenSection.getPathAdditionalProperties().entrySet()) {
                             if (entry.getValue() == null) {
@@ -776,7 +776,7 @@ public class TppServiceImpl implements TppService {
                         }
                     }
 
-                    // Preparazione del Body (Form Data) e rimpiazzo parametri nell'URL se necessario
+                    // Preparazione del Body (Form Data)
                     MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
                     if (tokenSection.getBodyAdditionalProperties() != null) {
                         for (Map.Entry<String, String> entry : tokenSection.getBodyAdditionalProperties().entrySet()) {
@@ -792,11 +792,11 @@ public class TppServiceImpl implements TppService {
                     }
 
                     // Determinazione del Content-Type
-                    String contentType = tokenSection.getContentType() != null ? 
-                                        tokenSection.getContentType() : 
+                    String contentType = tokenSection.getContentType() != null ?
+                                        tokenSection.getContentType() :
                                         MediaType.APPLICATION_FORM_URLENCODED_VALUE;
 
-                    // Chiamata al connector: restituisce il DTO strutturato (non lancia eccezioni per 4xx/5xx)
+                    // Chiamata al connector: restituisce il DTO
                     return tppConnectorAuth.testConnection(url, contentType, formData);
                 })
                 .doOnSuccess(res -> log.info("[TPP-SERVICE][TEST-AUTH] Auth test completed with status: {}", res.getStatus()))
