@@ -5,10 +5,8 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -30,7 +28,6 @@ class TppConnectorAuthTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // New mock server for each test to ensure isolation
         mockWebServer = new MockWebServer();
         mockWebServer.start();
         
