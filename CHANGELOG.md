@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/pagopa/emd-tpp/compare/v1.7.0...v1.8.0) (2026-09-01)
+
+
+### Features
+
+* [MMC-916] add psp testAuthConnection endpoint ([#137](https://github.com/pagopa/emd-tpp/issues/137)) ([f9fc696](https://github.com/pagopa/emd-tpp/commit/f9fc6966cdfc8c0666db8729e65dac9daab632a8))
+
 ## [1.7.0](https://github.com/pagopa/emd-tpp/compare/v1.6.3...v1.7.0) (2026-08-25)
 
 
