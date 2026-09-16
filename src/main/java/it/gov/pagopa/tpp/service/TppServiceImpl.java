@@ -499,13 +499,21 @@ public class TppServiceImpl implements TppService {
     @Override
     public Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId) {
         log.info("[TPP-SERVICE][GET] Received request to get TPP for entityId: {}",  entityId);
-
-        return tppRepository.findByEntityId(entityId)
-                .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
-                    ExceptionMessage.TPP_NOT_FOUND)))
-                .map(tppWithoutTokenSectionMapperToDTO::map)
-                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with entityId: {}",tppDTO.getEntityId()))
-                .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
+        
+        return tppMapService.getFromMapByEntityId(entityId)
+            .map(tpp -> {
+                log.info("[TPP-SERVICE][GET] Found TPP in MAP for entityId: {}", entityId);
+                return tppWithoutTokenSectionMapperToDTO.map(tpp);
+            })
+            .switchIfEmpty(Mono.defer(() ->
+                tppRepository.findByEntityId(entityId)
+                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
+                        ExceptionMessage.TPP_NOT_FOUND)))
+                    .flatMap(dbTpp -> tppMapService.addToMap(dbTpp).thenReturn(dbTpp))
+                    .map(tppWithoutTokenSectionMapperToDTO::map)
+            ))
+            .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Successfully processed TPP with entityId: {}", tppDTO.getEntityId()))
+            .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for entityId {}: {}", entityId, error.getMessage()));
     }
 
     /**
@@ -546,7 +554,7 @@ public class TppServiceImpl implements TppService {
                 .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED,
                     ExceptionMessage.TPP_NOT_FOUND)))
                 .flatMap(tpp -> tppRepository.delete(tpp)
-                    .then(tppMapService.removeFromMap(tppId))
+                    .then(tppMapService.removeFromMap(tpp))
                     .thenReturn(mapperToDTO.map(tpp))
                 )
                 .doOnSuccess(tokenSectionDTO -> log.info("[TPP-SERVICE][DELETE] Delete TPP for tppId: {}",tppId))
@@ -801,6 +809,25 @@ public class TppServiceImpl implements TppService {
                 })
                 .doOnSuccess(res -> log.info("[TPP-SERVICE][TEST-AUTH] Auth test completed with status: {}", res.getStatus()))
                 .doOnError(error -> log.error("[TPP-SERVICE][TEST-AUTH] Auth test process failed: {}", error.getMessage()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<TppDTOWithoutTokenSection> getCachedTppByEntityId(String entityId) {
+        log.info("[TPP-SERVICE][CACHE-TEST] Received request to get TPP strictly from cache for entityId: {}",  entityId);
+        
+        return tppMapService.getFromMapByEntityId(entityId)
+            .map(tpp -> {
+                log.info("[TPP-SERVICE][CACHE-TEST] Found TPP in MAP for entityId: {}", entityId);
+                return tppWithoutTokenSectionMapperToDTO.map(tpp);
+            })
+            // Se non c'è in cache, lanciamo subito errore senza andare sul DB
+            .switchIfEmpty(Mono.error(exceptionMap.throwException(
+                    ExceptionName.TPP_NOT_ONBOARDED,
+                    "TPP non trovato in cache per l'entityId specificato"
+            )));
     }
 
 }

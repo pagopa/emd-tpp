@@ -7,6 +7,8 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
+import it.gov.pagopa.tpp.model.TokenSection;
+
 import java.util.Map;
 import reactor.core.publisher.Mono;
 
@@ -220,4 +222,13 @@ public interface TppService {
      *         or configuration is missing
      */
     Mono<TppConnectionResponseDTO> testAuthConnection(String tppId);
+
+    /**
+     * Retrieves TPP details strictly from the cache using the entity identifier.
+     * Does not fallback to the database.
+     *
+     * @param entityId the entity identifier
+     * @return a {@link Mono} containing the {@link TppDTOWithoutTokenSection} if cached
+     */
+    Mono<TppDTOWithoutTokenSection> getCachedTppByEntityId(String entityId);
 }

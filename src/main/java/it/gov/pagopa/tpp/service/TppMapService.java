@@ -39,14 +39,16 @@ public class TppMapService {
     private final TokenSectionCryptService tokenSectionCryptService;
     private final RedissonReactiveClient redissonClient;
     private final RMapReactive<String, Tpp> tppMap;
+    private final RMapReactive<String, String> entityIdToTppIdMap;
     private final Duration pollInterval;
 
     @Autowired
     public TppMapService(TppRepository tppRepository,
                          TokenSectionCryptService tokenSectionCryptService,
                          RedissonReactiveClient redissonClient,
-                         RMapReactive<String, Tpp> tppMap) {
-        this(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofSeconds(5));
+                         RMapReactive<String, Tpp> tppMap,
+                         RMapReactive<String, String> entityIdToTppIdMap) {
+        this(tppRepository, tokenSectionCryptService, redissonClient, tppMap, entityIdToTppIdMap, Duration.ofSeconds(5));
     }
 
     /** Package-private constructor — used by unit tests to inject a short poll interval. */
@@ -54,12 +56,14 @@ public class TppMapService {
                   TokenSectionCryptService tokenSectionCryptService,
                   RedissonReactiveClient redissonClient,
                   RMapReactive<String, Tpp> tppMap,
+                  RMapReactive<String, String> entityIdToTppIdMap,
                   Duration pollInterval) {
         this.tppRepository = tppRepository;
         this.tokenSectionCryptService = tokenSectionCryptService;
         this.redissonClient = redissonClient;
         this.tppMap = tppMap;
         this.pollInterval = pollInterval;
+        this.entityIdToTppIdMap = entityIdToTppIdMap;
     }
 
     /**
@@ -130,10 +134,13 @@ public class TppMapService {
      */
     public Mono<Boolean> addToMap(Tpp tpp) {
         String tppId = tpp.getTppId();
+        String entityId = tpp.getEntityId();
+        
         return tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tppId)
                 .flatMap(decryptionResult ->
                         tppMap.put(tppId, tpp)
-                                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added TPP ID in cache: {}", tppId))
+                                .then(entityIdToTppIdMap.put(entityId, tppId))
+                                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added TPP ID {} and EntityID {} in cache", tppId, entityId))
                                 .thenReturn(true)
                 )
                 .onErrorResume(e -> {
@@ -152,8 +159,11 @@ public class TppMapService {
      */
     public Mono<Boolean> addDecryptedToMap(Tpp tpp) {
         String tppId = tpp.getTppId();
+        String entityId = tpp.getEntityId();
+
         return tppMap.put(tppId, tpp)
-                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decrypted TPP ID in cache: {}", tppId))
+                .then(entityIdToTppIdMap.put(entityId, tppId))
+                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decryptedTPP ID {} and EntityID {} in cache", tppId, entityId))
                 .thenReturn(true)
                 .onErrorResume(e -> {
                     log.error("[TPP-MAP][ADD] Failed to cache already-decrypted TPP ID: {}", tppId, e);
@@ -172,14 +182,29 @@ public class TppMapService {
     }
 
     /**
+     * Retrieves a TPP entity from the Redis cache by its entityId.
+     *
+     * @param entityId the TPP identifier to look up
+     * @return a Mono containing the cached {@link Tpp}, or {@code Mono.empty()} if absent
+     */
+    public Mono<Tpp> getFromMapByEntityId(String entityId) {
+        return entityIdToTppIdMap.get(entityId)
+                .flatMap(tppId -> tppMap.get(tppId));
+    }
+
+    /**
      * Removes a TPP entity from the Redis cache by its identifier.
      *
-     * @param tppId the TPP identifier to remove
+     * @param tpp the TPP to remove
      * @return a Mono&lt;Void&gt; that completes when the entry has been deleted
      */
-    public Mono<Void> removeFromMap(String tppId) {
+    public Mono<Void> removeFromMap(Tpp tpp) {
+        String tppId = tpp.getTppId();
+        String entityId = tpp.getEntityId();
+
         return tppMap.remove(tppId)
-                .doOnSuccess(removed -> log.info("[TPP-MAP][REMOVE] Removed TPP ID from cache: {}", tppId))
+                .then(entityIdToTppIdMap.remove(entityId))
+                .doOnSuccess(removed -> log.info("[TPP-MAP][REMOVE] Removed TPP ID: {} and EntityID: {}", tppId, entityId))
                 .then();
     }
 

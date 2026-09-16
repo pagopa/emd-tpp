@@ -39,6 +39,8 @@ class TppMapServiceTest {
 
     private RMapReactive<String, Tpp> tppMap;
 
+    private RMapReactive<String, String> entityIdToTppIdMap;
+
     @Mock
     private RLockReactive lock;
 
@@ -59,6 +61,8 @@ class TppMapServiceTest {
     void setUp() {
         tpp = getMockTpp();
         tppMap = mock(RMapReactive.class);
+        entityIdToTppIdMap = mock(RMapReactive.class);
+
         MockitoAnnotations.openMocks(this);
 
         // Lock setup (same pattern as BloomFilterInitializerTest in emd-citizen)
@@ -76,12 +80,17 @@ class TppMapServiceTest {
         when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>()));
         when(tppMap.fastRemove(any())).thenReturn(Mono.just(0L));
 
+        // Map setup (Secondary)
+        when(entityIdToTppIdMap.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(entityIdToTppIdMap.get(anyString())).thenReturn(Mono.empty());
+        when(entityIdToTppIdMap.remove(anyString())).thenReturn(Mono.empty());
+
         // Repository and crypto
         when(tppRepository.findAll()).thenReturn(Flux.just(tpp));
         when(tokenSectionCryptService.keyDecrypt(any(TokenSection.class), anyString()))
                 .thenReturn(Mono.just(true));
 
-        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofMillis(100));
+        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap, entityIdToTppIdMap, Duration.ofMillis(100));
         tppMapService.resetCache();
     }
 
@@ -179,7 +188,7 @@ class TppMapServiceTest {
     void removeFromMap() {
         tppMapService.addToMap(tpp).block();
 
-        tppMapService.removeFromMap(tpp.getTppId()).block();
+        tppMapService.removeFromMap(tpp).block();
 
         when(tppMap.get(tpp.getTppId())).thenReturn(Mono.empty());
 

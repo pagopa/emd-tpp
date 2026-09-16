@@ -44,6 +44,9 @@ class AzureKeyServiceTest {
     private RMapReactive<String, Tpp> tppMap;
 
     @MockitoBean
+    private RMapReactive<String, String> entityIdToTppIdMap;
+
+    @MockitoBean
     private RedissonReactiveClient redissonReactiveClient;
 
     @MockitoBean
