@@ -223,12 +223,4 @@ public interface TppService {
      */
     Mono<TppConnectionResponseDTO> testAuthConnection(String tppId);
 
-    /**
-     * Retrieves TPP details strictly from the cache using the entity identifier.
-     * Does not fallback to the database.
-     *
-     * @param entityId the entity identifier
-     * @return a {@link Mono} containing the {@link TppDTOWithoutTokenSection} if cached
-     */
-    Mono<TppDTOWithoutTokenSection> getCachedTppByEntityId(String entityId);
 }

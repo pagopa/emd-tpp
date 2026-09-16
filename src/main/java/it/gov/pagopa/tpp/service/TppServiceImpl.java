@@ -811,23 +811,4 @@ public class TppServiceImpl implements TppService {
                 .doOnError(error -> log.error("[TPP-SERVICE][TEST-AUTH] Auth test process failed: {}", error.getMessage()));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Mono<TppDTOWithoutTokenSection> getCachedTppByEntityId(String entityId) {
-        log.info("[TPP-SERVICE][CACHE-TEST] Received request to get TPP strictly from cache for entityId: {}",  entityId);
-        
-        return tppMapService.getFromMapByEntityId(entityId)
-            .map(tpp -> {
-                log.info("[TPP-SERVICE][CACHE-TEST] Found TPP in MAP for entityId: {}", entityId);
-                return tppWithoutTokenSectionMapperToDTO.map(tpp);
-            })
-            // Se non c'è in cache, lanciamo subito errore senza andare sul DB
-            .switchIfEmpty(Mono.error(exceptionMap.throwException(
-                    ExceptionName.TPP_NOT_ONBOARDED,
-                    "TPP non trovato in cache per l'entityId specificato"
-            )));
-    }
-
 }

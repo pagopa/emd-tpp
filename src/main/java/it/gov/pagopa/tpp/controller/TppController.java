@@ -236,14 +236,4 @@ public interface TppController {
     @GetMapping("/{tppId}/network/connection/test")
     Mono<ResponseEntity<TppConnectionResponseDTO>> testAuthConnection(@PathVariable String tppId);
 
-    /**
-     * Get a tpp (without token section) strictly from the Redis cache by entity id.
-     * Useful for testing and debugging cache state.
-     *
-     * @param entityId to get from cache
-     * @return a {@link Mono} containing a {@link ResponseEntity} with
-     *          {@link TppDTOWithoutTokenSection} if found in cache
-     */
-    @GetMapping("/cache/entityId/{entityId}")
-    Mono<ResponseEntity<TppDTOWithoutTokenSection>> getCachedTppByEntityId(@Valid @PathVariable String entityId);
 }

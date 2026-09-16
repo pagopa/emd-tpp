@@ -205,12 +205,4 @@ public class TppControllerImpl implements TppController {
                 .map(ResponseEntity::ok);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Mono<ResponseEntity<TppDTOWithoutTokenSection>> getCachedTppByEntityId(String entityId) {
-        return tppService.getCachedTppByEntityId(inputSanitization(entityId))
-                .map(ResponseEntity::ok);
-    }
 }
