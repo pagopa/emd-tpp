@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
+
 import java.util.Map;
 import reactor.core.publisher.Mono;
 
@@ -220,4 +221,5 @@ public interface TppService {
      *         or configuration is missing
      */
     Mono<TppConnectionResponseDTO> testAuthConnection(String tppId);
+
 }
