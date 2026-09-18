@@ -7,7 +7,6 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
-import it.gov.pagopa.tpp.model.TokenSection;
 
 import java.util.Map;
 import reactor.core.publisher.Mono;
