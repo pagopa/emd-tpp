@@ -370,6 +370,7 @@ public class TppMapService {
     private Mono<Map<String, Tpp>> buildSnapshotFromDb() {
         Map<String, Tpp> snapshot = new ConcurrentHashMap<>();
         return tppRepository.findAll()
+                .filter(tpp -> Boolean.TRUE.equals(tpp.getState()))
                 .buffer(100)
                 .flatMap(batch -> Flux.fromIterable(batch)
                         .flatMap(tpp -> tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tpp.getTppId())
