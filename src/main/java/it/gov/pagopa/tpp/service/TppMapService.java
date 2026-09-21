@@ -198,7 +198,8 @@ public class TppMapService {
      */
     public Mono<Tpp> getFromMapByEntityId(String entityId) {
         return entityIdToTppIdMap.get(entityId)
-                .flatMap(tppId -> tppMap.get(tppId));
+                .flatMap(tppMap::get)
+                .filter(tpp -> entityId.equals(tpp.getEntityId()));
     }
 
     /**
