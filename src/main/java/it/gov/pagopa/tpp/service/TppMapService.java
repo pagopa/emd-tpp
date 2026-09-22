@@ -291,8 +291,7 @@ public class TppMapService {
                         log.info("[TPP-MAP][MAP-INITIALIZER] No active TPPs found in DB — cache stays empty.");
                         return Mono.empty();
                     }
-                    Map<String, String> entityIdSnapshot = snapshot.values().stream()
-                            .collect(Collectors.toMap(tpp -> tpp.getEntityId(), tpp -> tpp.getTppId()));
+                    Map<String, String> entityIdSnapshot = buildEntityIdIndex(snapshot);
                     return tppMap.putAll(snapshot)
                             .then(entityIdToTppIdMap.putAll(entityIdSnapshot))
                             .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete. Size: {}", snapshot.size()));
@@ -310,8 +309,7 @@ public class TppMapService {
                             Map<String, Tpp> newSnapshot = tuple.getT3();
 
                             // Step 2: build the new entityId -> tppId index from the database snapshot.
-                            Map<String, String> newEntityIdSnapshot = newSnapshot.values().stream()
-                                    .collect(Collectors.toMap(tpp -> tpp.getEntityId(), tpp -> tpp.getTppId()));
+                            Map<String, String> newEntityIdSnapshot = buildEntityIdIndex(newSnapshot);
 
                             // Step 3: upsert TPPs into the main cache without creating an empty-cache window.
                             Mono<Void> upsertTppCache = newSnapshot.isEmpty()
@@ -354,6 +352,61 @@ public class TppMapService {
                                             "TPPs: {}, entityId index: {}, evicted TPPs: {}, evicted entityIds: {}",
                                             newSnapshot.size(), newEntityIdSnapshot.size(), staleTppIds.size(),staleEntityIds.size()));
                         });
+    }
+
+    /**
+     * Builds the Redis entityId-to-tppId index from the provided TPP snapshot.
+     *
+     * <p>The {@code entityId} is expected to be unique across all TPPs, as enforced
+     *  by the domain model and the corresponding MongoDB unique constraint. This
+     *  method explicitly validates that invariant before creating the index.
+     *
+     *  <p>If multiple TPPs are associated with the same {@code entityId}, the method
+     *  fails with an {@link IllegalStateException} instead of arbitrarily selecting
+     *  one of the conflicting TPPs. This prevents the cache from being populated
+     *  with an inconsistent or potentially incorrect entityId-to-tppId mapping.
+     * 
+     *  @param snapshot a map containing the TPPs to be indexed, keyed by {@code tppId}
+     *  @return a map containing one entry for each TPP, where the key is the
+     *           {@code entityId} and the value is the corresponding {@code tppId}
+     *  @throws IllegalStateException if more than one TPP is associated with the
+     *           same {@code entityId}
+     */
+    private Map<String, String> buildEntityIdIndex(Map<String, Tpp> snapshot) {
+
+        // Group TPPs by entityId so that duplicate entityIds can be detected
+        // before building the final one-to-one entityId -> tppId index.
+        Map<String, List<Tpp>> groupedByEntityId = snapshot.values().stream()
+                .collect(Collectors.groupingBy(tpp -> tpp.getEntityId()));
+
+        // Collect only the entityIds that are associated with more than one TPP,
+        // together with the conflicting tppIds, to provide useful diagnostic information.
+        Map<String, List<String>> duplicatedEntityIds = groupedByEntityId.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey(),
+                        entry -> entry.getValue().stream()
+                                .map(tpp -> tpp.getTppId())
+                                .collect(Collectors.toList())
+                ));
+
+        // Fail fast when the entityId uniqueness invariant is violated.
+        // Choosing one of the conflicting TPPs would hide a data integrity problem
+        // and could result in an incorrect cache mapping.
+        if (!duplicatedEntityIds.isEmpty()) {
+            throw new IllegalStateException(
+                    "TPP data integrity violation: duplicate entityId detected. " +
+                    "Conflicting values: " + duplicatedEntityIds
+            );
+        }
+
+        // Build the final index only after uniqueness has been verified,
+        // guaranteeing that each entityId is mapped to exactly one tppId.
+        return groupedByEntityId.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey(),
+                        entry -> entry.getValue().get(0).getTppId()
+                ));
     }
 
     /**
