@@ -69,6 +69,10 @@ public class TppMapService {
     /**
      * Populates the Redis cache with active TPP entities from the database at application startup.
      *
+     * <p>If the cache is missing or in a partial state (e.g., missing the entityId index after a software update),
+     * this method performs a full synchronization via {@link #performReset()} to ensure data consistency and
+     * safely evict any stale entries.</p>
+     *
      * <p>Uses {@link Mono#usingWhen} to guarantee that the distributed lock is always released
      * (success, error, or cancellation) and that {@code block()} returns only <em>after</em>
      * the unlock command has completed on Redis — no fire-and-forget race.</p>
@@ -99,8 +103,8 @@ public class TppMapService {
                                     return Mono.empty();
                                 }
 
-                                // Step 3: initialize both cache structures from the database.
-                                return doPopulate();
+                                // Step 3: Perform a full synchronization from the database.
+                                return performReset();
                             });
                 },
                 // asyncCleanup: called on complete, error AND cancel — properly chained, not fire-and-forget
@@ -282,20 +286,6 @@ public class TppMapService {
                 .doOnSuccess(released -> log.info("[TPP-MAP] Lock released: {}", released))
                 .doOnError(e -> log.error("[TPP-MAP] Failed to release lock: {}", e.getMessage()))
                 .then();
-    }
-
-    private Mono<Void> doPopulate() {
-        return buildSnapshotFromDb()
-                .flatMap(snapshot -> {
-                    if (snapshot.isEmpty()) {
-                        log.info("[TPP-MAP][MAP-INITIALIZER] No active TPPs found in DB — cache stays empty.");
-                        return Mono.empty();
-                    }
-                    Map<String, String> entityIdSnapshot = buildEntityIdIndex(snapshot);
-                    return tppMap.putAll(snapshot)
-                            .then(entityIdToTppIdMap.putAll(entityIdSnapshot))
-                            .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete. Size: {}", snapshot.size()));
-                });
     }
 
     private Mono<Void> performReset() {

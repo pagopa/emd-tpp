@@ -7,18 +7,13 @@ import com.azure.security.keyvault.keys.cryptography.models.EncryptResult;
 import com.azure.security.keyvault.keys.cryptography.models.EncryptionAlgorithm;
 import com.azure.security.keyvault.keys.models.CreateRsaKeyOptions;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
-import it.gov.pagopa.tpp.model.Tpp;
-import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RLockReactive;
-import org.redisson.api.RMapReactive;
 import org.redisson.api.RedissonReactiveClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Base64;
@@ -35,16 +30,7 @@ import static org.mockito.Mockito.*;
 class AzureKeyServiceTest {
 
     @MockitoBean
-    private TppRepository repository;
-
-    @MockitoBean
-    private TokenSectionCryptService tokenSectionCryptService;
-
-    @MockitoBean
-    private RMapReactive<String, Tpp> tppMap;
-
-    @MockitoBean
-    private RMapReactive<String, String> entityIdToTppIdMap;
+    private TppMapService tppMapService;
 
     @MockitoBean
     private RedissonReactiveClient redissonReactiveClient;
@@ -66,22 +52,6 @@ class AzureKeyServiceTest {
 
         azureKeyService.setKeyClient(keyClient);
 
-        RLockReactive lock = mock(RLockReactive.class);
-
-        when(redissonReactiveClient.getLock(anyString()))
-                .thenReturn(lock);
-
-        when(lock.tryLock(anyLong(), anyLong(), any()))
-                .thenReturn(Mono.just(true));
-
-        when(lock.forceUnlock())
-                .thenReturn(Mono.just(true));
-
-        when(tppMap.isExists())
-                .thenReturn(Mono.just(true));
-
-        when(repository.findAll())
-                .thenReturn(Flux.empty());
     }
 
     @Test
