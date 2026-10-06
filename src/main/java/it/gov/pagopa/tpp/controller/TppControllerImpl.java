@@ -204,4 +204,5 @@ public class TppControllerImpl implements TppController {
         return tppService.testAuthConnection(inputSanitization(tppId))
                 .map(ResponseEntity::ok);
     }
+
 }

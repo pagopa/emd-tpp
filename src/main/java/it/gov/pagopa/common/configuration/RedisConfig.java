@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.gov.pagopa.tpp.model.Tpp;
 import org.redisson.api.RMapReactive;
 import org.redisson.api.RedissonReactiveClient;
+import org.redisson.client.codec.StringCodec;
 import org.redisson.codec.JsonJacksonCodec;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,8 @@ import org.springframework.context.annotation.Configuration;
 public class RedisConfig {
 
     public static final String TPP_CACHE_MAP_KEY = "emd:tpp:cache";
+    public static final String TPP_ENTITY_ID_MAP_KEY = "emd:tpp:entityId-index";
+
 
     @Bean
     public RMapReactive<String, Tpp> tppMapReactive(RedissonReactiveClient redissonReactiveClient) {
@@ -32,5 +35,10 @@ public class RedisConfig {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         return redissonReactiveClient.getMap(TPP_CACHE_MAP_KEY, new JsonJacksonCodec(redisObjectMapper));
+    }
+
+    @Bean
+    public RMapReactive<String, String> entityIdToTppIdMapReactive(RedissonReactiveClient redissonReactiveClient) {
+        return redissonReactiveClient.getMap(TPP_ENTITY_ID_MAP_KEY, StringCodec.INSTANCE);
     }
 }

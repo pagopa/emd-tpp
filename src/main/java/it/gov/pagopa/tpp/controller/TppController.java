@@ -235,4 +235,5 @@ public interface TppController {
      */
     @GetMapping("/{tppId}/network/connection/test")
     Mono<ResponseEntity<TppConnectionResponseDTO>> testAuthConnection(@PathVariable String tppId);
+
 }

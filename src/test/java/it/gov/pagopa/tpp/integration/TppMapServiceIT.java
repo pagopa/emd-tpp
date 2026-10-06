@@ -131,6 +131,35 @@ public class TppMapServiceIT extends BaseIT {
         log.info("=== TEST COMPLETED ===");
     }
 
+    /**
+     * Verifies that the secondary index mapping {@code entityId} to {@code tppId} functions
+     * correctly in Redis.
+     *
+     * <ul>
+     *   <li>Arrange: create an active TPP and assign a specific {@code entityId} to it.</li>
+     *   <li>Act: add the TPP to the cache using {@code addToMap()} (which populates both 
+     *       the primary map and the secondary entityId-to-tppId index).</li>
+     *   <li>Assert: {@code getFromMapByEntityId()} successfully resolves the index and 
+     *       retrieves the full TPP object matching the expected IDs.</li>
+     * </ul>
+     */
+    @Test
+    void testAddAndGetFromMapByEntityId() {
+        log.info("=== EXECUTING testAddAndGetFromMapByEntityId ===");
+        Tpp tpp = getMockTpp(TPP_ACTIVE_ID, true);
+
+        tppMapService.addToMap(tpp).block();
+
+        StepVerifier.create(tppMapService.getFromMapByEntityId("entityId01234567"))
+                .assertNext(result -> {
+                    log.info("Retrieved TPP by EntityId: {}", result.getTppId());
+                    assertEquals(TPP_ACTIVE_ID, result.getTppId());
+                    assertEquals("entityId01234567", result.getEntityId());
+                })
+                .verifyComplete();
+        log.info("=== TEST COMPLETED ===");
+    }
+
     // -------------------------------------------------------------------------
     // 3. removeFromMap
     // -------------------------------------------------------------------------
@@ -152,11 +181,14 @@ public class TppMapServiceIT extends BaseIT {
         Tpp tpp = getMockTpp(TPP_ACTIVE_ID, true);
         tppMapService.addToMap(tpp).block();
 
-        StepVerifier.create(tppMapService.removeFromMap(TPP_ACTIVE_ID))
+        StepVerifier.create(tppMapService.removeFromMap(tpp))
                 .verifyComplete();
 
         StepVerifier.create(tppMapService.getFromMap(TPP_ACTIVE_ID))
-                .verifyComplete(); // must be absent
+                .verifyComplete();
+
+        StepVerifier.create(tppMapService.getFromMapByEntityId("entityId01234567"))
+                .verifyComplete(); 
 
         log.info("=== TEST COMPLETED ===");
     }
