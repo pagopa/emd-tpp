@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/pagopa/emd-tpp/compare/v1.8.0...v1.8.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* trigger release please ([dfad765](https://github.com/pagopa/emd-tpp/commit/dfad765ca35259baf37d142f9ba81c0dc6156563))
+
 ## [1.8.0](https://github.com/pagopa/emd-tpp/compare/v1.7.0...v1.8.0) (2026-09-01)
 
 
