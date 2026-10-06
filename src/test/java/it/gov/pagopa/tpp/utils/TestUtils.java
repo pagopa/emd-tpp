@@ -20,6 +20,10 @@ public class TestUtils {
         return TppDTOFaker.mockInstance(true);
     }
 
+    public static TppDTO getMockTppDtoDisabled() {
+        return TppDTOFaker.mockInstance(false);
+    }
+
     public static TppDTO getMockTppDtoNoTokenSection() {
         return TppDTOFaker.mockInstanceWithNoTokenSection(true);
     }

@@ -27,7 +27,7 @@ public class TppDTOToObjectMapper {
     public Tpp map(TppDTO tppDTO){
 
         return Tpp.builder()
-                .state(true)
+                .state(Boolean.TRUE.equals(tppDTO.getState()))
                 .tppId(tppDTO.getTppId())
                 .clientId(tppDTO.getClientId())
                 .idPsp(tppDTO.getIdPsp())
