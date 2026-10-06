@@ -637,27 +637,46 @@ class TppServiceTest {
     @Test
     void getTppByEntityId_Ok() {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+        String entityId = tppDtoNoToken.getEntityId();
+        Tpp mockTpp = getMockTpp();
 
-        Mockito.when(tppRepository.findByEntityId(tppDtoNoToken.getEntityId()))
-            .thenReturn(Mono.just(getMockTpp()));
+        Mockito.when(tppMapService.getFromMapByEntityId(entityId))
+            .thenReturn(Mono.empty());
+
+        Mockito.when(tppRepository.findByEntityId(entityId))
+            .thenReturn(Mono.just(mockTpp));
+
+        Mockito.when(tppMapService.addToMap(mockTpp))
+            .thenReturn(Mono.just(true));
 
         StepVerifier.create(tppService.getTppByEntityId(tppDtoNoToken.getEntityId()))
             .expectNextCount(1)
             .verifyComplete();
+
+        Mockito.verify(tppMapService).getFromMapByEntityId(entityId);
+        Mockito.verify(tppRepository).findByEntityId(entityId);
+        Mockito.verify(tppMapService).addToMap(mockTpp);
     }
 
     @Test
     void getTppByEntityId_TppNotOnboarded() {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
+        String entityId = tppDtoNoToken.getEntityId();
 
-        Mockito.when(tppRepository.findByEntityId(tppDtoNoToken.getEntityId()))
+        Mockito.when(tppMapService.getFromMapByEntityId(entityId))
             .thenReturn(Mono.empty());
 
-        StepVerifier.create(tppService.getTppByEntityId(tppDtoNoToken.getEntityId()))
+        Mockito.when(tppRepository.findByEntityId(entityId))
+            .thenReturn(Mono.empty());
+
+        StepVerifier.create(tppService.getTppByEntityId(entityId))
             .expectErrorMatches(throwable ->
                 throwable instanceof ClientExceptionWithBody &&
                     ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
             .verify();
+            
+        Mockito.verify(tppMapService).getFromMapByEntityId(entityId);
+        Mockito.verify(tppMapService, Mockito.never()).addToMap(Mockito.any());
     }
 
     @Test
@@ -728,7 +747,7 @@ class TppServiceTest {
 
         Mockito.when(tppRepository.delete(mockTpp)).thenReturn(Mono.empty());
 
-        Mockito.when(tppMapService.removeFromMap(tppDto.getTppId())).thenReturn(Mono.empty());
+        Mockito.when(tppMapService.removeFromMap(mockTpp)).thenReturn(Mono.empty());
 
         StepVerifier.create(tppService.deleteTpp(tppDto.getTppId()))
             .expectNextCount(1)

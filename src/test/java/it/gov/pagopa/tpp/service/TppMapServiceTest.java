@@ -39,6 +39,8 @@ class TppMapServiceTest {
 
     private RMapReactive<String, Tpp> tppMap;
 
+    private RMapReactive<String, String> entityIdToTppIdMap;
+
     @Mock
     private RLockReactive lock;
 
@@ -59,6 +61,8 @@ class TppMapServiceTest {
     void setUp() {
         tpp = getMockTpp();
         tppMap = mock(RMapReactive.class);
+        entityIdToTppIdMap = mock(RMapReactive.class);
+
         MockitoAnnotations.openMocks(this);
 
         // Lock setup (same pattern as BloomFilterInitializerTest in emd-citizen)
@@ -72,16 +76,26 @@ class TppMapServiceTest {
         when(tppMap.get(anyString())).thenReturn(Mono.empty());
         when(tppMap.remove(anyString())).thenReturn(Mono.empty());
         when(tppMap.delete()).thenReturn(Mono.just(true));
-        when(tppMap.putAll(any())).thenReturn(Mono.empty());
+        when(tppMap.putAll(anyMap())).thenReturn(Mono.empty());
         when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>()));
-        when(tppMap.fastRemove(any())).thenReturn(Mono.just(0L));
+        when(tppMap.fastRemove(any(String[].class))).thenReturn(Mono.just(0L));
+
+        // Secondary entityId -> tppId index setup
+        when(entityIdToTppIdMap.isExists()).thenReturn(Mono.just(false));
+        when(entityIdToTppIdMap.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(entityIdToTppIdMap.get(anyString())).thenReturn(Mono.empty());
+        when(entityIdToTppIdMap.remove(anyString())).thenReturn(Mono.empty());
+        when(entityIdToTppIdMap.delete()).thenReturn(Mono.just(true));
+        when(entityIdToTppIdMap.putAll(anyMap())).thenReturn(Mono.empty());
+        when(entityIdToTppIdMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>()));
+        when(entityIdToTppIdMap.fastRemove(any(String[].class))).thenReturn(Mono.just(0L));
 
         // Repository and crypto
         when(tppRepository.findAll()).thenReturn(Flux.just(tpp));
         when(tokenSectionCryptService.keyDecrypt(any(TokenSection.class), anyString()))
                 .thenReturn(Mono.just(true));
 
-        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofMillis(100));
+        tppMapService = new TppMapService(tppRepository, tokenSectionCryptService, redissonClient, tppMap, entityIdToTppIdMap, Duration.ofMillis(100));
         tppMapService.resetCache();
     }
 
@@ -159,16 +173,34 @@ class TppMapServiceTest {
      */
     @Test
     void resetCache_staleKeyInRedis_isEvicted() {
-        // Redis currently has "staleKey", but DB only returns the active tpp (no "staleKey")
-        when(tppMap.readAllKeySet()).thenReturn(Mono.just(new HashSet<>(Set.of("staleKey"))));
-        clearInvocations(tppMap);
+        // Step 1: simulate a stale TPP key and its corresponding entityId index entry.
+        when(tppMap.readAllKeySet())
+                .thenReturn(Mono.just(new HashSet<>(Set.of("staleKey"))));
 
+        when(entityIdToTppIdMap.readAllKeySet())
+                .thenReturn(Mono.just(new HashSet<>(Set.of("staleEntityId"))));
+
+        clearInvocations(tppMap, entityIdToTppIdMap);
+
+        // Step 2: execute the cache reset.
         tppMapService.resetCache();
 
-        // The stale key must have been evicted via fastRemove
-        verify(tppMap).fastRemove(any());
-        // The active tpp must still be upserted
-        verify(tppMap).putAll(argThat(map -> map.containsKey(tpp.getTppId())));
+        // Step 3: verify that stale TPP data is evicted from the main cache.
+        verify(tppMap).fastRemove(any(String[].class));
+
+        // Step 4: verify that stale entityId index data is evicted from the secondary cache.
+        verify(entityIdToTppIdMap).fastRemove(any(String[].class));
+
+        // Step 5: verify that the active TPP is still upserted into the main cache.
+        verify(tppMap).putAll(argThat(map ->
+                map.size() == 1 && map.containsKey(tpp.getTppId())
+        ));
+
+        // Step 6: verify that the corresponding entityId -> tppId mapping is upserted.
+        verify(entityIdToTppIdMap).putAll(argThat(map ->
+                map.size() == 1 && map.containsKey(tpp.getEntityId())
+                        && tpp.getTppId().equals(map.get(tpp.getEntityId()))
+        ));
     }
 
     // -------------------------------------------------------------------------
@@ -179,7 +211,7 @@ class TppMapServiceTest {
     void removeFromMap() {
         tppMapService.addToMap(tpp).block();
 
-        tppMapService.removeFromMap(tpp.getTppId()).block();
+        tppMapService.removeFromMap(tpp).block();
 
         when(tppMap.get(tpp.getTppId())).thenReturn(Mono.empty());
 
@@ -275,15 +307,22 @@ class TppMapServiceTest {
      */
     @Test
     void populateMap_lockNotAcquired_waitsForCacheReady() {
+        // Step 1: simulate another pod holding the distributed lock.
         when(lock.tryLock(0, -1, TimeUnit.SECONDS)).thenReturn(Mono.just(false));
-        // Cache becomes ready on first poll
-        when(tppMap.isExists()).thenReturn(Mono.just(true));
-        clearInvocations(tppMap, tppRepository);
 
+        // Step 2: simulate both cache structures becoming available.
+        when(tppMap.isExists()).thenReturn(Mono.just(true));
+        when(entityIdToTppIdMap.isExists()).thenReturn(Mono.just(true));
+
+        clearInvocations(tppMap, entityIdToTppIdMap, tppRepository);
+
+        // Step 3: initialize the service and wait for the cache to become ready.
         tppMapService.populateMap();
 
+        // Step 4: this pod must not read from MongoDB or write to either cache.
         verify(tppRepository, never()).findAll();
-        verify(tppMap, never()).putAll(any());
+        verify(tppMap, never()).putAll(anyMap());
+        verify(entityIdToTppIdMap, never()).putAll(anyMap());
     }
 
     // -------------------------------------------------------------------------
@@ -296,13 +335,19 @@ class TppMapServiceTest {
      */
     @Test
     void populateMap_cacheAlreadyExists_skips() {
+        // Step 1: simulate both cache structures already populated by another pod.
         when(tppMap.isExists()).thenReturn(Mono.just(true));
-        clearInvocations(tppRepository, tppMap);
+        when(entityIdToTppIdMap.isExists()).thenReturn(Mono.just(true));
 
+        clearInvocations(tppRepository, tppMap, entityIdToTppIdMap);
+
+        // Step 2: initialization must skip the database and cache population.
         tppMapService.populateMap();
 
+        // Step 3: verify that neither cache structure is populated again.
         verify(tppRepository, never()).findAll();
-        verify(tppMap, never()).putAll(any());
+        verify(tppMap, never()).putAll(anyMap());
+        verify(entityIdToTppIdMap, never()).putAll(anyMap());
     }
 
     /**

@@ -39,14 +39,16 @@ public class TppMapService {
     private final TokenSectionCryptService tokenSectionCryptService;
     private final RedissonReactiveClient redissonClient;
     private final RMapReactive<String, Tpp> tppMap;
+    private final RMapReactive<String, String> entityIdToTppIdMap;
     private final Duration pollInterval;
 
     @Autowired
     public TppMapService(TppRepository tppRepository,
                          TokenSectionCryptService tokenSectionCryptService,
                          RedissonReactiveClient redissonClient,
-                         RMapReactive<String, Tpp> tppMap) {
-        this(tppRepository, tokenSectionCryptService, redissonClient, tppMap, Duration.ofSeconds(5));
+                         RMapReactive<String, Tpp> tppMap,
+                         RMapReactive<String, String> entityIdToTppIdMap) {
+        this(tppRepository, tokenSectionCryptService, redissonClient, tppMap, entityIdToTppIdMap, Duration.ofSeconds(5));
     }
 
     /** Package-private constructor — used by unit tests to inject a short poll interval. */
@@ -54,16 +56,22 @@ public class TppMapService {
                   TokenSectionCryptService tokenSectionCryptService,
                   RedissonReactiveClient redissonClient,
                   RMapReactive<String, Tpp> tppMap,
+                  RMapReactive<String, String> entityIdToTppIdMap,
                   Duration pollInterval) {
         this.tppRepository = tppRepository;
         this.tokenSectionCryptService = tokenSectionCryptService;
         this.redissonClient = redissonClient;
         this.tppMap = tppMap;
         this.pollInterval = pollInterval;
+        this.entityIdToTppIdMap = entityIdToTppIdMap;
     }
 
     /**
      * Populates the Redis cache with active TPP entities from the database at application startup.
+     *
+     * <p>If the cache is missing or in a partial state (e.g., missing the entityId index after a software update),
+     * this method performs a full synchronization via {@link #performReset()} to ensure data consistency and
+     * safely evict any stale entries.</p>
      *
      * <p>Uses {@link Mono#usingWhen} to guarantee that the distributed lock is always released
      * (success, error, or cancellation) and that {@code block()} returns only <em>after</em>
@@ -81,13 +89,22 @@ public class TppMapService {
                         log.info("[TPP-MAP][MAP-INITIALIZER] Another pod is initializing — waiting for cache to be ready...");
                         return waitForCachePopulated();
                     }
-                    return tppMap.isExists()
-                            .flatMap(exists -> {
-                                if (Boolean.TRUE.equals(exists)) {
-                                    log.info("[TPP-MAP][MAP-INITIALIZER] Cache already populated by another pod — skipping.");
+                    // Step 1: check whether both cache maps already exist before starting initialization.
+                    return Mono.zip(
+                                tppMap.isExists(),
+                                entityIdToTppIdMap.isExists())
+                            .flatMap(tuple -> {
+                                boolean tppMapExists = Boolean.TRUE.equals(tuple.getT1());
+                                boolean entityIdIndexExists = Boolean.TRUE.equals(tuple.getT2());
+
+                                // Step 2: skip initialization only when both cache structures already exist.
+                                if (tppMapExists && entityIdIndexExists) {
+                                    log.info("[TPP-MAP][MAP-INITIALIZER] Cache and entityId index already populated by another pod — skipping.");
                                     return Mono.empty();
                                 }
-                                return doPopulate();
+
+                                // Step 3: Perform a full synchronization from the database.
+                                return performReset();
                             });
                 },
                 // asyncCleanup: called on complete, error AND cancel — properly chained, not fire-and-forget
@@ -130,14 +147,17 @@ public class TppMapService {
      */
     public Mono<Boolean> addToMap(Tpp tpp) {
         String tppId = tpp.getTppId();
+        String entityId = tpp.getEntityId();
+        
         return tokenSectionCryptService.keyDecrypt(tpp.getTokenSection(), tppId)
                 .flatMap(decryptionResult ->
                         tppMap.put(tppId, tpp)
-                                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added TPP ID in cache: {}", tppId))
+                                .then(entityIdToTppIdMap.put(entityId, tppId))
+                                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added TPP ID {} and EntityID {} in cache", tppId, entityId))
                                 .thenReturn(true)
                 )
                 .onErrorResume(e -> {
-                    log.error("[TPP-MAP][ADD] Decryption failed for TPP ID: {}", tppId, e);
+                    log.error("[TPP-MAP][ADD] Decryption failed for TPP ID: {}, entityId: {}", tppId, entityId, e);
                     return Mono.just(false);
                 });
     }
@@ -152,11 +172,14 @@ public class TppMapService {
      */
     public Mono<Boolean> addDecryptedToMap(Tpp tpp) {
         String tppId = tpp.getTppId();
+        String entityId = tpp.getEntityId();
+
         return tppMap.put(tppId, tpp)
-                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decrypted TPP ID in cache: {}", tppId))
+                .then(entityIdToTppIdMap.put(entityId, tppId))
+                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decryptedTPP ID {} and EntityID {} in cache", tppId, entityId))
                 .thenReturn(true)
                 .onErrorResume(e -> {
-                    log.error("[TPP-MAP][ADD] Failed to cache already-decrypted TPP ID: {}", tppId, e);
+                    log.error("[TPP-MAP][ADD] Failed to cache already-decrypted TPP ID: {}, entityId={}", tppId, entityId, e);
                     return Mono.just(false);
                 });
     }
@@ -172,14 +195,30 @@ public class TppMapService {
     }
 
     /**
+     * Retrieves a TPP entity from the Redis cache by its entityId.
+     *
+     * @param entityId the TPP identifier to look up
+     * @return a Mono containing the cached {@link Tpp}, or {@code Mono.empty()} if absent
+     */
+    public Mono<Tpp> getFromMapByEntityId(String entityId) {
+        return entityIdToTppIdMap.get(entityId)
+                .flatMap(tppMap::get)
+                .filter(tpp -> entityId.equals(tpp.getEntityId()));
+    }
+
+    /**
      * Removes a TPP entity from the Redis cache by its identifier.
      *
-     * @param tppId the TPP identifier to remove
+     * @param tpp the TPP to remove
      * @return a Mono&lt;Void&gt; that completes when the entry has been deleted
      */
-    public Mono<Void> removeFromMap(String tppId) {
+    public Mono<Void> removeFromMap(Tpp tpp) {
+        String tppId = tpp.getTppId();
+        String entityId = tpp.getEntityId();
+
         return tppMap.remove(tppId)
-                .doOnSuccess(removed -> log.info("[TPP-MAP][REMOVE] Removed TPP ID from cache: {}", tppId))
+                .then(entityIdToTppIdMap.remove(entityId))
+                .doOnSuccess(removed -> log.info("[TPP-MAP][REMOVE] Removed TPP ID: {} and EntityID: {}", tppId, entityId))
                 .then();
     }
 
@@ -197,13 +236,22 @@ public class TppMapService {
      * available — preventing it from serving stale/empty data during rolling updates.</p>
      */
     private Mono<Void> waitForCachePopulated() {
-        return Flux.interval(pollInterval)
-                .flatMap(tick -> tppMap.isExists())
-                .filter(Boolean.TRUE::equals)
-                .next()
-                .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Cache is now ready — proceeding."))
-                .then();
-    }
+    return Flux.interval(pollInterval)
+            // Step 1: wait until both Redis cache structures are available.
+            .flatMap(tick -> Mono.zip(
+                    tppMap.isExists(),
+                    entityIdToTppIdMap.isExists()
+            ))
+            // Step 2: proceed only when both cache structures exist.
+            .filter(tuple ->
+                    Boolean.TRUE.equals(tuple.getT1()) &&
+                    Boolean.TRUE.equals(tuple.getT2())
+            )
+            // Step 3: stop polling as soon as the cache is ready.
+            .next()
+            .doOnSuccess(v ->log.info("[TPP-MAP][MAP-INITIALIZER] Cache and entityId index are now ready — proceeding."))
+            .then();
+}
 
     /**
      * Attempts to acquire the distributed lock with watchdog-based TTL management.
@@ -240,43 +288,115 @@ public class TppMapService {
                 .then();
     }
 
-    private Mono<Void> doPopulate() {
-        return buildSnapshotFromDb()
-                .flatMap(snapshot -> {
-                    if (snapshot.isEmpty()) {
-                        log.info("[TPP-MAP][MAP-INITIALIZER] No active TPPs found in DB — cache stays empty.");
-                        return Mono.empty();
-                    }
-                    return tppMap.putAll(snapshot)
-                            .doOnSuccess(v -> log.info("[TPP-MAP][MAP-INITIALIZER] Population complete. Size: {}", snapshot.size()));
-                });
+    private Mono<Void> performReset() {
+        // Step 1: read the current keys BEFORE making any changes (source of truth for eviction).
+        return Mono.zip(tppMap.readAllKeySet(),
+                        entityIdToTppIdMap.readAllKeySet(),
+                        buildSnapshotFromDb()).
+                        flatMap(tuple -> {
+                            Set<String> currentTppIds = tuple.getT1();
+                            Set<String> currentEntityIds = tuple.getT2();
+                            Map<String, Tpp> newSnapshot = tuple.getT3();
+
+                            // Step 2: build the new entityId -> tppId index from the database snapshot.
+                            Map<String, String> newEntityIdSnapshot = buildEntityIdIndex(newSnapshot);
+
+                            // Step 3: upsert TPPs into the main cache without creating an empty-cache window.
+                            Mono<Void> upsertTppCache = newSnapshot.isEmpty()
+                                    ? Mono.empty()
+                                    : tppMap.putAll(newSnapshot);
+
+                            // Step 4: upsert the entityId -> tppId index consistently with the new TPP snapshot.
+                            Mono<Void> upsertEntityIdIndex = newEntityIdSnapshot.isEmpty()
+                                    ? Mono.empty()
+                                    : entityIdToTppIdMap.putAll(newEntityIdSnapshot);
+
+                            // Step 5: identify TPP IDs that are no longer present in the new snapshot.
+                            List<String> staleTppIds = currentTppIds.stream()
+                                    .filter(tppId -> !newSnapshot.containsKey(tppId))
+                                    .collect(Collectors.toList());
+
+                            // Step 6: identify entityIds that are no longer present in the new index.
+                            List<String> staleEntityIds = currentEntityIds.stream()
+                                    .filter(entityId -> !newEntityIdSnapshot.containsKey(entityId))
+                                    .collect(Collectors.toList());
+
+                            // Step 7: remove TPPs that are no longer present in the new snapshot.
+                            Mono<Void> evictTppCache = staleTppIds.isEmpty()
+                                    ? Mono.empty()
+                                    : tppMap.fastRemove(staleTppIds.toArray(new String[0])).then();
+
+                            // Step 8: remove entityId mappings that are no longer present in the new index.
+                            Mono<Void> evictEntityIdIndex = staleEntityIds.isEmpty()
+                                    ? Mono.empty()
+                                    : entityIdToTppIdMap.fastRemove(staleEntityIds.toArray(new String[0]))
+                                    .then();
+
+                            // Step 9: update both cache structures before removing stale entries.
+                            return upsertTppCache
+                                    .then(upsertEntityIdIndex)
+                                    .then(evictTppCache)
+                                    .then(evictEntityIdIndex)
+                                    .doOnSuccess(v -> log.info(
+                                            "[TPP-MAP][CACHE-RESET] Cache reset complete. " +
+                                            "TPPs: {}, entityId index: {}, evicted TPPs: {}, evicted entityIds: {}",
+                                            newSnapshot.size(), newEntityIdSnapshot.size(), staleTppIds.size(),staleEntityIds.size()));
+                        });
     }
 
-    private Mono<Void> performReset() {
-        // Step 1: read the current keys BEFORE making any changes (source of truth for eviction)
-        return tppMap.readAllKeySet()
-                .zipWith(buildSnapshotFromDb())
-                .flatMap(tuple -> {
-                    Set<String> currentKeys = tuple.getT1();
-                    Map<String, Tpp> newSnapshot = tuple.getT2();
+    /**
+     * Builds the Redis entityId-to-tppId index from the provided TPP snapshot.
+     *
+     * <p>The {@code entityId} is expected to be unique across all TPPs, as enforced
+     *  by the domain model and the corresponding MongoDB unique constraint. This
+     *  method explicitly validates that invariant before creating the index.
+     *
+     *  <p>If multiple TPPs are associated with the same {@code entityId}, the method
+     *  fails with an {@link IllegalStateException} instead of arbitrarily selecting
+     *  one of the conflicting TPPs. This prevents the cache from being populated
+     *  with an inconsistent or potentially incorrect entityId-to-tppId mapping.
+     * 
+     *  @param snapshot a map containing the TPPs to be indexed, keyed by {@code tppId}
+     *  @return a map containing one entry for each TPP, where the key is the
+     *           {@code entityId} and the value is the corresponding {@code tppId}
+     *  @throws IllegalStateException if more than one TPP is associated with the
+     *           same {@code entityId}
+     */
+    private Map<String, String> buildEntityIdIndex(Map<String, Tpp> snapshot) {
 
-                    // Step 2: upsert active TPPs — overwrites existing entries, NO empty-cache window
-                    Mono<Void> upsert = newSnapshot.isEmpty()
-                            ? Mono.empty()
-                            : tppMap.putAll(newSnapshot);
+        // Group TPPs by entityId so that duplicate entityIds can be detected
+        // before building the final one-to-one entityId -> tppId index.
+        Map<String, List<Tpp>> groupedByEntityId = snapshot.values().stream()
+                .collect(Collectors.groupingBy(tpp -> tpp.getEntityId()));
 
-                    // Step 3: evict entries that are no longer active (in Redis but missing from new snapshot)
-                    List<String> staleKeys = currentKeys.stream()
-                            .filter(k -> !newSnapshot.containsKey(k))
-                            .collect(Collectors.toList());
-                    Mono<Void> evict = staleKeys.isEmpty()
-                            ? Mono.empty()
-                            : tppMap.fastRemove(staleKeys.toArray(new String[0])).then();
+        // Collect only the entityIds that are associated with more than one TPP,
+        // together with the conflicting tppIds, to provide useful diagnostic information.
+        Map<String, List<String>> duplicatedEntityIds = groupedByEntityId.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey(),
+                        entry -> entry.getValue().stream()
+                                .map(tpp -> tpp.getTppId())
+                                .collect(Collectors.toList())
+                ));
 
-                    return upsert.then(evict)
-                            .doOnSuccess(v -> log.info("[TPP-MAP][CACHE-RESET] Cache reset complete. New size: {}, evicted: {}",
-                                    newSnapshot.size(), staleKeys.size()));
-                });
+        // Fail fast when the entityId uniqueness invariant is violated.
+        // Choosing one of the conflicting TPPs would hide a data integrity problem
+        // and could result in an incorrect cache mapping.
+        if (!duplicatedEntityIds.isEmpty()) {
+            throw new IllegalStateException(
+                    "TPP data integrity violation: duplicate entityId detected. " +
+                    "Conflicting values: " + duplicatedEntityIds
+            );
+        }
+
+        // Build the final index only after uniqueness has been verified,
+        // guaranteeing that each entityId is mapped to exactly one tppId.
+        return groupedByEntityId.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey(),
+                        entry -> entry.getValue().get(0).getTppId()
+                ));
     }
 
     /**
