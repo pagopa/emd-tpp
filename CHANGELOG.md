@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.1](https://github.com/pagopa/emd-tpp/compare/v1.8.0...v1.8.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* MMC-1141 Add continous delivery and javadoc action ([#146](https://github.com/pagopa/emd-tpp/issues/146)) ([3d607ed](https://github.com/pagopa/emd-tpp/commit/3d607ed0563e234f7ae13a36ed8f6673b316c49c))
+* trigger release please ([dfad765](https://github.com/pagopa/emd-tpp/commit/dfad765ca35259baf37d142f9ba81c0dc6156563))
+
 ## [1.8.0](https://github.com/pagopa/emd-tpp/compare/v1.7.0...v1.8.0) (2026-09-01)
 
 
