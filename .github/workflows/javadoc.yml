@@ -43,12 +43,12 @@ jobs:
           echo '<settings><servers><server><id>github</id><username></username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>' > ~/.m2/settings.xml
 
       - name: Generate Javadoc with Maven
-        run: mvn clean javadoc:javadoc -DadditionalJOption=-Xdoclint:none
+        run: mvn clean org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc -DadditionalJOption=-Xdoclint:none
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: target/site/apidocs
+          path: target/reports/apidocs
 
       - name: Deploy to GitHub Pages
         id: deployment
