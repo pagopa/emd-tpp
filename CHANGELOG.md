@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/pagopa/emd-tpp/compare/v1.8.1...v1.8.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* [MMC-843] Removed state hardcoded to true on save of tpp ([#147](https://github.com/pagopa/emd-tpp/issues/147)) ([7b22ce1](https://github.com/pagopa/emd-tpp/commit/7b22ce1e5abcd87744f99ec4970e15a2d5250229))
+
 ## [1.8.1](https://github.com/pagopa/emd-tpp/compare/v1.8.0...v1.8.1) (2026-10-07)
 
 
