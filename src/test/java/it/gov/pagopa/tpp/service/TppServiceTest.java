@@ -19,8 +19,10 @@ import it.gov.pagopa.tpp.model.mapper.TppDTOToObjectMapper;
 import it.gov.pagopa.tpp.repository.TppRepository;
 import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import java.util.ArrayList;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
+import static it.gov.pagopa.tpp.utils.TestUtils.getMockTppDto;
 import static org.mockito.ArgumentMatchers.*;
 
 @SpringBootTest(classes = {
@@ -249,13 +252,12 @@ class TppServiceTest {
 
     @Test
     void createTpp_Ok() {
-        TppDTO inputDto = getMockTppDto();
-        Tpp mockTppEntity = getMockTpp();
+        TppDTO inputDto = getMockTppDtoDisabled();
 
         Mockito.when(tppRepository.findByEntityId(any()))
             .thenReturn(Mono.empty());
         Mockito.when(tppRepository.save(any()))
-            .thenReturn(Mono.just(mockTppEntity));
+            .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
         Mockito.when(azureKeyService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
         Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
@@ -265,9 +267,32 @@ class TppServiceTest {
         StepVerifier.create(tppService.createNewTpp(inputDto, inputDto.getTppId()))
             .expectNextMatches(response -> {
                 response.setLastUpdateDate(null);
-                return response.equals(getMockTppDto());
+                return response.equals(inputDto);
             })
             .verifyComplete();
+    }
+
+    @Test
+    void createTpp_stateNull_defaultsToFalse() {
+        TppDTO inputDto = getMockTppDtoDisabled();
+        inputDto.setState(null);
+
+        Mockito.when(tppRepository.findByEntityId(any())).thenReturn(Mono.empty());
+        Mockito.when(tppRepository.save(any()))
+            .thenAnswer(inv -> Mono.just(inv.<Tpp>getArgument(0)));
+        Mockito.when(azureKeyService.createRsaKey(any())).thenReturn(Mono.just(keyVault));
+        Mockito.when(azureKeyService.getKey(any())).thenReturn(Mono.just(keyVault));
+        Mockito.when(tokenSectionCryptService.keyEncrypt(any(), any())).thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addToMap(any()))
+            .thenReturn(Mono.just(Boolean.TRUE));
+
+        StepVerifier.create(tppService.createNewTpp(inputDto, inputDto.getTppId()))
+            .expectNextCount(1)
+            .verifyComplete();
+
+        ArgumentCaptor<Tpp> captor = ArgumentCaptor.forClass(Tpp.class);
+        Mockito.verify(tppRepository).save(captor.capture());
+        Assertions.assertFalse(captor.getValue().getState());
     }
 
     @Test
