@@ -22,6 +22,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -112,6 +113,29 @@ class TppMapServiceTest {
         StepVerifier.create(tppMapService.getFromMap(tpp.getTppId()))
                 .expectNext(tpp)
                 .verifyComplete();
+    }
+
+    @Test
+    void getAllFromCache_UsesSingleBulkRedisOperation() {
+        when(tppMap.getAll(Set.of(tpp.getTppId())))
+                .thenReturn(Mono.just(Map.of(tpp.getTppId(), tpp)));
+
+        StepVerifier.create(tppMapService.getAllFromMap(Set.of(tpp.getTppId())))
+                .expectNextMatches(result -> result.size() == 1 && result.get(tpp.getTppId()) == tpp)
+                .verifyComplete();
+
+        verify(tppMap).getAll(Set.of(tpp.getTppId()));
+        verify(tppMap, never()).get(anyString());
+    }
+
+    @Test
+    void getAllFromCache_PropagatesRedisFailure() {
+        RuntimeException redisFailure = new RuntimeException("Redis unavailable");
+        when(tppMap.getAll(Set.of(tpp.getTppId()))).thenReturn(Mono.error(redisFailure));
+
+        StepVerifier.create(tppMapService.getAllFromMap(Set.of(tpp.getTppId())))
+                .expectErrorMatches(error -> error == redisFailure)
+                .verify();
     }
 
     /**

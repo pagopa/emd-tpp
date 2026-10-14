@@ -1,5 +1,6 @@
 package it.gov.pagopa.tpp.controller;
 
+import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.tpp.dto.*;
 import it.gov.pagopa.tpp.service.TppServiceImpl;
 
@@ -35,6 +36,19 @@ public class TppControllerImpl implements TppController {
     @Override
     public Mono<ResponseEntity<List<TppDTO>>> filterEnabledList(TppIdList tppIdList) {
         return tppService.filterEnabledList(inputSanitization(tppIdList.getIds()), tppIdList.getRecipientId())
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<ResponseEntity<TppBatchResponseDTO>> getTppsBatch(String apiVersion, TppBatchRequestDTO request) {
+        if (!"1".equals(apiVersion)) {
+            return Mono.error(new ClientExceptionWithBody(
+                    HttpStatus.BAD_REQUEST, "INVALID_API_VERSION", "X-API-Version must be 1"));
+        }
+        return tppService.getTppsBatch(inputSanitization(request.getIds()))
                 .map(ResponseEntity::ok);
     }
 

@@ -8,6 +8,7 @@ import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppBatchResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.mapper.TokenSectionObjectToDTOMapper;
@@ -616,9 +617,10 @@ class TppServiceTest {
     void getTppDetailsFromCache_Ok() {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
         TppDTO tppDto = getMockTppDto();
+        Tpp cachedTpp = getMockTpp();
 
-        Mockito.when(tppMapService.getFromMap(any()))
-            .thenReturn(Mono.just(getMockTpp()));
+        Mockito.when(tppMapService.getAllFromMap(anySet()))
+            .thenReturn(Mono.just(Map.of(cachedTpp.getTppId(), cachedTpp)));
 
         StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
             .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
@@ -629,12 +631,13 @@ class TppServiceTest {
     void getTppDetailsFromDB_Ok() {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
         TppDTO tppDto = getMockTppDto();
+        Tpp dbTpp = getMockTpp();
 
-        Mockito.when(tppRepository.findByTppId(tppDtoNoToken.getTppId()))
-            .thenReturn(Mono.just(getMockTpp()));
+        Mockito.when(tppRepository.findByTppIdIn(List.of(tppDtoNoToken.getTppId())))
+            .thenReturn(Flux.just(dbTpp));
 
-        Mockito.when(tppMapService.getFromMap(any()))
-            .thenReturn(Mono.empty());
+        Mockito.when(tppMapService.getAllFromMap(anySet()))
+            .thenReturn(Mono.just(Map.of()));
         Mockito.when(tppMapService.addToMap(any()))
             .thenReturn(Mono.just(Boolean.TRUE));
 
@@ -647,16 +650,72 @@ class TppServiceTest {
     void getTppDetails_TppNotOnboarded() {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
 
-        Mockito.when(tppRepository.findByTppId(tppDtoNoToken.getTppId()))
-            .thenReturn(Mono.empty());
-        Mockito.when(tppMapService.getFromMap(any()))
-            .thenReturn(Mono.empty());
+        Mockito.when(tppRepository.findByTppIdIn(List.of(tppDtoNoToken.getTppId())))
+            .thenReturn(Flux.empty());
+        Mockito.when(tppMapService.getAllFromMap(anySet()))
+            .thenReturn(Mono.just(Map.of()));
 
         StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
             .expectErrorMatches(throwable ->
                 throwable instanceof ClientExceptionWithBody &&
                     ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
             .verify();
+    }
+
+    @Test
+    void getTppsBatch_UsesBulkCacheAndOneDatabaseFallback_PreservesOrderAndMissingIds() {
+        Tpp cachedTpp = getMockTpp("cached", true);
+        cachedTpp.setBusinessName("Cached business");
+        cachedTpp.setEntityId("cached-entity");
+        Tpp dbTpp = getMockTpp("database", true);
+        dbTpp.setBusinessName("Database business");
+        dbTpp.setEntityId("database-entity");
+        List<String> requestedIds = List.of("cached", "database", "missing", "cached");
+
+        Mockito.when(tppMapService.getAllFromMap(anySet()))
+                .thenReturn(Mono.just(Map.of("cached", cachedTpp)));
+        Mockito.when(tppRepository.findByTppIdIn(List.of("database", "missing")))
+                .thenReturn(Flux.just(dbTpp));
+        Mockito.when(tppMapService.addToMap(dbTpp)).thenReturn(Mono.just(true));
+
+        StepVerifier.create(tppService.getTppsBatch(requestedIds))
+                .assertNext(response -> {
+                    Assertions.assertEquals(List.of("cached", "database"), response.getResults().stream()
+                            .map(result -> result.getTppId()).toList());
+                    Assertions.assertEquals(List.of("missing"), response.getMissingTppIds());
+                    Assertions.assertEquals("Cached business", response.getResults().get(0).getBusinessName());
+                    Assertions.assertEquals("database-entity", response.getResults().get(1).getEntityId());
+                })
+                .verifyComplete();
+
+        Mockito.verify(tppMapService).getAllFromMap(argThat(ids -> ids.size() == 3));
+        Mockito.verify(tppRepository).findByTppIdIn(List.of("database", "missing"));
+        Mockito.verify(tppMapService).addToMap(dbTpp);
+        Mockito.verify(tppMapService, Mockito.never()).getFromMap(anyString());
+    }
+
+    @Test
+    void getTppsBatch_RedisFailurePropagatesWithoutQueryingDatabase() {
+        RuntimeException redisFailure = new RuntimeException("Redis unavailable");
+        Mockito.when(tppMapService.getAllFromMap(anySet())).thenReturn(Mono.error(redisFailure));
+
+        StepVerifier.create(tppService.getTppsBatch(List.of("tpp-1")))
+                .expectErrorMatches(error -> error == redisFailure)
+                .verify();
+
+        Mockito.verifyNoInteractions(tppRepository);
+    }
+
+    @Test
+    void getTppsBatch_DatabaseFailurePropagatesWithoutReturningPartialResults() {
+        RuntimeException mongoFailure = new RuntimeException("Mongo unavailable");
+        Mockito.when(tppMapService.getAllFromMap(anySet())).thenReturn(Mono.just(Map.of()));
+        Mockito.when(tppRepository.findByTppIdIn(List.of("tpp-1", "tpp-2")))
+                .thenReturn(Flux.error(mongoFailure));
+
+        StepVerifier.create(tppService.getTppsBatch(List.of("tpp-1", "tpp-2")))
+                .expectErrorMatches(error -> error == mongoFailure)
+                .verify();
     }
 
     @Test

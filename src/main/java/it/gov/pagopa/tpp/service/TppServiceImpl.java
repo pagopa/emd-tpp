@@ -10,6 +10,8 @@ import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.TokenSectionDTO;
 import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
+import it.gov.pagopa.tpp.dto.TppBatchItemDTO;
+import it.gov.pagopa.tpp.dto.TppBatchResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
@@ -25,7 +27,10 @@ import it.gov.pagopa.tpp.service.keyvault.AzureKeyService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -220,6 +225,58 @@ public class TppServiceImpl implements TppService {
                 })
                 .doOnSuccess(tppDTOList -> log.info("[TPP-SERVICE][GET-ENABLED] Retrival ended"))
                 .doOnError(error -> log.error("[TPP-SERVICE][GET-ENABLED] Error retrieving enabled TPPs: {}", error.getMessage()));
+    }
+
+    /**
+     * Resolves a batch through the shared Redis cache and one MongoDB query for cache misses.
+     * IDs are deduplicated in first-seen order, and infrastructure errors are not converted
+     * into missing-ID results.
+     */
+    @Override
+    public Mono<TppBatchResponseDTO> getTppsBatch(List<String> tppIds) {
+        return Mono.defer(() -> {
+            List<String> orderedIds = new ArrayList<>(new LinkedHashSet<>(tppIds));
+            return getTppsByIds(orderedIds)
+                    .map(foundById -> TppBatchResponseDTO.builder()
+                            .results(orderedIds.stream()
+                                    .map(foundById::get)
+                                    .filter(Objects::nonNull)
+                                    .map(tpp -> new TppBatchItemDTO(
+                                            tpp.getTppId(), tpp.getBusinessName(), tpp.getEntityId()))
+                                    .toList())
+                            .missingTppIds(orderedIds.stream()
+                                    .filter(tppId -> !foundById.containsKey(tppId))
+                                    .toList())
+                            .build());
+        })
+        .doOnError(error -> log.error("[TPP-SERVICE][BATCH] Error retrieving batch of TPPs: {}", error.getMessage()));
+    }
+
+    /**
+     * Shared cache/database lookup used by single and batch TPP detail retrieval.
+     * The cache is queried in one operation; cache misses are loaded from MongoDB together
+     * and then passed through the existing cache-population abstraction.
+     */
+    private Mono<Map<String, Tpp>> getTppsByIds(List<String> tppIds) {
+        Set<String> requestedIds = new LinkedHashSet<>(tppIds);
+        return tppMapService.getAllFromMap(requestedIds)
+                .flatMap(cachedTpps -> {
+                    List<String> cacheMisses = requestedIds.stream()
+                            .filter(tppId -> !cachedTpps.containsKey(tppId))
+                            .toList();
+                    if (cacheMisses.isEmpty()) {
+                        return Mono.just(new LinkedHashMap<>(cachedTpps));
+                    }
+
+                    return tppRepository.findByTppIdIn(cacheMisses)
+                            .concatMap(tpp -> tppMapService.addToMap(tpp).thenReturn(tpp))
+                            .collectMap(Tpp::getTppId)
+                            .map(databaseTpps -> {
+                                Map<String, Tpp> result = new LinkedHashMap<>(cachedTpps);
+                                result.putAll(databaseTpps);
+                                return result;
+                            });
+                });
     }
 
     /**
@@ -470,17 +527,15 @@ public class TppServiceImpl implements TppService {
     public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
         log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", tppId);
 
-        return tppMapService.getFromMap(tppId)
-            .map(tpp -> {
-                log.info("[TPP-SERVICE][GET] Found TPP in MAP for tppId: {}", tppId);
-                return tppWithoutTokenSectionMapperToDTO.map(tpp);
+        return getTppsByIds(List.of(tppId))
+            .flatMap(tpps -> {
+                Tpp tpp = tpps.get(tppId);
+                if (tpp == null) {
+                    return Mono.error(exceptionMap.throwException(
+                            ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND));
+                }
+                return Mono.just(tppWithoutTokenSectionMapperToDTO.map(tpp));
             })
-            .switchIfEmpty(Mono.defer(() ->
-                tppRepository.findByTppId(tppId)
-                    .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
-                    .flatMap(dbTpp -> tppMapService.addToMap(dbTpp).thenReturn(dbTpp))
-                    .map(tppWithoutTokenSectionMapperToDTO::map)
-            ))
             .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET] Found TPP with tppId: {}", tppDTO.getTppId()))
             .doOnError(error -> log.error("[TPP-SERVICE][GET] Error retrieving TPP for tppId {}: {}", tppId, error.getMessage()));
     }

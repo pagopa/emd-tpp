@@ -153,11 +153,11 @@ public class TppMapService {
                 .flatMap(decryptionResult ->
                         tppMap.put(tppId, tpp)
                                 .then(entityIdToTppIdMap.put(entityId, tppId))
-                                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added TPP ID {} and EntityID {} in cache", tppId, entityId))
+                                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added TPP ID in cache"))
                                 .thenReturn(true)
                 )
                 .onErrorResume(e -> {
-                    log.error("[TPP-MAP][ADD] Decryption failed for TPP ID: {}, entityId: {}", tppId, entityId, e);
+                    log.error("[TPP-MAP][ADD] Decryption or cache update failed", e);
                     return Mono.just(false);
                 });
     }
@@ -176,10 +176,10 @@ public class TppMapService {
 
         return tppMap.put(tppId, tpp)
                 .then(entityIdToTppIdMap.put(entityId, tppId))
-                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decryptedTPP ID {} and EntityID {} in cache", tppId, entityId))
+                .doOnSuccess(old -> log.info("[TPP-MAP][ADD] Updated/Added decrypted TPP in cache"))
                 .thenReturn(true)
                 .onErrorResume(e -> {
-                    log.error("[TPP-MAP][ADD] Failed to cache already-decrypted TPP ID: {}, entityId={}", tppId, entityId, e);
+                    log.error("[TPP-MAP][ADD] Failed to cache already-decrypted TPP", e);
                     return Mono.just(false);
                 });
     }
@@ -192,6 +192,20 @@ public class TppMapService {
      */
     public Mono<Tpp> getFromMap(String tppId) {
         return tppMap.get(tppId);
+    }
+
+    /**
+     * Retrieves all cached TPPs matching the requested identifiers in a single Redis operation.
+     * Redis failures are propagated to the caller rather than treated as cache misses.
+     *
+     * @param tppIds identifiers to retrieve
+     * @return the cached TPPs keyed by their identifiers
+     */
+    public Mono<Map<String, Tpp>> getAllFromMap(Set<String> tppIds) {
+        if (tppIds.isEmpty()) {
+            return Mono.just(Map.of());
+        }
+        return tppMap.getAll(tppIds);
     }
 
     /**
@@ -218,7 +232,7 @@ public class TppMapService {
 
         return tppMap.remove(tppId)
                 .then(entityIdToTppIdMap.remove(entityId))
-                .doOnSuccess(removed -> log.info("[TPP-MAP][REMOVE] Removed TPP ID: {} and EntityID: {}", tppId, entityId))
+                .doOnSuccess(removed -> log.info("[TPP-MAP][REMOVE] Removed TPP from cache"))
                 .then();
     }
 

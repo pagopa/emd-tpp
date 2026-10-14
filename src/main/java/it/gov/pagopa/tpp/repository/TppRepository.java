@@ -48,6 +48,14 @@ public interface TppRepository extends ReactiveMongoRepository<Tpp,String>, TppR
     Mono<Tpp> findByTppId(String tppId);
 
     /**
+     * Finds TPP records for multiple identifiers in one database operation.
+     *
+     * @param tppIds identifiers to retrieve
+     * @return matching TPP records, or an empty Flux when none are found
+     */
+    Flux<Tpp> findByTppIdIn(List<String> tppIds);
+
+    /**
      * Finds a single TPP record by its entity identifier.
      * 
      * @param entityId the P.IVA or C.F. identifier of the TPP
