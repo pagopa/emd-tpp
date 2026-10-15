@@ -31,6 +31,16 @@ public interface TppController {
     Mono<ResponseEntity<List<TppDTO>>> filterEnabledList(@Valid @RequestBody TppIdList tppIdList);
 
     /**
+     * Resolves multiple TPP identifiers and returns only the fields required for payment enrichment.
+     * Duplicate IDs are collapsed at their first occurrence; missing IDs are listed separately.
+     * Requires {@code X-API-Version: 1}.
+     */
+    @PostMapping("/batch")
+    Mono<ResponseEntity<TppBatchResponseDTO>> getTppsBatch(
+            @RequestHeader(name = "X-API-Version", required = false) String apiVersion,
+            @Valid @RequestBody TppBatchRequestDTO request);
+
+    /**
      * Update the state of an existing TPP.
      *
      * @param tppUpdateState to update

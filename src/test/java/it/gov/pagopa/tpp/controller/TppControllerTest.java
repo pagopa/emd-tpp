@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.controller;
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import it.gov.pagopa.common.web.exception.ErrorManager;
 import it.gov.pagopa.common.web.exception.ServiceExceptionHandler;
+import it.gov.pagopa.common.web.exception.ValidationExceptionHandler;
 import it.gov.pagopa.tpp.configuration.ExceptionMap;
 import it.gov.pagopa.tpp.dto.NetworkResponseDTO;
 import it.gov.pagopa.tpp.dto.RecipientIdOnWhitelistDTO;
@@ -11,6 +12,9 @@ import it.gov.pagopa.tpp.dto.TppConnectionResponseDTO;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
+import it.gov.pagopa.tpp.dto.TppBatchItemDTO;
+import it.gov.pagopa.tpp.dto.TppBatchRequestDTO;
+import it.gov.pagopa.tpp.dto.TppBatchResponseDTO;
 import it.gov.pagopa.tpp.dto.TppIdList;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
 import it.gov.pagopa.tpp.dto.TppUpdateIsPaymentEnabled;
@@ -38,7 +42,8 @@ import static org.mockito.ArgumentMatchers.*;
 @ContextConfiguration(classes = {
     TppControllerImpl.class, 
     ServiceExceptionHandler.class, 
-    ErrorManager.class
+    ErrorManager.class,
+    ValidationExceptionHandler.class
 })
 class TppControllerTest {
 
@@ -292,6 +297,80 @@ class TppControllerTest {
                 Assertions.assertEquals(dtoList.size(), resultResponse.size());
                 Assertions.assertTrue(resultResponse.containsAll(dtoList));
             });
+    }
+
+    @Test
+    void getTppsBatch_Ok_ReturnsOnlyRequiredFieldsAndMissingIds() {
+        TppBatchRequestDTO request = new TppBatchRequestDTO(List.of("tpp-1", "tpp-missing"));
+        TppBatchResponseDTO response = TppBatchResponseDTO.builder()
+                .results(List.of(new TppBatchItemDTO("tpp-1", "Business", "entity-1")))
+                .missingTppIds(List.of("tpp-missing"))
+                .build();
+        Mockito.when(tppService.getTppsBatch(request.getIds())).thenReturn(Mono.just(response));
+
+        webClient.post()
+                .uri("/emd/tpp/batch")
+                .header("X-API-Version", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.results[0].tppId").isEqualTo("tpp-1")
+                .jsonPath("$.results[0].businessName").isEqualTo("Business")
+                .jsonPath("$.results[0].entityId").isEqualTo("entity-1")
+                .jsonPath("$.missingTppIds[0]").isEqualTo("tpp-missing")
+                .jsonPath("$.results[0].clientId").doesNotExist()
+                .jsonPath("$.results[0].tokenSection").doesNotExist()
+                .jsonPath("$.results[0].contact").doesNotExist()
+                .jsonPath("$.results[0].authenticationUrl").doesNotExist();
+    }
+
+    @Test
+    void getTppsBatch_RejectsMissingOrUnknownApiVersion() {
+        TppBatchRequestDTO request = new TppBatchRequestDTO(List.of("tpp-1"));
+
+        webClient.post()
+                .uri("/emd/tpp/batch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("INVALID_API_VERSION");
+
+        webClient.post()
+                .uri("/emd/tpp/batch")
+                .header("X-API-Version", "2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("INVALID_API_VERSION");
+
+        Mockito.verifyNoInteractions(tppService);
+    }
+
+    @Test
+    void getTppsBatch_ValidatesEmptyBlankAndOversizedIds() {
+        assertBatchValidationFailure(new TppBatchRequestDTO(List.of()));
+        assertBatchValidationFailure(new TppBatchRequestDTO(null));
+        assertBatchValidationFailure(new TppBatchRequestDTO(java.util.Arrays.asList((String) null)));
+        assertBatchValidationFailure(new TppBatchRequestDTO(List.of(" ", "tpp-1")));
+        assertBatchValidationFailure(new TppBatchRequestDTO(java.util.Collections.nCopies(101, "tpp-1")));
+
+        Mockito.verifyNoInteractions(tppService);
+    }
+
+    private void assertBatchValidationFailure(TppBatchRequestDTO request) {
+        webClient.post()
+                .uri("/emd/tpp/batch")
+                .header("X-API-Version", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test

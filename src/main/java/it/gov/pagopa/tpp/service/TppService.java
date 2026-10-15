@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
+import it.gov.pagopa.tpp.dto.TppBatchResponseDTO;
 
 import java.util.Map;
 import reactor.core.publisher.Mono;
@@ -50,6 +51,15 @@ public interface TppService {
      * @return a {@link Mono} containing a list of enabled {@link TppDTO} entities
      */
     Mono<List<TppDTO>> filterEnabledList(List<String> tppIdList, String recipientId);
+
+    /**
+     * Resolves TPP identity details for the requested IDs, preserving their first-seen order.
+     * Missing IDs are returned separately; infrastructure failures fail the whole operation.
+     *
+     * @param tppIds unique or repeated TPP identifiers to resolve
+     * @return found TPP identity details and the IDs that were not found
+     */
+    Mono<TppBatchResponseDTO> getTppsBatch(List<String> tppIds);
 
     /**
      * Creates a new TPP entity with the specified configuration.
