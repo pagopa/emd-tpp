@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.9.0](https://github.com/pagopa/emd-tpp/compare/v1.8.2...v1.9.0) (2026-10-15)
+
+
+### Features
+
+* [MMC-1191] get batch tpp info endpoint ([#152](https://github.com/pagopa/emd-tpp/issues/152)) ([711049d](https://github.com/pagopa/emd-tpp/commit/711049de3b6c56dc7925e4cfc5111d82c64f73ab))
+
 ## [1.8.2](https://github.com/pagopa/emd-tpp/compare/v1.8.1...v1.8.2) (2026-10-12)
 
 
