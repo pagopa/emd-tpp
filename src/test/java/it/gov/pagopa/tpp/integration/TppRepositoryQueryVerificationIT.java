@@ -20,6 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 /**
  * Integration test verifying MongoDB aggregation queries.
  *
@@ -142,7 +146,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             )
             .assertNext(tpp -> {
                 log.info("Found tpp: {}", tpp);
-                assert tpp.getTppId().equals(TPP_ID);
+                assertEquals(TPP_ID, tpp.getTppId());
             })
             .verifyComplete();
 
@@ -280,9 +284,9 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         
         StepVerifier.create(repository.findEnabledForRecipient(ids, RECIPIENT_ID))
              .assertNext(tpp -> {
-                assert tpp.getTppId().equals(TPP_ID_3);
-                assert tpp.getState().equals(false);
-                assert tpp.getWhitelistRecipient().contains(RECIPIENT_ID);
+                assertEquals(TPP_ID_3, tpp.getTppId());
+                assertFalse(tpp.getState());
+                assertTrue(tpp.getWhitelistRecipient().contains(RECIPIENT_ID));
             })
             .verifyComplete();
     }
@@ -327,8 +331,8 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             .recordWith(ArrayList::new)
             .expectNextCount(2)
             .consumeRecordedWith(results -> {
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID));
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3));
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID)));
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3)));
             })
             .verifyComplete();
     }
@@ -373,12 +377,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             .recordWith(ArrayList::new)
             .expectNextCount(2)
             .consumeRecordedWith(results -> {
-                assert results.stream().allMatch(tpp ->
+                assertTrue(results.stream().allMatch(tpp ->
                     tpp.getWhitelistRecipient() != null && !tpp.getWhitelistRecipient().isEmpty()
-                ) : "All TPPs should have non-empty whitelistRecipient";
-
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3));
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_4));
+                ), "All TPPs should have non-empty whitelistRecipient");
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3)));
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_4)));
             })
             .verifyComplete();
 
