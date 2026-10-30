@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -188,7 +190,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             )
             .assertNext(tpp -> {
                 log.info("Found tpp: {}", tpp);
-                assert tpp.getEntityId().equals(ENTITY_ID);
+                assertThat(tpp.getEntityId()).isEqualTo(ENTITY_ID);
             })
             .verifyComplete();
 
@@ -235,7 +237,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             )
             .assertNext(tpp -> {
                 log.info("Found tpp: {}", tpp);
-                assert tpp.getTppId().equals(TPP_ID);
+                assertThat(tpp.getTppId()).isEqualTo(TPP_ID);
             })
             .verifyComplete();
 
