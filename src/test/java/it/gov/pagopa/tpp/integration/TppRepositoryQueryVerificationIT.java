@@ -5,7 +5,6 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.test.context.TestPropertySource;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
-import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.repository.TppRepository;
@@ -63,14 +62,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create first TPP entity with state=TRUE for testing active TPPs
         Tpp testTpp = Tpp.builder()
                 .tppId(TPP_ID)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.TRUE)  // This TPP is active
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -80,14 +76,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create second TPP entity with state=FALSE for testing inactive TPPs
         Tpp testTpp2 = Tpp.builder()
                 .tppId(TPP_ID_2)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_2)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -97,14 +90,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create Inactive tpp with whitelist recipient
         Tpp whitelistedTpp = Tpp.builder()
                 .tppId(TPP_ID_3)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_3)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -115,14 +105,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create Inactive tpp and with different whitelist recipient
         Tpp inactiveTpp = Tpp.builder()
                 .tppId(TPP_ID_4)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_4)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")

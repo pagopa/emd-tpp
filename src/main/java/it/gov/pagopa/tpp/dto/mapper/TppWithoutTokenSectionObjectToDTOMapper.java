@@ -67,10 +67,7 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
                 .authenticationType(tpp.getAuthenticationType())
                 .tppId(tpp.getTppId())
                 .clientId(tpp.getClientId())
-                .idPsp(tpp.getIdPsp())
-                .legalAddress(tpp.getLegalAddress())
                 .businessName(tpp.getBusinessName())
-                .contact(tpp.getContact())
                 .entityId(tpp.getEntityId())
                 .creationDate(tpp.getCreationDate())
                 .lastUpdateDate(tpp.getLastUpdateDate())
@@ -98,13 +95,10 @@ public class TppWithoutTokenSectionObjectToDTOMapper {
 
         if (fields.contains(SearchFields.CLIENT_ID)) builder.clientId(tpp.getClientId());
         if (fields.contains(SearchFields.ENTITY_ID)) builder.entityId(tpp.getEntityId());
-        if (fields.contains(SearchFields.ID_PSP)) builder.idPsp(tpp.getIdPsp());
         if (fields.contains(SearchFields.BUSINESS_NAME)) builder.businessName(tpp.getBusinessName());
-        if (fields.contains(SearchFields.LEGAL_ADDRESS)) builder.legalAddress(tpp.getLegalAddress());
         if (fields.contains(SearchFields.MESSAGE_URL)) builder.messageUrl(tpp.getMessageUrl());
         if (fields.contains(SearchFields.AUTHENTICATION_URL)) builder.authenticationUrl(tpp.getAuthenticationUrl());
         if (fields.contains(SearchFields.AUTHENTICATION_TYPE)) builder.authenticationType(tpp.getAuthenticationType());
-        if (fields.contains(SearchFields.CONTACT)) builder.contact(tpp.getContact());
         if (fields.contains(SearchFields.STATE)) builder.state(tpp.getState());
         if (fields.contains(SearchFields.CREATION_DATE)) builder.creationDate(tpp.getCreationDate());
         if (fields.contains(SearchFields.LAST_UPDATE_DATE)) builder.lastUpdateDate(tpp.getLastUpdateDate());

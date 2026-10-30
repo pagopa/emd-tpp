@@ -322,7 +322,6 @@ class TppControllerTest {
                 .jsonPath("$.missingTppIds[0]").isEqualTo("tpp-missing")
                 .jsonPath("$.results[0].clientId").doesNotExist()
                 .jsonPath("$.results[0].tokenSection").doesNotExist()
-                .jsonPath("$.results[0].contact").doesNotExist()
                 .jsonPath("$.results[0].authenticationUrl").doesNotExist();
     }
 
