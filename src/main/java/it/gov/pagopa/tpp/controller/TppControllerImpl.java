@@ -137,6 +137,19 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
+    public Mono<ResponseEntity<TppDTO>> getFullTppByEntityId(String apiVersion, String entityId) {
+        if (!"1".equals(apiVersion)) {
+            return Mono.error(new ClientExceptionWithBody(
+                    HttpStatus.BAD_REQUEST, "INVALID_API_VERSION", "X-API-Version must be 1"));
+        }
+        return tppService.getFullTppByEntityId(inputSanitization(entityId))
+                .map(ResponseEntity::ok);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Mono<ResponseEntity<TppSearchResponseDTO>> searchTpps(String entityId, String businessName, int page, int size, List<String> fields) {
         return tppService.searchTpps(
                         entityId != null ? inputSanitization(entityId) : null,

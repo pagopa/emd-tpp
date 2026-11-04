@@ -259,6 +259,43 @@ class TppControllerTest {
     }
 
     @Test
+    void getFullTppByEntityId_Ok() {
+        TppDTO tppDto = getMockTppDto();
+        Mockito.when(tppService.getFullTppByEntityId(tppDto.getEntityId()))
+                .thenReturn(Mono.just(tppDto));
+
+        webClient.get()
+                .uri("/emd/tpp/entityId/{entityId}/full", tppDto.getEntityId())
+                .header("X-API-Version", "1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TppDTO.class)
+                .consumeWith(response -> Assertions.assertEquals(tppDto, response.getResponseBody()));
+    }
+
+    @Test
+    void getFullTppByEntityId_RequiresSupportedApiVersion() {
+        String entityId = getMockTppDto().getEntityId();
+
+        webClient.get()
+                .uri("/emd/tpp/entityId/{entityId}/full", entityId)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("INVALID_API_VERSION");
+
+        webClient.get()
+                .uri("/emd/tpp/entityId/{entityId}/full", entityId)
+                .header("X-API-Version", "2")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("INVALID_API_VERSION");
+
+        Mockito.verifyNoInteractions(tppService);
+    }
+
+    @Test
     void getTokenSection_Ok()  {
         TokenSectionDTO tokenSectionDTO = getMockTokenSectionDto();
 

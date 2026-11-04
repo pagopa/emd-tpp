@@ -141,6 +141,14 @@ public interface TppService {
     Mono<TppDTOWithoutTokenSection> getTppByEntityId(String entityId);
 
     /**
+     * Retrieves the complete TPP details, including the decrypted token section, by entity identifier.
+     *
+     * @param entityId the entity identifier
+     * @return a {@link Mono} containing the complete {@link TppDTO}
+     */
+    Mono<TppDTO> getFullTppByEntityId(String entityId);
+
+    /**
      * Tests the network connectivity to a specific TPP.
      * 
      * @param tppName the name of the TPP to test connectivity
