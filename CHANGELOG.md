@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.10.0](https://github.com/pagopa/emd-tpp/compare/v1.9.0...v1.10.0) (2026-11-05)
+
+
+### Features
+
+* [MMC-1361] add full dto get from entity endpoint ([#156](https://github.com/pagopa/emd-tpp/issues/156)) ([f8fc330](https://github.com/pagopa/emd-tpp/commit/f8fc330ef6985f407480cac67f1aca418046a25a))
+
 # [1.9.0](https://github.com/pagopa/emd-tpp/compare/v1.8.2...v1.9.0) (2026-10-15)
 
 

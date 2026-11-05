@@ -569,6 +569,32 @@ public class TppServiceImpl implements TppService {
 
     /**
      * {@inheritDoc}
+     *
+     * Returns the complete TPP representation. Database results are decrypted before mapping
+     * and cached in decrypted form, matching the cache's existing read model.
+     */
+    @Override
+    public Mono<TppDTO> getFullTppByEntityId(String entityId) {
+        log.info("[TPP-SERVICE][GET-FULL] Received request for entityId: {}", entityId);
+
+        return tppMapService.getFromMapByEntityId(entityId)
+                .map(mapperToDTO::map)
+                .switchIfEmpty(Mono.defer(() ->
+                        tppRepository.findByEntityId(entityId)
+                                .switchIfEmpty(Mono.error(exceptionMap.throwException(
+                                        ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
+                                .flatMap(dbTpp -> tokenSectionCryptService
+                                        .keyDecrypt(dbTpp.getTokenSection(), dbTpp.getTppId())
+                                        .flatMap(ignored -> tppMapService.addDecryptedToMap(dbTpp)
+                                                .thenReturn(dbTpp)))
+                                .map(mapperToDTO::map)))
+                .doOnSuccess(tppDTO -> log.info("[TPP-SERVICE][GET-FULL] Successfully processed entityId: {}", entityId))
+                .doOnError(error -> log.error("[TPP-SERVICE][GET-FULL] Error retrieving entityId {}: {}",
+                        entityId, error.getMessage()));
+    }
+
+    /**
+     * {@inheritDoc}
      * 
      * This method fetches the TPP's token section from the database, decrypts
      * the sensitive authentication data using Azure Key Vault, and returns
