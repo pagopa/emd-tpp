@@ -764,6 +764,39 @@ class TppServiceTest {
     }
 
     @Test
+    void getFullTppByEntityId_FromCache() {
+        Tpp mockTpp = getMockTpp();
+        Mockito.when(tppMapService.getFromMapByEntityId(mockTpp.getEntityId()))
+                .thenReturn(Mono.just(mockTpp));
+
+        StepVerifier.create(tppService.getFullTppByEntityId(mockTpp.getEntityId()))
+                .expectNextMatches(dto -> dto.getTppId().equals(mockTpp.getTppId())
+                        && dto.getTokenSection() != null)
+                .verifyComplete();
+
+        Mockito.verify(tppRepository, Mockito.never()).findByEntityId(anyString());
+    }
+
+    @Test
+    void getFullTppByEntityId_FromDatabaseDecryptsAndCaches() {
+        Tpp mockTpp = getMockTpp();
+        String entityId = mockTpp.getEntityId();
+        Mockito.when(tppMapService.getFromMapByEntityId(entityId)).thenReturn(Mono.empty());
+        Mockito.when(tppRepository.findByEntityId(entityId)).thenReturn(Mono.just(mockTpp));
+        Mockito.when(tokenSectionCryptService.keyDecrypt(mockTpp.getTokenSection(), mockTpp.getTppId()))
+                .thenReturn(Mono.just(true));
+        Mockito.when(tppMapService.addDecryptedToMap(mockTpp)).thenReturn(Mono.just(true));
+
+        StepVerifier.create(tppService.getFullTppByEntityId(entityId))
+                .expectNextMatches(dto -> dto.getTppId().equals(mockTpp.getTppId())
+                        && dto.getTokenSection() != null)
+                .verifyComplete();
+
+        Mockito.verify(tokenSectionCryptService).keyDecrypt(mockTpp.getTokenSection(), mockTpp.getTppId());
+        Mockito.verify(tppMapService).addDecryptedToMap(mockTpp);
+    }
+
+    @Test
     void getTokenSectionFromDB_Ok() {
         TppDTO tppDto = getMockTppDto();
 

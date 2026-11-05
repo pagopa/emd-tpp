@@ -135,6 +135,15 @@ public interface TppController {
     Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppByEntityId(@Valid @PathVariable String entityId);
 
     /**
+     * Get the complete TPP, including its token section, by entity ID.
+     * Requires {@code X-API-Version: 1}.
+     */
+    @GetMapping("/entityId/{entityId}/full")
+    Mono<ResponseEntity<TppDTO>> getFullTppByEntityId(
+            @RequestHeader(name = "X-API-Version", required = false) String apiVersion,
+            @Valid @PathVariable String entityId);
+
+    /**
      * Search TPPs by exact {@code entityId} or partial (case-insensitive) {@code businessName},
      * returning a paginated result.
      * <p>
