@@ -24,14 +24,11 @@ public class Tpp {
     private String tppId;
     private String clientId;
     private String entityId;
-    private String idPsp;
     private String businessName;
-    private String legalAddress;
     private String messageUrl;
     private String authenticationUrl;
     private AuthenticationType authenticationType;
     private Boolean state;
-    private Contact contact;
     private TokenSection tokenSection;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdateDate;

@@ -3,7 +3,6 @@ package it.gov.pagopa.tpp.utils.faker;
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
-import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
 import java.util.HashMap;
@@ -15,7 +14,6 @@ public class TppDTOFaker {
 
     public static TppDTO mockInstance(Boolean bias) {
 
-        Contact contact = new Contact("name","number", "email");
         VersionDetails versionDetails = new VersionDetails("linkVersion");
         AgentLink agentLink = new AgentLink("ios", new HashMap<>() {{
             put("v1", versionDetails);
@@ -26,13 +24,10 @@ public class TppDTOFaker {
                 .clientId("legacyClientId")
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
-                .idPsp("idPsp")
-                .legalAddress("legalAddress")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(bias)
                 .entityId("entityId01234567")
                 .businessName("businessName")
-                .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
@@ -48,19 +43,14 @@ public class TppDTOFaker {
 
     public static TppDTO mockInstanceWithNoTppId(Boolean bias) {
 
-        Contact contact = new Contact("name","number", "email");
-
         return TppDTO.builder()
                 .tppId(null)
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
-                .idPsp("idPsp")
-                .legalAddress("legalAddress")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(bias)
                 .entityId("entityId01234567")
                 .businessName("businessName")
-                .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())
@@ -72,19 +62,14 @@ public class TppDTOFaker {
 
     public static TppDTO mockInstanceWithNoTokenSection(Boolean bias) {
 
-        Contact contact = new Contact("name","number", "email");
-
         return TppDTO.builder()
                 .tppId(("tppId"))
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
-                .idPsp("idPsp")
-                .legalAddress("legalAddress")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(bias)
                 .entityId("entityId01234567")
                 .businessName("businessName")
-                .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(null)

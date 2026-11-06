@@ -344,9 +344,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
                     existingTpp.setMessageUrl(tppDTOWithoutTokenSection.getMessageUrl());
                     existingTpp.setAuthenticationUrl(tppDTOWithoutTokenSection.getAuthenticationUrl());
-                    existingTpp.setContact(tppDTOWithoutTokenSection.getContact());
                     existingTpp.setBusinessName(tppDTOWithoutTokenSection.getBusinessName());
-                    existingTpp.setLegalAddress(tppDTOWithoutTokenSection.getLegalAddress());
                     existingTpp.setPspDenomination(tppDTOWithoutTokenSection.getPspDenomination());
                     existingTpp.setAgentLinks(tppDTOWithoutTokenSection.getAgentLinks());
                     existingTpp.setMessageTemplate(tppDTOWithoutTokenSection.getMessageTemplate());
@@ -376,9 +374,7 @@ public class TppServiceImpl implements TppService {
                     existingTpp.setLastUpdateDate(LocalDateTime.now());
                     if (tppDTOPatch.getMessageUrl() != null)         existingTpp.setMessageUrl(tppDTOPatch.getMessageUrl());
                     if (tppDTOPatch.getAuthenticationUrl() != null)  existingTpp.setAuthenticationUrl(tppDTOPatch.getAuthenticationUrl());
-                    if (tppDTOPatch.getContact() != null)            existingTpp.setContact(tppDTOPatch.getContact());
                     if (tppDTOPatch.getBusinessName() != null)       existingTpp.setBusinessName(tppDTOPatch.getBusinessName());
-                    if (tppDTOPatch.getLegalAddress() != null)       existingTpp.setLegalAddress(tppDTOPatch.getLegalAddress());
                     if (tppDTOPatch.getPspDenomination() != null)    existingTpp.setPspDenomination(tppDTOPatch.getPspDenomination());
                     if (tppDTOPatch.getAgentLinks() != null)         existingTpp.setAgentLinks(tppDTOPatch.getAgentLinks());
                     if (tppDTOPatch.getMessageTemplate() != null)    existingTpp.setMessageTemplate(tppDTOPatch.getMessageTemplate());
