@@ -5,7 +5,6 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.test.context.TestPropertySource;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
-import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.repository.TppRepository;
@@ -20,6 +19,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Integration test verifying MongoDB aggregation queries.
@@ -63,14 +67,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create first TPP entity with state=TRUE for testing active TPPs
         Tpp testTpp = Tpp.builder()
                 .tppId(TPP_ID)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.TRUE)  // This TPP is active
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -80,14 +81,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create second TPP entity with state=FALSE for testing inactive TPPs
         Tpp testTpp2 = Tpp.builder()
                 .tppId(TPP_ID_2)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_2)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -97,14 +95,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create Inactive tpp with whitelist recipient
         Tpp whitelistedTpp = Tpp.builder()
                 .tppId(TPP_ID_3)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_3)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -115,14 +110,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         // Create Inactive tpp and with different whitelist recipient
         Tpp inactiveTpp = Tpp.builder()
                 .tppId(TPP_ID_4)
-                .idPsp("idPsp")
                 .messageUrl("messageUrl")
-                .legalAddress("legalAddress")
                 .authenticationUrl("authenticationUrl")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(Boolean.FALSE)  // This TPP is inactive
                 .businessName("businessName")
-                .contact(new Contact("name","number","email"))
                 .entityId(ENTITY_ID_4)
                 .tokenSection(new TokenSection("",new HashMap<>(), new HashMap<>()))
                 .pspDenomination("paymentButton")
@@ -155,7 +147,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             )
             .assertNext(tpp -> {
                 log.info("Found tpp: {}", tpp);
-                assert tpp.getTppId().equals(TPP_ID);
+                assertEquals(TPP_ID, tpp.getTppId());
             })
             .verifyComplete();
 
@@ -197,7 +189,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             )
             .assertNext(tpp -> {
                 log.info("Found tpp: {}", tpp);
-                assert tpp.getEntityId().equals(ENTITY_ID);
+                assertThat(tpp.getEntityId()).isEqualTo(ENTITY_ID);
             })
             .verifyComplete();
 
@@ -244,7 +236,7 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             )
             .assertNext(tpp -> {
                 log.info("Found tpp: {}", tpp);
-                assert tpp.getTppId().equals(TPP_ID);
+                assertThat(tpp.getTppId()).isEqualTo(TPP_ID);
             })
             .verifyComplete();
 
@@ -293,9 +285,9 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
         
         StepVerifier.create(repository.findEnabledForRecipient(ids, RECIPIENT_ID))
              .assertNext(tpp -> {
-                assert tpp.getTppId().equals(TPP_ID_3);
-                assert tpp.getState().equals(false);
-                assert tpp.getWhitelistRecipient().contains(RECIPIENT_ID);
+                assertEquals(TPP_ID_3, tpp.getTppId());
+                assertFalse(tpp.getState());
+                assertTrue(tpp.getWhitelistRecipient().contains(RECIPIENT_ID));
             })
             .verifyComplete();
     }
@@ -340,8 +332,8 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             .recordWith(ArrayList::new)
             .expectNextCount(2)
             .consumeRecordedWith(results -> {
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID));
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3));
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID)));
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3)));
             })
             .verifyComplete();
     }
@@ -386,12 +378,11 @@ public class TppRepositoryQueryVerificationIT extends BaseIT{
             .recordWith(ArrayList::new)
             .expectNextCount(2)
             .consumeRecordedWith(results -> {
-                assert results.stream().allMatch(tpp ->
+                assertTrue(results.stream().allMatch(tpp ->
                     tpp.getWhitelistRecipient() != null && !tpp.getWhitelistRecipient().isEmpty()
-                ) : "All TPPs should have non-empty whitelistRecipient";
-
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3));
-                assert results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_4));
+                ), "All TPPs should have non-empty whitelistRecipient");
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_3)));
+                assertTrue(results.stream().anyMatch(t -> t.getTppId().equals(TPP_ID_4)));
             })
             .verifyComplete();
 

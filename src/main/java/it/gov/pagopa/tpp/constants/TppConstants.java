@@ -71,13 +71,10 @@ public class TppConstants {
         public static final String TPP_ID = "tppId";
         public static final String CLIENT_ID = "clientId";
         public static final String ENTITY_ID = "entityId";
-        public static final String ID_PSP = "idPsp";
         public static final String BUSINESS_NAME = "businessName";
-        public static final String LEGAL_ADDRESS = "legalAddress";
         public static final String MESSAGE_URL = "messageUrl";
         public static final String AUTHENTICATION_URL = "authenticationUrl";
         public static final String AUTHENTICATION_TYPE = "authenticationType";
-        public static final String CONTACT = "contact";
         public static final String STATE = "state";
         public static final String CREATION_DATE = "creationDate";
         public static final String LAST_UPDATE_DATE = "lastUpdateDate";
@@ -91,8 +88,8 @@ public class TppConstants {
          * All the fields that can be requested through the {@code fields} search parameter.
          */
         public static final Set<String> ALLOWED = Set.of(
-                TPP_ID, CLIENT_ID, ENTITY_ID, ID_PSP, BUSINESS_NAME, LEGAL_ADDRESS,
-                MESSAGE_URL, AUTHENTICATION_URL, AUTHENTICATION_TYPE, CONTACT, STATE,
+                TPP_ID, CLIENT_ID, ENTITY_ID, BUSINESS_NAME,
+                MESSAGE_URL, AUTHENTICATION_URL, AUTHENTICATION_TYPE, STATE,
                 CREATION_DATE, LAST_UPDATE_DATE, PSP_DENOMINATION, AGENT_LINKS,
                 IS_PAYMENT_ENABLED, MESSAGE_TEMPLATE, WHITELIST_RECIPIENT
         );
