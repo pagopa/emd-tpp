@@ -333,8 +333,7 @@ public class TppServiceImpl implements TppService {
      * {@inheritDoc}
      */
     @Override
-    public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection, String authHeader) {
-        log.info("Token -> {} ", authHeader);
+    public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection) {
         if (tppDTOWithoutTokenSection.getTppId() == null)
             return Mono.error(exceptionMap.throwException(ExceptionName.GENERIC_ERROR,
                     ExceptionMessage.GENERIC_ERROR));
@@ -525,7 +524,9 @@ public class TppServiceImpl implements TppService {
      * {@inheritDoc}
      */
     @Override
-    public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
+    public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId, String authHeader) {
+        log.info("Token -> {} ", authHeader);
+
         log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", tppId);
 
         return getTppsByIds(List.of(tppId))
