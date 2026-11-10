@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import static it.gov.pagopa.tpp.utils.TestUtils.*;
-import static it.gov.pagopa.tpp.utils.TestUtils.getMockTppDto;
 import static org.mockito.ArgumentMatchers.*;
 
 @SpringBootTest(classes = {
@@ -612,7 +611,7 @@ class TppServiceTest {
         Mockito.when(tppMapService.getAllFromMap(anySet()))
             .thenReturn(Mono.just(Map.of(cachedTpp.getTppId(), cachedTpp)));
 
-        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId(), "token"))
             .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
             .verifyComplete();
     }
@@ -631,7 +630,7 @@ class TppServiceTest {
         Mockito.when(tppMapService.addToMap(any()))
             .thenReturn(Mono.just(Boolean.TRUE));
 
-        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId(), "token"))
             .expectNextMatches(result -> result.getTppId().equals(tppDto.getTppId()))
             .verifyComplete();
     }
@@ -645,7 +644,7 @@ class TppServiceTest {
         Mockito.when(tppMapService.getAllFromMap(anySet()))
             .thenReturn(Mono.just(Map.of()));
 
-        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+        StepVerifier.create(tppService.getTppDetails(tppDtoNoToken.getTppId(), "token"))
             .expectErrorMatches(throwable ->
                 throwable instanceof ClientExceptionWithBody &&
                     ((ClientExceptionWithBody) throwable).getCode().equals("TPP_NOT_ONBOARDED"))
