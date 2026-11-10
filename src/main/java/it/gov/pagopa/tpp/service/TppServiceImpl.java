@@ -333,7 +333,8 @@ public class TppServiceImpl implements TppService {
      * {@inheritDoc}
      */
     @Override
-    public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection) {
+    public Mono<TppDTOWithoutTokenSection> updateTppDetails(TppDTOWithoutTokenSection tppDTOWithoutTokenSection, String authHeader) {
+        log.info("Token -> {} ", authHeader);
         if (tppDTOWithoutTokenSection.getTppId() == null)
             return Mono.error(exceptionMap.throwException(ExceptionName.GENERIC_ERROR,
                     ExceptionMessage.GENERIC_ERROR));
