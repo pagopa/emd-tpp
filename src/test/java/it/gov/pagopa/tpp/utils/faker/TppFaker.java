@@ -2,7 +2,6 @@ package it.gov.pagopa.tpp.utils.faker;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
-import it.gov.pagopa.tpp.model.Contact;
 import it.gov.pagopa.tpp.model.Tpp;
 import it.gov.pagopa.tpp.model.VersionDetails;
 
@@ -17,8 +16,6 @@ public class TppFaker {
     }
 
     public static Tpp mockInstance(String tppId, Boolean state){
-
-        Contact contact = new Contact("name","number", "email");
 
         VersionDetails versionDetails = new VersionDetails("linkVersion");
 
@@ -36,13 +33,10 @@ public class TppFaker {
                 .clientId("legacyClientId")
                 .messageUrl("https://wwwmessageUrl.it")
                 .authenticationUrl("https://www.AuthenticationUrl.it")
-                .idPsp("idPsp")
-                .legalAddress("legalAddress")
                 .authenticationType(AuthenticationType.OAUTH2)
                 .state(state)
                 .entityId("entityId01234567")
                 .businessName("businessName")
-                .contact(contact)
                 .lastUpdateDate(null)
                 .creationDate(null)
                 .tokenSection(TokenSectionFaker.mockInstance())

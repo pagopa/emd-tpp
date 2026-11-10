@@ -2,7 +2,6 @@ package it.gov.pagopa.tpp.dto;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
-import it.gov.pagopa.tpp.model.Contact;
 import jakarta.validation.constraints.Pattern;
 import java.util.HashMap;
 import java.util.List;
@@ -26,11 +25,7 @@ public class TppDTOPatch {
 
     private String clientId;
 
-    private String idPsp;
-
     private String businessName;
-
-    private String legalAddress;
 
     @Pattern(regexp = "^(https?|ftp)://[^ /$.?#].[^ ]*$", message = "Message URL must be a valid URL")
     private String messageUrl;
@@ -39,8 +34,6 @@ public class TppDTOPatch {
     private String authenticationUrl;
 
     private AuthenticationType authenticationType;
-
-    private Contact contact;
 
     private String pspDenomination;
 

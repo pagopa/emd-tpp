@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/pagopa/emd-tpp/compare/v1.10.0...v1.10.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* [MMC-1313] Remove fields ([#153](https://github.com/pagopa/emd-tpp/issues/153)) ([b8dffce](https://github.com/pagopa/emd-tpp/commit/b8dffce34e887282d5f4cd5eb0e4c2fa6daf8dae))
+
 # [1.10.0](https://github.com/pagopa/emd-tpp/compare/v1.9.0...v1.10.0) (2026-11-05)
 
 

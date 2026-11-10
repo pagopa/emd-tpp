@@ -20,7 +20,5 @@ public class BaseMessageDTO {
     private String content;
     private String notes;
     private Boolean associatedPayment;
-    private String idPsp;
-
 
 }

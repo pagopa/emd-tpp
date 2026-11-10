@@ -2,14 +2,7 @@ package it.gov.pagopa.tpp.model.mapper;
 
 import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.model.Tpp;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.core.io.Resource;
-import org.springframework.util.StreamUtils;
-
-import jakarta.annotation.PostConstruct; // Usa javax.annotation se sei su Spring Boot < 3
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Service class responsible for mapping {@link TppDTO} 
@@ -30,13 +23,10 @@ public class TppDTOToObjectMapper {
                 .state(Boolean.TRUE.equals(tppDTO.getState()))
                 .tppId(tppDTO.getTppId())
                 .clientId(tppDTO.getClientId())
-                .idPsp(tppDTO.getIdPsp())
                 .messageUrl(tppDTO.getMessageUrl())
-                .legalAddress(tppDTO.getLegalAddress())
                 .authenticationUrl(tppDTO.getAuthenticationUrl())
                 .authenticationType(tppDTO.getAuthenticationType())
                 .businessName(tppDTO.getBusinessName())
-                .contact(tppDTO.getContact())
                 .entityId(tppDTO.getEntityId())
                 .tokenSection(tppDTO.getTokenSection())
                 .pspDenomination(tppDTO.getPspDenomination())
