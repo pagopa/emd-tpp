@@ -13,6 +13,7 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.resource.NoResourceFoundException;
 import org.springframework.web.server.MethodNotAllowedException;
 import org.springframework.web.server.MissingRequestValueException;
+import org.springframework.web.server.ServerWebInputException;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
  * The handler supports the following exception types:
  * <ul>
  *   <li>{@link WebExchangeBindException} - Request body validation failures with detailed field errors</li>
+ *   <li>{@link ServerWebInputException} - Malformed/undecodable request input (e.g. invalid enum
+ *       value or a body that cannot be deserialized into the target type)</li>
  *   <li>{@link MissingRequestValueException} - Missing required request parameters or headers</li>
  *   <li>{@link NoResourceFoundException} - Static resource not found errors</li>
  *   <li>{@link MethodNotAllowedException} - Unsupported HTTP method errors</li>
@@ -41,15 +44,17 @@ public class ValidationExceptionHandler {
     /**
      * Constructs a new ValidationExceptionHandler with an optional template error DTO.
      * <p>
-     * If no template is provided, a default error DTO with code "INVALID_REQUEST"
+     * If no template is provided, a default error DTO with code "TPP_BAD_REQUEST"
      * and message "Invalid request" will be created. The template determines the
-     * error code used across all validation error responses.
+     * error code used across all validation error responses, so every bad-request response
+     * produced by this handler is reported with the {@code TPP_BAD_REQUEST} code while the
+     * message remains specific to the offending field or condition.
      *
      * @param templateValidationErrorDTO the template error DTO to use for validation errors
      */
     public ValidationExceptionHandler(@Nullable ErrorDTO templateValidationErrorDTO) {
         this.templateValidationErrorDTO = Optional.ofNullable(templateValidationErrorDTO)
-                .orElse(new ErrorDTO("INVALID_REQUEST", "Invalid request"));
+                .orElse(new ErrorDTO("TPP_BAD_REQUEST", "Invalid request"));
     }
 
     /**
@@ -76,6 +81,28 @@ public class ValidationExceptionHandler {
         log.debug("Something went wrong while validating http request", e);
 
         return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+    }
+
+    /**
+     * Handles {@link ServerWebInputException} raised when the request input cannot be decoded
+     * into the target type, for example an invalid enum value or a JSON body whose shape does
+     * not match the expected structure. These are client errors and must be reported as
+     * {@code 400 Bad Request} with a structured error.
+     * <p>
+     * More specific subclasses such as {@link WebExchangeBindException} are handled by their own
+     * dedicated handler and are not affected by this method. The response intentionally avoids
+     * leaking internal exception details.
+     *
+     * @param e the server web input exception
+     * @return an {@link ErrorDTO} with the template error code and a generic validation message
+     */
+    @ExceptionHandler(ServerWebInputException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorDTO handleServerWebInputException(ServerWebInputException e) {
+        log.info("A ServerWebInputException occurred : HttpStatus 400 - Request input is not valid");
+        log.debug("Something went wrong while decoding the request input", e);
+
+        return new ErrorDTO(templateValidationErrorDTO.getCode(), "Request input is not valid");
     }
 
     /**
