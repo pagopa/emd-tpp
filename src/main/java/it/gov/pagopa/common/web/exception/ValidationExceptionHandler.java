@@ -44,15 +44,17 @@ public class ValidationExceptionHandler {
     /**
      * Constructs a new ValidationExceptionHandler with an optional template error DTO.
      * <p>
-     * If no template is provided, a default error DTO with code "INVALID_REQUEST"
+     * If no template is provided, a default error DTO with code "TPP_BAD_REQUEST"
      * and message "Invalid request" will be created. The template determines the
-     * error code used across all validation error responses.
+     * error code used across all validation error responses, so every bad-request response
+     * produced by this handler is reported with the {@code TPP_BAD_REQUEST} code while the
+     * message remains specific to the offending field or condition.
      *
      * @param templateValidationErrorDTO the template error DTO to use for validation errors
      */
     public ValidationExceptionHandler(@Nullable ErrorDTO templateValidationErrorDTO) {
         this.templateValidationErrorDTO = Optional.ofNullable(templateValidationErrorDTO)
-                .orElse(new ErrorDTO("INVALID_REQUEST", "Invalid request"));
+                .orElse(new ErrorDTO("TPP_BAD_REQUEST", "Invalid request"));
     }
 
     /**

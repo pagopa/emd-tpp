@@ -87,7 +87,7 @@ class ValidationExceptionHandlerTest {
                 .consumeWith(response -> {
                     ErrorDTO errorDTO = response.getResponseBody();
                     assertThat(errorDTO).isNotNull();
-                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getCode()).isEqualTo("TPP_BAD_REQUEST");
                     assertThat(errorDTO.getMessage()).isEqualTo("[data]: The field is mandatory!");
                 });
     }
@@ -105,7 +105,7 @@ class ValidationExceptionHandlerTest {
                 .consumeWith(response -> {
                     ErrorDTO errorDTO = response.getResponseBody();
                     assertThat(errorDTO).isNotNull();
-                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getCode()).isEqualTo("TPP_BAD_REQUEST");
                     assertThat(errorDTO.getMessage()).isEqualTo("Request input is not valid");
                 });
     }
@@ -124,7 +124,7 @@ class ValidationExceptionHandlerTest {
                 .consumeWith(response -> {
                     ErrorDTO errorDTO = response.getResponseBody();
                     assertThat(errorDTO).isNotNull();
-                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getCode()).isEqualTo("TPP_BAD_REQUEST");
                     assertThat(errorDTO.getMessage()).isEqualTo("Request input is not valid");
                 });
     }
@@ -143,7 +143,7 @@ class ValidationExceptionHandlerTest {
                 .consumeWith(response -> {
                     ErrorDTO errorDTO = response.getResponseBody();
                     assertThat(errorDTO).isNotNull();
-                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getCode()).isEqualTo("TPP_BAD_REQUEST");
                     assertThat(errorDTO.getMessage()).isEqualTo("Something went wrong due to a missing request value");
 
                 });
@@ -163,7 +163,7 @@ class ValidationExceptionHandlerTest {
                 .consumeWith(response -> {
                     ErrorDTO errorDTO = response.getResponseBody();
                     assertThat(errorDTO).isNotNull();
-                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getCode()).isEqualTo("TPP_BAD_REQUEST");
                     assertThat(errorDTO.getMessage()).isEqualTo("Something went wrong due to a missing static resource");
 
                 });
@@ -180,7 +180,7 @@ class ValidationExceptionHandlerTest {
                 .consumeWith(response -> {
                     ErrorDTO errorDTO = response.getResponseBody();
                     assertThat(errorDTO).isNotNull();
-                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getCode()).isEqualTo("TPP_BAD_REQUEST");
                     assertThat(errorDTO.getMessage()).isEqualTo("Request is not supported");
 
                 });
