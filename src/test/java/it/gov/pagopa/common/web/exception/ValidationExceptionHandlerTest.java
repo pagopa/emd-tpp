@@ -4,6 +4,7 @@ package it.gov.pagopa.common.web.exception;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.util.HashMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,11 @@ class ValidationExceptionHandlerTest {
         String testEndpoint(@RequestBody @Valid ValidationDTO body, @RequestHeader("data") String data) {
             return "OK";
         }
+
+        @PutMapping("/decode")
+        String decodeEndpoint(@RequestBody @Valid DecodeDTO body) {
+            return "OK";
+        }
     }
 
     @Data
@@ -45,6 +51,25 @@ class ValidationExceptionHandlerTest {
     static class ValidationDTO {
         @NotBlank(message = "The field is mandatory!")
         private String data;
+    }
+
+    enum SampleType {
+        OAUTH2
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    static class NestedDetails {
+        private String link;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    static class DecodeDTO {
+        private SampleType authenticationType;
+        private HashMap<String, NestedDetails> versions;
     }
 
     @Test
@@ -66,6 +91,44 @@ class ValidationExceptionHandlerTest {
                     assertThat(errorDTO.getMessage()).isEqualTo("[data]: The field is mandatory!");
                 });
     }
+    @Test
+    void testHandleInvalidEnumValueReturnsBadRequest() {
+        String invalidJson = "{\"authenticationType\":\"BASIC\"}";
+
+        webTestClient.put()
+                .uri("/decode")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidJson)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(ErrorDTO.class)
+                .consumeWith(response -> {
+                    ErrorDTO errorDTO = response.getResponseBody();
+                    assertThat(errorDTO).isNotNull();
+                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getMessage()).isEqualTo("Request input is not valid");
+                });
+    }
+
+    @Test
+    void testHandleUndecodableNestedValueReturnsBadRequest() {
+        String invalidJson = "{\"versions\":{\"v1.0.0\":\"not-an-object\"}}";
+
+        webTestClient.put()
+                .uri("/decode")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidJson)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(ErrorDTO.class)
+                .consumeWith(response -> {
+                    ErrorDTO errorDTO = response.getResponseBody();
+                    assertThat(errorDTO).isNotNull();
+                    assertThat(errorDTO.getCode()).isEqualTo("INVALID_REQUEST");
+                    assertThat(errorDTO.getMessage()).isEqualTo("Request input is not valid");
+                });
+    }
+
     @Test
     void testHandleMissingRequestValueException() {
 
