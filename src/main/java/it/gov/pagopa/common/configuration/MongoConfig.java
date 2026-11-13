@@ -4,6 +4,7 @@ import com.mongodb.lang.NonNull;
 import it.gov.pagopa.common.utils.CommonConstants;
 import lombok.Setter;
 import org.bson.types.Decimal128;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.mongodb.autoconfigure.MongoClientSettingsBuilderCustomizer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
 import java.math.BigDecimal;
@@ -24,6 +26,42 @@ import java.util.concurrent.TimeUnit;
  */
 @Configuration
 public class MongoConfig {
+
+    /**
+     * Replacement token used in place of the dot ({@code .}) character inside map keys when a
+     * document is written to MongoDB/Cosmos DB.
+     * <p>
+     * MongoDB does not allow dots in field names, and map keys are persisted as field names
+     * (for example {@code agentLinks.<agent>.versions} uses the version string as a key). Without
+     * a replacement, a key such as {@code v1.0.0} makes the write fail and surfaces as an internal
+     * error. Spring Data applies this replacement transparently on write and restores the original
+     * dot on read, so the Java/API representation of the key is unchanged.
+     * <p>
+     * The token is intentionally unlikely to appear in legitimate keys to avoid ambiguous
+     * round-tripping.
+     */
+    private static final String MAP_KEY_DOT_REPLACEMENT = "_";
+
+    /**
+     * Post-processes the Spring Data {@link MappingMongoConverter} (the one backing the reactive
+     * {@code ReactiveMongoTemplate} auto-configured by Spring Boot) to configure the map-key dot
+     * replacement. This lets documents contain map keys with dots, such as semantic version
+     * strings like {@code v1.0.0}, without failing the write.
+     *
+     * @return a {@link BeanPostProcessor} that configures the map-key dot replacement
+     */
+    @Bean
+    public BeanPostProcessor mappingMongoConverterDotReplacementPostProcessor() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName) {
+                if (bean instanceof MappingMongoConverter mappingMongoConverter) {
+                    mappingMongoConverter.setMapKeyDotReplacement(MAP_KEY_DOT_REPLACEMENT);
+                }
+                return bean;
+            }
+        };
+    }
 
     /**
      * Configuration properties class for MongoDB custom settings.
