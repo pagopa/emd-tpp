@@ -3,6 +3,7 @@ package it.gov.pagopa.tpp.dto;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
 import it.gov.pagopa.tpp.model.TokenSection;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -51,7 +52,7 @@ public class TppDTO {
     private String pspDenomination;
 
     @NotNull(message = "Agent Link must not be null")
-    private HashMap<String, AgentLink> agentLinks;
+    private HashMap<String, @Valid AgentLink> agentLinks;
 
     @NotNull(message = "IsPaymentEnabled must not be null")
     private Boolean isPaymentEnabled;
