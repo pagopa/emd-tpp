@@ -724,4 +724,151 @@ class TppControllerTest {
                 .jsonPath("$.code").isEqualTo("TPP_NOT_FOUND");
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Agent link version key validation (keys persisted as Cosmos/Mongo field names cannot contain
+    // a dot). A valid VersionDetails nested under a dotted key must still be rejected at request
+    // binding time, before any service invocation. Keys without a dot must be accepted.
+    // ---------------------------------------------------------------------------------------------
+
+    /** Body JSON with an agentLinks version key, letting us control the exact key under test. */
+    private static String tppDtoJsonWithVersionKey(String versionKey) {
+        return String.format("""
+                {
+                  "tppId": "tppId",
+                  "entityId": "entityId01234567",
+                  "businessName": "businessName",
+                  "messageUrl": "https://www.messageUrl.it",
+                  "authenticationUrl": "https://www.authUrl.it",
+                  "authenticationType": "OAUTH2",
+                  "pspDenomination": "psp",
+                  "isPaymentEnabled": true,
+                  "agentLinks": {
+                    "ios": {
+                      "fallBackLink": "https://www.fallback.it",
+                      "versions": {
+                        "%s": { "link": "https://www.versionlink.it" }
+                      }
+                    }
+                  }
+                }
+                """, versionKey);
+    }
+
+    private static String patchJsonWithVersionKey(String versionKey) {
+        return String.format("""
+                {
+                  "agentLinks": {
+                    "ios": {
+                      "fallBackLink": "https://www.fallback.it",
+                      "versions": {
+                        "%s": { "link": "https://www.versionlink.it" }
+                      }
+                    }
+                  }
+                }
+                """, versionKey);
+    }
+
+    @Test
+    void save_RejectsDottedAgentLinkVersionKey_WithoutInvokingService() {
+        webClient.post()
+                .uri("/emd/tpp/save")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tppDtoJsonWithVersionKey("v1.0.0"))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("TPP_BAD_REQUEST");
+
+        Mockito.verifyNoInteractions(tppService);
+    }
+
+    @Test
+    void updateTppDetails_RejectsDottedAgentLinkVersionKey_WithoutInvokingService() {
+        webClient.put()
+                .uri("/emd/tpp/update")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tppDtoJsonWithVersionKey("v1.0.0"))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("TPP_BAD_REQUEST");
+
+        Mockito.verifyNoInteractions(tppService);
+    }
+
+    @Test
+    void patchTppDetails_RejectsDottedAgentLinkVersionKey_WithoutInvokingService() {
+        webClient.patch()
+                .uri("/emd/tpp/{tppId}", "tppId")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patchJsonWithVersionKey("v1.0.0"))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("TPP_BAD_REQUEST");
+
+        Mockito.verifyNoInteractions(tppService);
+    }
+
+    @Test
+    void save_AcceptsAgentLinkVersionKeyWithoutDot() {
+        Mockito.when(tppService.createNewTpp(any(TppDTO.class), anyString()))
+                .thenReturn(Mono.just(getMockTppDto()));
+
+        webClient.post()
+                .uri("/emd/tpp/save")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tppDtoJsonWithVersionKey("v1"))
+                .exchange()
+                .expectStatus().isOk();
+
+        Mockito.verify(tppService).createNewTpp(any(TppDTO.class), anyString());
+    }
+
+    @Test
+    void updateTppDetails_AcceptsAgentLinkVersionKeyWithoutDot() {
+        Mockito.when(tppService.updateTppDetails(any(TppDTOWithoutTokenSection.class)))
+                .thenReturn(Mono.just(getMockTppDtoWithoutTokenSection()));
+
+        webClient.put()
+                .uri("/emd/tpp/update")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tppDtoJsonWithVersionKey("v1"))
+                .exchange()
+                .expectStatus().isOk();
+
+        Mockito.verify(tppService).updateTppDetails(any(TppDTOWithoutTokenSection.class));
+    }
+
+    @Test
+    void patchTppDetails_AcceptsAgentLinkVersionKeyWithoutDot() {
+        Mockito.when(tppService.patchTppDetails(eq("tppId"), any(TppDTOPatch.class)))
+                .thenReturn(Mono.just(getMockTppDtoWithoutTokenSection()));
+
+        webClient.patch()
+                .uri("/emd/tpp/{tppId}", "tppId")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patchJsonWithVersionKey("v1"))
+                .exchange()
+                .expectStatus().isOk();
+
+        Mockito.verify(tppService).patchTppDetails(eq("tppId"), any(TppDTOPatch.class));
+    }
+
+    @Test
+    void patchTppDetails_WithoutAgentLinks_StillInvokesService() {
+        Mockito.when(tppService.patchTppDetails(eq("tppId"), any(TppDTOPatch.class)))
+                .thenReturn(Mono.just(getMockTppDtoWithoutTokenSection()));
+
+        webClient.patch()
+                .uri("/emd/tpp/{tppId}", "tppId")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"businessName\": \"onlyBusinessName\"}")
+                .exchange()
+                .expectStatus().isOk();
+
+        Mockito.verify(tppService).patchTppDetails(eq("tppId"), any(TppDTOPatch.class));
+    }
+
 }
