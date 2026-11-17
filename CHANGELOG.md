@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.2](https://github.com/pagopa/emd-tpp/compare/v1.10.1...v1.10.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* [MMC-964] Add handler to fix 500 errors ([#159](https://github.com/pagopa/emd-tpp/issues/159)) ([cc5a4b3](https://github.com/pagopa/emd-tpp/commit/cc5a4b3be935f773bc671b93d6ea3eb292a1891b))
+
 ## [1.10.1](https://github.com/pagopa/emd-tpp/compare/v1.10.0...v1.10.1) (2026-11-09)
 
 
