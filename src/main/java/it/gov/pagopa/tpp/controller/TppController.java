@@ -91,7 +91,7 @@ public interface TppController {
      *          the updated {@link TppDTOWithoutTokenSection} if successful
      */
     @PatchMapping("/{tppId}")
-    Mono<ResponseEntity<TppDTOWithoutTokenSection>> patchTppDetails(@Valid @PathVariable String tppId, @RequestBody TppDTOPatch tppDTOPatch);
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> patchTppDetails(@Valid @PathVariable String tppId, @Valid @RequestBody TppDTOPatch tppDTOPatch);
 
     /**
      * Update TokenSection of a specific TPP

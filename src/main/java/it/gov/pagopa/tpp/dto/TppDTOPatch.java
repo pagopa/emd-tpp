@@ -2,6 +2,7 @@ package it.gov.pagopa.tpp.dto;
 
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,7 @@ public class TppDTOPatch {
 
     private String pspDenomination;
 
-    private HashMap<String, AgentLink> agentLinks;
+    private HashMap<String, @Valid AgentLink> agentLinks;
 
     private Boolean isPaymentEnabled;
 
