@@ -112,7 +112,8 @@ public interface TppController {
      *          {@link TppDTOWithoutTokenSection} if found
      */
     @GetMapping("/{tppId}")
-    Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppDetails(@Valid @PathVariable String tppId);
+    Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppDetails(@Valid @PathVariable String tppId,
+            @RequestHeader(name = "Authorization", required = false) String authHeader);
 
     /**
      * Get TokenSection of a TPP

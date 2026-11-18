@@ -110,8 +110,8 @@ public class TppControllerImpl implements TppController {
      * {@inheritDoc}
      */
     @Override
-    public Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppDetails(String tppId) {
-        return tppService.getTppDetails(inputSanitization(tppId))
+    public Mono<ResponseEntity<TppDTOWithoutTokenSection>> getTppDetails(String tppId, String authHeader) {
+        return tppService.getTppDetails(inputSanitization(tppId), authHeader)
                 .map(ResponseEntity::ok);
     }
     

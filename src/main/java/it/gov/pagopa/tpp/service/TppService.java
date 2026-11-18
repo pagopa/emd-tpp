@@ -7,6 +7,7 @@ import it.gov.pagopa.tpp.dto.TppDTO;
 import it.gov.pagopa.tpp.dto.TppDTOPatch;
 import it.gov.pagopa.tpp.dto.TppDTOWithoutTokenSection;
 import it.gov.pagopa.tpp.dto.TppSearchResponseDTO;
+import it.gov.pagopa.tpp.model.TokenSection;
 import it.gov.pagopa.tpp.dto.TppBatchResponseDTO;
 
 import java.util.Map;
@@ -122,7 +123,7 @@ public interface TppService {
      * @param tppId the TPP identifier
      * @return a {@link Mono} containing the {@link TppDTOWithoutTokenSection}
      */
-    Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId);
+    Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId, String authHeader);
 
     /**
      * Retrieves the token section configuration for a specific TPP.

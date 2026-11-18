@@ -520,7 +520,9 @@ public class TppServiceImpl implements TppService {
      * {@inheritDoc}
      */
     @Override
-    public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId) {
+    public Mono<TppDTOWithoutTokenSection> getTppDetails(String tppId, String authHeader) {
+        log.info("Token -> {} ", authHeader);
+
         log.info("[TPP-SERVICE][GET] Received request to get TPP for tppId: {}", tppId);
 
         return getTppsByIds(List.of(tppId))

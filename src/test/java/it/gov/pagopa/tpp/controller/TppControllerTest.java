@@ -22,6 +22,7 @@ import it.gov.pagopa.tpp.service.TppServiceImpl;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
@@ -223,12 +224,12 @@ class TppControllerTest {
     @Test
     void getTppDetails_Ok()  {
         TppDTOWithoutTokenSection tppDtoNoToken = getMockTppDtoWithoutTokenSection();
-
-        Mockito.when(tppService.getTppDetails(tppDtoNoToken.getTppId()))
+        Mockito.when(tppService.getTppDetails(ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Mono.just(tppDtoNoToken));
 
         webClient.get()
             .uri("/emd/tpp/{tppId}", tppDtoNoToken.getTppId())
+            .header("X-API-Version", "1")
             .exchange()
             .expectStatus().isOk()
             .expectBody(TppDTOWithoutTokenSection.class)
