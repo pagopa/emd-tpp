@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.3](https://github.com/pagopa/emd-tpp/compare/v1.10.2...v1.10.3) (2026-11-24)
+
+
+### Bug Fixes
+
+* [MMC-1477] convert dates to utc ([#160](https://github.com/pagopa/emd-tpp/issues/160)) ([07a8443](https://github.com/pagopa/emd-tpp/commit/07a84438b2881a9ed2d3e015746ba7543983321c))
+
 ## [1.10.2](https://github.com/pagopa/emd-tpp/compare/v1.10.1...v1.10.2) (2026-11-17)
 
 
