@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 
 /**
@@ -30,8 +30,8 @@ public class Tpp {
     private AuthenticationType authenticationType;
     private Boolean state;
     private TokenSection tokenSection;
-    private LocalDateTime creationDate;
-    private LocalDateTime lastUpdateDate;
+    private Instant creationDate;
+    private Instant lastUpdateDate;
     private String pspDenomination;
     private HashMap<String, AgentLink> agentLinks;
     private Boolean isPaymentEnabled;

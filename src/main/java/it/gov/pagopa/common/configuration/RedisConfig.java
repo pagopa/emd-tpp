@@ -23,8 +23,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RedisConfig {
 
-    public static final String TPP_CACHE_MAP_KEY = "emd:tpp:cache";
-    public static final String TPP_ENTITY_ID_MAP_KEY = "emd:tpp:entityId-index";
+    public static final String TPP_CACHE_MAP_KEY = "emd:tpp:cache:utc";
+    public static final String TPP_ENTITY_ID_MAP_KEY = "emd:tpp:entityId-index:utc";
 
 
     @Bean
