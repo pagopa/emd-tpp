@@ -1,5 +1,6 @@
 package it.gov.pagopa.tpp.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.gov.pagopa.tpp.enums.AuthenticationType;
 import it.gov.pagopa.tpp.model.AgentLink;
 import it.gov.pagopa.tpp.model.TokenSection;
@@ -12,7 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 
 /**
@@ -44,8 +45,10 @@ public class TppDTO {
     private AuthenticationType authenticationType;
 
     private Boolean state;
-    private LocalDateTime creationDate;
-    private LocalDateTime lastUpdateDate;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Instant creationDate;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Instant lastUpdateDate;
     private TokenSection tokenSection;
 
     @NotNull(message = "pspDenomination must not be null")

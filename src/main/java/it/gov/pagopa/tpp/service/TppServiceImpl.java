@@ -41,7 +41,8 @@ import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -341,7 +342,7 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppDTOWithoutTokenSection.getTppId())
                 .flatMap(existingTpp -> {
                     log.info("[TPP-SERVICE][UPSERT] TPP with tppId {} already exists. Updating...", existingTpp.getTppId());
-                    existingTpp.setLastUpdateDate(LocalDateTime.now());
+                    existingTpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
                     existingTpp.setMessageUrl(tppDTOWithoutTokenSection.getMessageUrl());
                     existingTpp.setAuthenticationUrl(tppDTOWithoutTokenSection.getAuthenticationUrl());
                     existingTpp.setBusinessName(tppDTOWithoutTokenSection.getBusinessName());
@@ -371,7 +372,7 @@ public class TppServiceImpl implements TppService {
         return tppRepository.findByTppId(tppId)
                 .flatMap(existingTpp -> {
                     log.info("[TPP-SERVICE][PATCH] TPP with tppId {} found. Applying partial update...", existingTpp.getTppId());
-                    existingTpp.setLastUpdateDate(LocalDateTime.now());
+                    existingTpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
                     if (tppDTOPatch.getMessageUrl() != null)         existingTpp.setMessageUrl(tppDTOPatch.getMessageUrl());
                     if (tppDTOPatch.getAuthenticationUrl() != null)  existingTpp.setAuthenticationUrl(tppDTOPatch.getAuthenticationUrl());
                     if (tppDTOPatch.getBusinessName() != null)       existingTpp.setBusinessName(tppDTOPatch.getBusinessName());
@@ -412,7 +413,7 @@ public class TppServiceImpl implements TppService {
                     return azureKeyService.getKey(tppId)
                             .flatMap(keyVaultKey -> tokenSectionCryptService.keyEncrypt(tokenSection, keyVaultKey))
                             .flatMap(encryptionResult -> {
-                                existingTpp.setLastUpdateDate(LocalDateTime.now());
+                                existingTpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
                                 existingTpp.setTokenSection(tokenSection);
 
                                 return tppRepository.save(existingTpp)
@@ -461,8 +462,9 @@ public class TppServiceImpl implements TppService {
                 .flatMap(encryptionResult -> {
                     Tpp tppToSave = mapperToObject.map(tppDTO);
                     tppToSave.setTppId(tppId);
-                    tppToSave.setLastUpdateDate(LocalDateTime.now());
-                    tppToSave.setCreationDate(LocalDateTime.now());
+                    Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+                    tppToSave.setLastUpdateDate(now);
+                    tppToSave.setCreationDate(now);
                     return tppRepository.save(tppToSave)
                             .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
                             .doOnSuccess(savedTpp -> log.info("[TPP-SERVICE][UPSERT] Created new TPP with tppId: {}", tppToSave.getTppId()))
@@ -484,7 +486,7 @@ public class TppServiceImpl implements TppService {
                         "Tpp not found during state update process")))
                 .flatMap(tpp -> {
                     tpp.setState(state);
-                    tpp.setLastUpdateDate(LocalDateTime.now());
+                    tpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
                     return tppRepository.save(tpp);
                 })
                 .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
@@ -507,7 +509,7 @@ public class TppServiceImpl implements TppService {
                         "Tpp not found during isPaymentEnabled update process")))
                 .flatMap(tpp -> {
                     tpp.setIsPaymentEnabled(isPaymentEnabled);
-                    tpp.setLastUpdateDate(LocalDateTime.now());
+                    tpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
                     return tppRepository.save(tpp);
                 })
                 .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
@@ -716,7 +718,7 @@ public class TppServiceImpl implements TppService {
 
           whitelist.add(recipientId);
           tpp.setWhitelistRecipient(whitelist);
-          tpp.setLastUpdateDate(LocalDateTime.now());
+          tpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 
           return tppRepository.save(tpp)
               .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
@@ -749,7 +751,7 @@ public class TppServiceImpl implements TppService {
 
           whitelist.remove(recipientId);
           tpp.setWhitelistRecipient(whitelist);
-          tpp.setLastUpdateDate(LocalDateTime.now());
+          tpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 
           return tppRepository.save(tpp)
               .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
@@ -770,7 +772,7 @@ public class TppServiceImpl implements TppService {
         .switchIfEmpty(Mono.error(exceptionMap.throwException(ExceptionName.TPP_NOT_ONBOARDED, ExceptionMessage.TPP_NOT_FOUND)))
         .flatMap(tpp -> {
           tpp.setWhitelistRecipient(recipientIds != null ? new ArrayList<>(new HashSet<>(recipientIds)) : new ArrayList<>());
-          tpp.setLastUpdateDate(LocalDateTime.now());
+          tpp.setLastUpdateDate(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 
           return tppRepository.save(tpp)
               .flatMap(savedTpp -> tppMapService.addToMap(savedTpp).thenReturn(savedTpp))
